@@ -1,0 +1,21 @@
+name: roamly_app
+description: Roamly AI travel assistant mobile application.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.1
+
+resolution: workspace
+
+dependencies:
+  cupertino_icons: ^1.0.8
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
