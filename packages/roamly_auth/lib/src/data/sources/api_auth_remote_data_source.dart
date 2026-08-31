@@ -1,15 +1,15 @@
-import 'package:roamly_auth/src/data/api/auth_api_paths.dart';
 import 'package:roamly_networking/roamly_networking.dart';
 
 import '../../domain/entities/auth_device.dart';
 import '../models/authentication_response_model.dart';
+import '../api/auth_api_paths.dart';
 import 'auth_remote_data_source.dart';
 
 final class ApiAuthRemoteDataSource implements AuthRemoteDataSource {
   final ApiClient _publicClient;
   final ApiClient _authenticatedClient;
 
-  ApiAuthRemoteDataSource({
+  const ApiAuthRemoteDataSource({
     required ApiClient publicClient,
     required ApiClient authenticatedClient,
   }) : _publicClient = publicClient,
@@ -41,8 +41,8 @@ final class ApiAuthRemoteDataSource implements AuthRemoteDataSource {
   Future<AuthenticationResponseModel> refresh({
     required String refreshToken,
   }) async {
-    final data = _publicClient.post(
-      AuthApiPaths.register,
+    final data = await _publicClient.post(
+      AuthApiPaths.refresh,
       data: <String, Object?>{'refresh_token': refreshToken},
     );
     return _authenticationResponse(data: data);
@@ -54,7 +54,7 @@ final class ApiAuthRemoteDataSource implements AuthRemoteDataSource {
     required String password,
     required AuthDevice device,
   }) async {
-    final data = _publicClient.post(
+    final data = await _publicClient.post(
       AuthApiPaths.register,
       data: _credentialsPayload(
         email: email,

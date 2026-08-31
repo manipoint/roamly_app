@@ -14,7 +14,7 @@ abstract interface class AuthRemoteDataSource {
     required String password,
     required AuthDevice device,
   });
-  
+
   Future<AuthenticationResponseModel> refresh({required String refreshToken});
 
   Future<void> logout();
