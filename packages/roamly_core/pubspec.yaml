@@ -1,0 +1,13 @@
+name: roamly_core
+description: Shared framework-independent primitives for Roamly.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.12.1
+
+resolution: workspace
+
+dev_dependencies:
+  test: ^1.25.0
+  

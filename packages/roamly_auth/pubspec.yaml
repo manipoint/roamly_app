@@ -1,0 +1,23 @@
+name: roamly_auth
+description: Authentication domain, data, and presentation feature for Roamly.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ^3.12.1
+  flutter: ">=1.17.0"
+resolution: workspace
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_secure_storage: ^11.0.0
+  roamly_core:
+    path: ../roamly_core
+  roamly_networking:
+    path: ../roamly_networking
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  
