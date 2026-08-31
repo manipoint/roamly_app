@@ -13,6 +13,15 @@ void main() {
       expect(failure.isRetryable, isTrue);
     });
 
+    test('deviceIdentity exposes a stable safe failure contract', () {
+      const failure = AuthFailure.deviceIdentity();
+
+      expect(failure, isA<AppFailure>());
+      expect(failure.kind, AuthFailureKind.deviceIdentity);
+      expect(failure.code, 'auth_device_identity_failed');
+      expect(failure.isRetryable, isTrue);
+    });
+
     test('preserves explicitly supplied failure properties', () {
       const failure = AuthFailure(
         code: 'auth_example_failure',

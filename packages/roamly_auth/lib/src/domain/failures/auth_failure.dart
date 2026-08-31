@@ -1,7 +1,7 @@
 import 'package:roamly_core/roamly_core.dart';
 
 /// Authentication-specific failure categories.
-enum AuthFailureKind { sessionStorage ,  deviceIdentity ,}
+enum AuthFailureKind { sessionStorage, deviceIdentity }
 
 /// A safe authentication-specific application failure.
 final class AuthFailure extends AppFailure {
@@ -15,7 +15,7 @@ final class AuthFailure extends AppFailure {
     : kind = AuthFailureKind.sessionStorage,
       super(code: 'auth_session_storage_failed', isRetryable: true);
 
-const AuthFailure.deviceIdentity()
+  const AuthFailure.deviceIdentity()
     : kind = AuthFailureKind.deviceIdentity,
       super(code: 'auth_device_identity_failed', isRetryable: true);
 
