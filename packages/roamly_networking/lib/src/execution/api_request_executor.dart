@@ -10,7 +10,7 @@ abstract interface class ApiRequestExecutor {
 /// Default API request execution boundary.
 
 final class DefaultApiRequestExecutor implements ApiRequestExecutor {
-  const DefaultApiRequestExecutor({required this._failureMapper});
+  const DefaultApiRequestExecutor({required DioFailureMapper failureMapper}): _failureMapper = failureMapper;
 
   final DioFailureMapper _failureMapper;
   @override

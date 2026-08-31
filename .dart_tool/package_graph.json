@@ -33,7 +33,8 @@
         "flutter",
         "flutter_secure_storage",
         "roamly_core",
-        "roamly_networking"
+        "roamly_networking",
+        "uuid"
       ],
       "devDependencies": [
         "flutter_lints",
@@ -126,6 +127,14 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "uuid",
+      "version": "4.6.0",
+      "dependencies": [
+        "crypto",
+        "fixnum"
       ]
     },
     {
@@ -471,6 +480,18 @@
       ]
     },
     {
+      "name": "fixnum",
+      "version": "1.1.1",
+      "dependencies": []
+    },
+    {
+      "name": "crypto",
+      "version": "3.0.7",
+      "dependencies": [
+        "typed_data"
+      ]
+    },
+    {
       "name": "flutter_secure_storage_windows",
       "version": "4.2.2",
       "dependencies": [
@@ -557,13 +578,6 @@
       "name": "web",
       "version": "1.1.1",
       "dependencies": []
-    },
-    {
-      "name": "crypto",
-      "version": "3.0.7",
-      "dependencies": [
-        "typed_data"
-      ]
     },
     {
       "name": "vm_service",
