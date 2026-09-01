@@ -12,12 +12,12 @@ import '../infrastructure/device/uuid_installation_id_generator.dart';
 import '../infrastructure/storage/flutter_secure_value_store.dart';
 import '../infrastructure/storage/secure_auth_token_store.dart';
 
-/// Concrete authentication depende
+/// Concrete authentication dependencies consumed by the application scope.
 final class AuthDependencies {
   final AuthRepository authRepository;
   final DeviceIdentityProvider deviceIdentity;
 
-  AuthDependencies({
+  const AuthDependencies({
     required this.authRepository,
     required this.deviceIdentity,
   });

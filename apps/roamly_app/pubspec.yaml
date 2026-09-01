@@ -13,6 +13,11 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_riverpod: ^3.4.2
+  roamly_auth:
+    path: ../../packages/roamly_auth
+  roamly_networking:
+    path: ../../packages/roamly_networking
+
 
 dev_dependencies:
   flutter_test:
