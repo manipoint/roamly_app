@@ -6,3 +6,5 @@ export 'src/domain/failures/auth_failure.dart';
 export 'src/domain/use_cases/register_use_case.dart';
 export 'src/domain/use_cases/sign_in_use_case.dart';
 export 'src/presentation/providers/auth_dependency_providers.dart';
+export 'src/presentation/controllers/auth_controller.dart';
+export 'src/composition/auth_module.dart' show AuthDependencies, AuthModule;
