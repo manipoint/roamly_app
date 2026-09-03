@@ -32,6 +32,8 @@ void main() {
     expect(app.theme, same(RoamlyTheme.light));
     expect(app.darkTheme, same(RoamlyTheme.dark));
     expect(app.themeMode, ThemeMode.system);
+    expect(app.routerConfig, isNotNull);
+    expect(app.home, isNull);
     expect(find.byKey(const ValueKey('unauthenticated-view')), findsOneWidget);
   });
 

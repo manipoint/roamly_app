@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 ///
 /// Prefer composing this primitive into feature-specific placeholders such as
 /// trip cards, hotel cards, and itinerary rows.
-class RoamlySkeleton extends StatefulWidget {
+final class RoamlySkeleton extends StatefulWidget {
   RoamlySkeleton({
     super.key,
     required this.width,
@@ -19,36 +19,27 @@ class RoamlySkeleton extends StatefulWidget {
          'A circular skeleton cannot have a border radius',
        );
 
-  /// Horizontal size of the placeholder.
   final double width;
-
-  /// Vertical size of the placeholder.
   final double height;
-
-  /// Corner radius used by rectangular placeholders.
   final BorderRadiusGeometry? borderRadius;
-
-  /// Whether the placeholder is rectangular or circular.
   final BoxShape shape;
-
-  /// Whether the shimmer animation should run.
-  ///
-  /// Animation is automatically disabled when the operating system requests
-  /// reduced motion.
   final bool animate;
 
   @override
   State<RoamlySkeleton> createState() => _RoamlySkeletonState();
 }
 
-class _RoamlySkeletonState extends State<RoamlySkeleton>
+final class _RoamlySkeletonState extends State<RoamlySkeleton>
     with SingleTickerProviderStateMixin {
-  static const _animationDuration = Duration(milliseconds: 1200);
+  static const Duration _animationDuration = Duration(milliseconds: 1200);
+
   late final AnimationController _animationController;
   bool _shouldAnimate = false;
+
   @override
   void initState() {
     super.initState();
+
     _animationController = AnimationController(
       duration: _animationDuration,
       vsync: this,
@@ -64,65 +55,68 @@ class _RoamlySkeletonState extends State<RoamlySkeleton>
   @override
   void didUpdateWidget(covariant RoamlySkeleton oldWidget) {
     super.didUpdateWidget(oldWidget);
+
     if (oldWidget.animate != widget.animate) {
       _synchronizeAnimation();
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final baseColor = Color.alphaBlend(
-      colorScheme.onSurface.withValues(alpha: .08),
-      colorScheme.surface,
-    );
-    final highlightColor = Color.alphaBlend(
-      colorScheme.onSurface.withAlpha(16),
-      colorScheme.surface,
-    );
-
-    return ExcludeSemantics(
-      child: SizedBox(
-        width: widget.width,
-        height: widget.height,
-        child: AnimatedBuilder(
-          animation: _animationController,
-          builder: ((context, child) {
-            return DecoratedBox(
-              decoration: _buildDecoration(
-                baseColor: baseColor,
-                highlightColor: highlightColor,
-              ),
-            );
-          }),
-        ),
-      ),
-    );
-  }
-
   void _synchronizeAnimation() {
     final animationsDisabled = MediaQuery.disableAnimationsOf(context);
     final shouldAnimate = widget.animate && !animationsDisabled;
+
     if (_shouldAnimate == shouldAnimate) {
       return;
     }
+
     _shouldAnimate = shouldAnimate;
+
     if (_shouldAnimate) {
       _animationController.repeat();
       return;
     }
+
     _animationController
       ..stop()
       ..value = 0;
   }
 
   @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final baseColor = Color.alphaBlend(
+      colorScheme.onSurface.withValues(alpha: 0.08),
+      colorScheme.surface,
+    );
+
+    final highlightColor = Color.alphaBlend(
+      colorScheme.onSurface.withValues(alpha: 0.16),
+      colorScheme.surface,
+    );
+
+    return ExcludeSemantics(
+      child: RepaintBoundary(
+        child: SizedBox(
+          width: widget.width,
+          height: widget.height,
+          child: AnimatedBuilder(
+            animation: _animationController,
+            builder: (context, child) {
+              return DecoratedBox(
+                decoration: _buildDecoration(
+                  baseColor: baseColor,
+                  highlightColor: highlightColor,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 
-  Decoration _buildDecoration({
+  BoxDecoration _buildDecoration({
     required Color baseColor,
     required Color highlightColor,
   }) {
@@ -133,16 +127,17 @@ class _RoamlySkeletonState extends State<RoamlySkeleton>
         borderRadius: _effectiveBorderRadius,
       );
     }
+
     final position = (_animationController.value * 6) - 3;
+
     return BoxDecoration(
       shape: widget.shape,
       borderRadius: _effectiveBorderRadius,
       gradient: LinearGradient(
         begin: Alignment(position - 1, 0),
         end: Alignment(position + 1, 0),
-
         colors: [baseColor, highlightColor, baseColor],
-        stops: const [0, .5, 1],
+        stops: const [0, 0.5, 1],
       ),
     );
   }
@@ -151,6 +146,13 @@ class _RoamlySkeletonState extends State<RoamlySkeleton>
     if (widget.shape == BoxShape.circle) {
       return null;
     }
+
     return widget.borderRadius;
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 }
