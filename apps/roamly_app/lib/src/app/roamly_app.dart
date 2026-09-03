@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:roamly_app/src/app/auth_gate.dart';
+import 'package:roamly_ui/roamly_ui.dart';
 
 final class RoamlyApp extends StatelessWidget {
   const RoamlyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Roamly AI',
-      home: AuthGate(),
+      theme: RoamlyTheme.light,
+      darkTheme: RoamlyTheme.dark,
+      themeMode: ThemeMode.system,
+      home: const AuthGate(),
     );
   }
 }

@@ -17,6 +17,8 @@ dependencies:
     path: ../../packages/roamly_auth
   roamly_networking:
     path: ../../packages/roamly_networking
+  roamly_ui:
+    path: ../../packages/roamly_ui
 
 
 dev_dependencies:
