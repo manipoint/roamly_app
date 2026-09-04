@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roamly_app/src/app/roamly_app.dart';
+import 'package:roamly_app/src/features/onboarding/presentation/pages/welcome_page.dart';
 import 'package:roamly_auth/roamly_auth.dart';
 import 'package:roamly_ui/roamly_ui.dart';
 
@@ -34,7 +35,7 @@ void main() {
     expect(app.themeMode, ThemeMode.system);
     expect(app.routerConfig, isNotNull);
     expect(app.home, isNull);
-    expect(find.byKey(const ValueKey('unauthenticated-view')), findsOneWidget);
+    expect(find.byType(WelcomePage), findsOneWidget);
   });
 
   testWidgets('selects the dark Roamly theme for a dark system preference', (
@@ -46,9 +47,7 @@ void main() {
     await pumpRoamlyApp(tester);
     await tester.pumpAndSettle();
 
-    final context = tester.element(
-      find.byKey(const ValueKey('unauthenticated-view')),
-    );
+    final context = tester.element(find.byType(WelcomePage));
 
     expect(Theme.of(context).brightness, Brightness.dark);
     expect(Theme.of(context).colorScheme, equals(RoamlyTheme.dark.colorScheme));

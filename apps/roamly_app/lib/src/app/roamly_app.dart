@@ -16,7 +16,6 @@ final class RoamlyApp extends ConsumerWidget {
       darkTheme: RoamlyTheme.dark,
       themeMode: ThemeMode.system,
       routerConfig: router,
-      
     );
   }
 }

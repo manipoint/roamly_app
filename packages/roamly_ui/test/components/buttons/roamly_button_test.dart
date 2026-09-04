@@ -18,6 +18,12 @@ void main() {
 
       await _pumpButton(tester, const RoamlyButton.ghost(label: 'Ghost'));
       expect(find.byType(TextButton), findsOneWidget);
+
+      await _pumpButton(
+        tester,
+        const RoamlyButton.destructive(label: 'Destructive'),
+      );
+      expect(find.byType(OutlinedButton), findsOneWidget);
     });
 
     testWidgets('invokes the supplied callback', (tester) async {
@@ -53,6 +59,97 @@ void main() {
 
       await tester.tap(find.byType(RoamlyButton));
       expect(tapped, isFalse);
+    });
+
+    testWidgets('keeps the primary loading state visually prominent', (
+      tester,
+    ) async {
+      await _pumpButton(
+        tester,
+        const RoamlyButton.primary(label: 'Continue', isLoading: true),
+      );
+
+      final context = tester.element(find.byType(RoamlyButton));
+      final colors = Theme.of(context).colorScheme;
+      final button = tester.widget<FilledButton>(find.byType(FilledButton));
+      final indicator = tester.widget<CircularProgressIndicator>(
+        find.byType(CircularProgressIndicator),
+      );
+
+      expect(
+        button.style?.backgroundColor?.resolve({WidgetState.disabled}),
+        colors.primary,
+      );
+      expect(
+        button.style?.foregroundColor?.resolve({WidgetState.disabled}),
+        colors.onPrimary,
+      );
+      expect(indicator.color, colors.onPrimary);
+    });
+
+    testWidgets('uses the primary color for secondary loading progress', (
+      tester,
+    ) async {
+      await _pumpButton(
+        tester,
+        const RoamlyButton.secondary(label: 'Continue', isLoading: true),
+      );
+
+      final context = tester.element(find.byType(RoamlyButton));
+      final colors = Theme.of(context).colorScheme;
+      final button = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
+      final indicator = tester.widget<CircularProgressIndicator>(
+        find.byType(CircularProgressIndicator),
+      );
+
+      expect(
+        button.style?.foregroundColor?.resolve({WidgetState.disabled}),
+        colors.primary,
+      );
+      expect(
+        button.style?.side?.resolve({WidgetState.disabled})?.color,
+        colors.primary,
+      );
+      expect(indicator.color, colors.primary);
+    });
+
+    testWidgets('uses the primary color for ghost loading progress', (
+      tester,
+    ) async {
+      await _pumpButton(
+        tester,
+        const RoamlyButton.ghost(label: 'Continue', isLoading: true),
+      );
+
+      final context = tester.element(find.byType(RoamlyButton));
+      final colors = Theme.of(context).colorScheme;
+      final button = tester.widget<TextButton>(find.byType(TextButton));
+      final indicator = tester.widget<CircularProgressIndicator>(
+        find.byType(CircularProgressIndicator),
+      );
+
+      expect(
+        button.style?.foregroundColor?.resolve({WidgetState.disabled}),
+        colors.primary,
+      );
+      expect(indicator.color, colors.primary);
+    });
+
+    testWidgets('uses the error color for destructive actions', (tester) async {
+      await _pumpButton(
+        tester,
+        const RoamlyButton.destructive(label: 'Sign out'),
+      );
+
+      final context = tester.element(find.byType(RoamlyButton));
+      final colors = Theme.of(context).colorScheme;
+      final button = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
+
+      expect(
+        button.style?.foregroundColor?.resolve(<WidgetState>{}),
+        colors.error,
+      );
+      expect(button.style?.side?.resolve(<WidgetState>{})?.color, colors.error);
     });
 
     testWidgets('renders an optional leading icon', (tester) async {

@@ -1,0 +1,46 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Roamly App (Cloud Run)",
+      "cwd": "${workspaceFolder}/apps/roamly_app",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "debug"
+    },
+    {
+      "name": "Roamly App (Local API - iOS/macOS)",
+      "cwd": "${workspaceFolder}/apps/roamly_app",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--dart-define=ROAMLY_API_BASE_URL=http://127.0.0.1:8000/api/v1/"
+      ]
+    },
+    {
+      "name": "Roamly App (Local API - Android Emulator)",
+      "cwd": "${workspaceFolder}/apps/roamly_app",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--dart-define=ROAMLY_API_BASE_URL=http://10.0.2.2:8000/api/v1/"
+      ]
+    },
+    {
+      "name": "Roamly App (Profile)",
+      "cwd": "${workspaceFolder}/apps/roamly_app",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "Roamly App (Release)",
+      "cwd": "${workspaceFolder}/apps/roamly_app",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release"
+    }
+  ]
+}

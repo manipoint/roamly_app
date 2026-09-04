@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:roamly_app/src/app/widgets/authenticated_view.dart';
 import 'package:roamly_app/src/app/widgets/session_loading_view.dart';
 import 'package:roamly_app/src/app/widgets/unauthenticated_view.dart';
 import 'package:roamly_auth/roamly_auth.dart';
@@ -11,15 +10,15 @@ final class AuthGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authSession = ref.watch(authControllerProvider);
+
     if (authSession.isLoading && !authSession.hasValue) {
-      return const SessionLoadingView(valueKey: 'auth-session-loading',);
+      return const SessionLoadingView(valueKey: 'auth-session-loading');
     }
-    final user = authSession.value;
-    if (user == null) {
-      return UnauthenticatedView(hasFailure:authSession.hasError);
+
+    if (authSession.hasError) {
+      return const UnauthenticatedView(hasFailure: true);
     }
-    return  AuthenticatedView(email:user.email);
+
+    return const SizedBox.shrink();
   }
 }
-
-

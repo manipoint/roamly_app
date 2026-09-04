@@ -9,7 +9,7 @@ void main() {
       expect(
         config.apiConfig.baseUri,
         Uri.parse(
-          'https://travel-assistant-api-752693246965.asia-south1.run.app/',
+          'https://travel-assistant-api-752693246965.asia-south1.run.app/api/v1/',
         ),
       );
       expect(config.apiConfig.connectTimeout, const Duration(seconds: 15));

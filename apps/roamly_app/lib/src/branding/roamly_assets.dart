@@ -23,6 +23,14 @@ abstract final class RoamlyAssets {
   static const String splashBackgroundDark =
       '$_brandingRoot/roamly_splash_background_dark.png';
 
+  /// Full-screen welcome background for light mode.
+  static const String welcomeBackgroundLight =
+      '$_brandingRoot/wellcom_splash.png';
+
+  /// Full-screen welcome background for dark mode.
+  static const String welcomeBackgroundDark =
+      '$_brandingRoot/wellcome_splash_dark.png';
+
   /// Every runtime branding asset registered by the application.
   static const List<String> all = <String>[
     appIcon,
@@ -31,5 +39,7 @@ abstract final class RoamlyAssets {
     logoWithTagline,
     splashBackgroundLight,
     splashBackgroundDark,
+    welcomeBackgroundLight,
+    welcomeBackgroundDark,
   ];
 }

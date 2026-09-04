@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum RoamlyButtonVariant { primary, secondary, ghost }
+enum RoamlyButtonVariant { primary, secondary, ghost, destructive }
 
 final class RoamlyButton extends StatelessWidget {
   const RoamlyButton.primary({
@@ -30,6 +30,15 @@ final class RoamlyButton extends StatelessWidget {
     this.expand = false,
   }) : variant = RoamlyButtonVariant.ghost;
 
+  const RoamlyButton.destructive({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.leadingIcon,
+    this.isLoading = false,
+    this.expand = false,
+  }) : variant = RoamlyButtonVariant.destructive;
+
   final String label;
   final VoidCallback? onPressed;
   final Widget? leadingIcon;
@@ -39,7 +48,37 @@ final class RoamlyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final effectiveOnPressed = isLoading ? null : onPressed;
+    final loadingStyle = isLoading
+        ? switch (variant) {
+            RoamlyButtonVariant.primary => ButtonStyle(
+              backgroundColor: WidgetStatePropertyAll(colors.primary),
+              foregroundColor: WidgetStatePropertyAll(colors.onPrimary),
+            ),
+            RoamlyButtonVariant.secondary => ButtonStyle(
+              foregroundColor: WidgetStatePropertyAll(colors.primary),
+              side: WidgetStatePropertyAll(
+                BorderSide(color: colors.primary, width: 1.5),
+              ),
+            ),
+            RoamlyButtonVariant.ghost => ButtonStyle(
+              foregroundColor: WidgetStatePropertyAll(colors.primary),
+            ),
+            RoamlyButtonVariant.destructive => ButtonStyle(
+              foregroundColor: WidgetStatePropertyAll(colors.error),
+              side: WidgetStatePropertyAll(
+                BorderSide(color: colors.error, width: 1.5),
+              ),
+            ),
+          }
+        : null;
+    final loadingIndicatorColor = switch (variant) {
+      RoamlyButtonVariant.primary => colors.onPrimary,
+      RoamlyButtonVariant.secondary ||
+      RoamlyButtonVariant.ghost => colors.primary,
+      RoamlyButtonVariant.destructive => colors.error,
+    };
     final content = AnimatedSwitcher(
       duration: const Duration(milliseconds: 200),
       child: isLoading
@@ -49,7 +88,7 @@ final class RoamlyButton extends StatelessWidget {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Theme.of(context).colorScheme.primary,
+                color: loadingIndicatorColor,
                 semanticsLabel: label,
               ),
             )
@@ -63,14 +102,27 @@ final class RoamlyButton extends StatelessWidget {
     final button = switch (variant) {
       RoamlyButtonVariant.primary => FilledButton(
         onPressed: effectiveOnPressed,
+        style: loadingStyle,
         child: content,
       ),
       RoamlyButtonVariant.secondary => OutlinedButton(
         onPressed: effectiveOnPressed,
+        style: loadingStyle,
         child: content,
       ),
       RoamlyButtonVariant.ghost => TextButton(
         onPressed: effectiveOnPressed,
+        style: loadingStyle,
+        child: content,
+      ),
+      RoamlyButtonVariant.destructive => OutlinedButton(
+        onPressed: effectiveOnPressed,
+        style:
+            loadingStyle ??
+            OutlinedButton.styleFrom(
+              foregroundColor: colors.error,
+              side: BorderSide(color: colors.error, width: 1.5),
+            ),
         child: content,
       ),
     };

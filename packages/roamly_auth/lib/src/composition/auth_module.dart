@@ -1,5 +1,6 @@
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:roamly_logging/roamly_logging.dart';
 import 'package:roamly_networking/roamly_networking.dart';
 
 import '../data/repositories/default_auth_repository.dart';
@@ -28,6 +29,7 @@ final class AuthDependencies {
 abstract final class AuthModule {
   static AuthDependencies create({
     required ApiConfig apiConfig,
+    required RoamlyLogger logger,
     FlutterSecureStorage? secureStorage,
     DeviceInfoPlugin? deviceInfoPlugin,
   }) {
@@ -45,15 +47,19 @@ abstract final class AuthModule {
     final authRepository = DefaultAuthRepository(
       remoteDataSource: remoteDataSource,
       tokenStore: tokenStore,
-      requestExecutor: const DefaultApiRequestExecutor(
+      logger: logger.child('repository'),
+      requestExecutor: DefaultApiRequestExecutor(
         failureMapper: DefaultDioFailureMapper(),
+        logger: logger.child('network'),
       ),
     );
     final deviceIdentityProvider = DefaultDeviceIdentityProvider(
       secureValueStore: secureValueStore,
       installationIdGenerator: const UuidInstallationIdGenerator(),
+      logger: logger.child('device_identity'),
       deviceNameProvider: PlatformDeviceNameProvider(
         deviceInfoPlugin: deviceInfoPlugin ?? DeviceInfoPlugin(),
+        logger: logger.child('device_name'),
       ),
     );
 

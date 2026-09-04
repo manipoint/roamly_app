@@ -4,7 +4,7 @@ import 'package:roamly_networking/roamly_networking.dart';
 final class AppConfig {
   const AppConfig({required this.apiConfig});
   static const String _defaultApiBaseUrl =
-      'https://travel-assistant-api-752693246965.asia-south1.run.app/';
+      'https://travel-assistant-api-752693246965.asia-south1.run.app/api/v1/';
 
   /// Validated backend API configuration.
   final ApiConfig apiConfig;

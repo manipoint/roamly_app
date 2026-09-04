@@ -2,9 +2,16 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:roamly_app/src/app/auth_gate.dart';
-import 'package:roamly_app/src/app/widgets/authenticated_view.dart';
-import 'package:roamly_app/src/app/widgets/unauthenticated_view.dart';
+import 'package:roamly_app/src/features/assistant/presentation/pages/assistant_page.dart';
+import 'package:roamly_app/src/features/auth/presentation/pages/register_page.dart';
+import 'package:roamly_app/src/features/auth/presentation/pages/sign_in_page.dart';
+import 'package:roamly_app/src/features/home/presentation/pages/home_page.dart';
+import 'package:roamly_app/src/features/onboarding/presentation/pages/welcome_page.dart';
+import 'package:roamly_app/src/features/profile/presentation/pages/profile_page.dart';
+import 'package:roamly_app/src/features/saved/presentation/pages/saved_page.dart';
+import 'package:roamly_app/src/features/trips/presentation/pages/trips_page.dart';
 import 'package:roamly_app/src/navigation/app_routes.dart';
+import 'package:roamly_app/src/navigation/authenticated_app_shell.dart';
 import 'package:roamly_auth/roamly_auth.dart';
 
 /// Provides the application router through Riverpod.
@@ -30,8 +37,9 @@ abstract final class AppRouter {
 
     ref.onDispose(authState.dispose);
 
-    bool isAuthenticationPath(String location) {
-      return location == AppRoutePaths.signIn ||
+    bool isGuestPath(String location) {
+      return location == AppRoutePaths.welcome ||
+          location == AppRoutePaths.signIn ||
           location == AppRoutePaths.register;
     }
 
@@ -41,7 +49,7 @@ abstract final class AppRouter {
       redirect: (context, state) {
         final authentication = authState.value;
         final currentLocation = state.matchedLocation;
-        final isOnAuthenticationRoute = isAuthenticationPath(currentLocation);
+        final isOnGuestRoute = isGuestPath(currentLocation);
 
         final isRestoringSession =
             !hasCompletedInitialAuthCheck && authentication.isLoading;
@@ -62,19 +70,21 @@ abstract final class AppRouter {
               ? null
               : Uri.tryParse(pendingLocation!);
 
-          if (pendingUri != null && isAuthenticationPath(pendingUri.path)) {
+          if (pendingUri != null && isGuestPath(pendingUri.path)) {
             final destination = pendingLocation;
             pendingLocation = null;
             return destination;
           }
 
-          if (isOnAuthenticationRoute) {
+          if (isOnGuestRoute) {
             return null;
           }
 
-          if (currentLocation != AppRoutePaths.root) {
-            pendingLocation ??= state.uri.toString();
+          if (currentLocation == AppRoutePaths.root) {
+            return AppRoutePaths.welcome;
           }
+
+          pendingLocation ??= state.uri.toString();
 
           return AppRoutePaths.signIn;
         }
@@ -87,12 +97,12 @@ abstract final class AppRouter {
 
           if (destinationUri != null &&
               destinationUri.path != AppRoutePaths.root &&
-              !isAuthenticationPath(destinationUri.path)) {
+              !isGuestPath(destinationUri.path)) {
             return destination;
           }
         }
 
-        if (currentLocation == AppRoutePaths.root || isOnAuthenticationRoute) {
+        if (currentLocation == AppRoutePaths.root || isOnGuestRoute) {
           return AppRoutePaths.home;
         }
 
@@ -107,32 +117,87 @@ abstract final class AppRouter {
           },
         ),
         GoRoute(
+          path: AppRoutePaths.welcome,
+          name: AppRouteNames.welcome,
+          builder: (context, state) {
+            return const WelcomePage();
+          },
+        ),
+        GoRoute(
           path: AppRoutePaths.signIn,
           name: AppRouteNames.signIn,
           builder: (context, state) {
-            return UnauthenticatedView(hasFailure: authState.value.hasError);
+            return const SignInPage();
           },
         ),
         GoRoute(
           path: AppRoutePaths.register,
           name: AppRouteNames.register,
           builder: (context, state) {
-            // TODO(imranlatif): Replace with RegisterPage.
-            return UnauthenticatedView(hasFailure: authState.value.hasError);
+            return const RegisterPage();
           },
         ),
-        GoRoute(
-          path: AppRoutePaths.home,
-          name: AppRouteNames.home,
-          builder: (context, state) {
-            final user = authState.value.value;
-
-            if (user == null) {
-              return const AuthGate();
-            }
-
-            return AuthenticatedView(email: user.email);
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) {
+            return AuthenticatedAppShell(navigationShell: navigationShell);
           },
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: AppRoutePaths.home,
+                  name: AppRouteNames.home,
+                  builder: (context, state) {
+                    return const HomePage();
+                  },
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: AppRoutePaths.trips,
+                  name: AppRouteNames.trips,
+                  builder: (context, state) {
+                    return const TripsPage();
+                  },
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: AppRoutePaths.assistant,
+                  name: AppRouteNames.assistant,
+                  builder: (context, state) {
+                    return const AssistantPage();
+                  },
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: AppRoutePaths.saved,
+                  name: AppRouteNames.saved,
+                  builder: (context, state) {
+                    return const SavedPage();
+                  },
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: AppRoutePaths.profile,
+                  name: AppRouteNames.profile,
+                  builder: (context, state) {
+                    return const ProfilePage();
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
       ],
     );

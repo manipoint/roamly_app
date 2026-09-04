@@ -7,6 +7,7 @@ import 'package:roamly_auth/src/data/sources/auth_remote_data_source.dart';
 import 'package:roamly_auth/src/data/storage/auth_token_store.dart';
 import 'package:roamly_auth/roamly_auth.dart';
 import 'package:roamly_core/roamly_core.dart';
+import 'package:roamly_logging/roamly_logging.dart';
 import 'package:roamly_networking/roamly_networking.dart';
 
 void main() {
@@ -285,6 +286,10 @@ DefaultAuthRepository _repository({
     remoteDataSource: remote,
     tokenStore: tokenStore,
     requestExecutor: const _FakeApiRequestExecutor(),
+    logger: RoamlyLogger(
+      name: 'test.auth.repository',
+      sink: const NoopLogSink(),
+    ),
   );
 }
 

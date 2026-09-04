@@ -12,7 +12,8 @@ dependencies:
   dio: ^5.11.0
   roamly_core:
     path: ../roamly_core
+  roamly_logging:
+    path: ../roamly_logging
 
 dev_dependencies:
   test: ^1.25.6
-

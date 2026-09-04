@@ -16,6 +16,8 @@ dependencies:
   go_router: ^18.0.1
   roamly_auth:
     path: ../../packages/roamly_auth
+  roamly_logging:
+    path: ../../packages/roamly_logging
   roamly_networking:
     path: ../../packages/roamly_networking
   roamly_ui:
@@ -25,6 +27,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  roamly_core:
+    path: ../../packages/roamly_core
 
 flutter:
   uses-material-design: true

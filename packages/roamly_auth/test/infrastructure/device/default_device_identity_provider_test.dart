@@ -5,6 +5,7 @@ import 'package:roamly_auth/src/infrastructure/device/device_name_provider.dart'
 import 'package:roamly_auth/src/infrastructure/device/installation_id_generator.dart';
 import 'package:roamly_auth/src/infrastructure/storage/secure_value_store.dart';
 import 'package:roamly_core/roamly_core.dart';
+import 'package:roamly_logging/roamly_logging.dart';
 
 void main() {
   const installationIdKey = 'auth.installation_id';
@@ -144,6 +145,27 @@ void main() {
 
       expect(device.name, isNull);
     });
+
+    test('logs secure storage failures without exception details', () async {
+      final sink = _RecordingLogSink();
+      final provider = _buildProvider(
+        storage: _FakeSecureValueStore(
+          readError: Exception('private storage details'),
+        ),
+        logger: RoamlyLogger(name: 'test.device', sink: sink),
+      );
+
+      _expectDeviceIdentityFailure(await provider.getCurrentDevice());
+
+      final record = sink.records.single;
+      expect(record.level, LogLevel.error);
+      expect(record.fields['error_type'], contains('Exception'));
+      expect(record.error, isNull);
+      expect(
+        '${record.message} ${record.fields}',
+        isNot(contains('private storage details')),
+      );
+    });
   });
 }
 
@@ -151,12 +173,15 @@ DefaultDeviceIdentityProvider _buildProvider({
   _FakeSecureValueStore? storage,
   _FakeInstallationIdGenerator? generator,
   _FakeDeviceNameProvider? deviceNameProvider,
+  RoamlyLogger? logger,
 }) {
   return DefaultDeviceIdentityProvider(
     secureValueStore: storage ?? _FakeSecureValueStore(),
     installationIdGenerator:
         generator ?? _FakeInstallationIdGenerator('generated-id'),
     deviceNameProvider: deviceNameProvider ?? _FakeDeviceNameProvider(null),
+    logger:
+        logger ?? RoamlyLogger(name: 'test.device', sink: const NoopLogSink()),
   );
 }
 
@@ -236,5 +261,14 @@ final class _FakeDeviceNameProvider implements DeviceNameProvider {
       throw exception;
     }
     return value;
+  }
+}
+
+final class _RecordingLogSink implements LogSink {
+  final List<LogRecord> records = [];
+
+  @override
+  void write(LogRecord record) {
+    records.add(record);
   }
 }

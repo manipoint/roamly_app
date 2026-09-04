@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:roamly_core/roamly_core.dart';
+import 'package:roamly_logging/roamly_logging.dart';
 import 'package:roamly_networking/roamly_networking.dart';
 import 'package:test/test.dart';
 
@@ -19,6 +20,10 @@ final class RecordingFailureMapper implements DioFailureMapper {
 }
 
 void main() {
+  final logger = RoamlyLogger(
+    name: 'test.networking',
+    sink: const NoopLogSink(),
+  );
   const mappedFailure = NetworkFailure(
     code: 'network_timeout',
     isRetryable: true,
@@ -35,7 +40,10 @@ void main() {
   group('DefaultApiRequestExecutor', () {
     test('returns a typed success value', () async {
       final mapper = RecordingFailureMapper(mappedFailure);
-      final executor = DefaultApiRequestExecutor(failureMapper: mapper);
+      final executor = DefaultApiRequestExecutor(
+        failureMapper: mapper,
+        logger: logger,
+      );
 
       final result = await executor.execute<int>(() async => 42);
 
@@ -46,7 +54,10 @@ void main() {
 
     test('executes the request exactly once', () async {
       final mapper = RecordingFailureMapper(mappedFailure);
-      final executor = DefaultApiRequestExecutor(failureMapper: mapper);
+      final executor = DefaultApiRequestExecutor(
+        failureMapper: mapper,
+        logger: logger,
+      );
       var requestCalls = 0;
 
       final result = await executor.execute<String>(() async {
@@ -61,7 +72,10 @@ void main() {
     test('maps an asynchronously delivered DioException', () async {
       final exception = dioException();
       final mapper = RecordingFailureMapper(mappedFailure);
-      final executor = DefaultApiRequestExecutor(failureMapper: mapper);
+      final executor = DefaultApiRequestExecutor(
+        failureMapper: mapper,
+        logger: logger,
+      );
 
       final result = await executor.execute<String>(
         () => Future<String>.error(exception),
@@ -76,7 +90,10 @@ void main() {
     test('maps a synchronously thrown DioException', () async {
       final exception = dioException();
       final mapper = RecordingFailureMapper(mappedFailure);
-      final executor = DefaultApiRequestExecutor(failureMapper: mapper);
+      final executor = DefaultApiRequestExecutor(
+        failureMapper: mapper,
+        logger: logger,
+      );
 
       final result = await executor.execute<String>(() => throw exception);
 
@@ -88,7 +105,10 @@ void main() {
 
     test('does not swallow an asynchronous unexpected exception', () async {
       final mapper = RecordingFailureMapper(mappedFailure);
-      final executor = DefaultApiRequestExecutor(failureMapper: mapper);
+      final executor = DefaultApiRequestExecutor(
+        failureMapper: mapper,
+        logger: logger,
+      );
       final unexpected = StateError('invalid response model');
 
       await expectLater(
@@ -100,7 +120,10 @@ void main() {
 
     test('does not swallow a synchronous unexpected exception', () async {
       final mapper = RecordingFailureMapper(mappedFailure);
-      final executor = DefaultApiRequestExecutor(failureMapper: mapper);
+      final executor = DefaultApiRequestExecutor(
+        failureMapper: mapper,
+        logger: logger,
+      );
       final unexpected = FormatException('invalid response payload');
 
       await expectLater(
@@ -109,5 +132,45 @@ void main() {
       );
       expect(mapper.calls, 0);
     });
+
+    test('logs mapped request failures without request data', () async {
+      final sink = _RecordingLogSink();
+      final executor = DefaultApiRequestExecutor(
+        failureMapper: RecordingFailureMapper(mappedFailure),
+        logger: RoamlyLogger(name: 'network', sink: sink),
+      );
+      final exception = DioException(
+        requestOptions: RequestOptions(
+          path: '/trips?access_token=secret',
+          method: 'GET',
+          data: const {'password': 'must-not-be-logged'},
+        ),
+        response: Response<void>(
+          requestOptions: RequestOptions(path: '/trips'),
+          statusCode: 504,
+        ),
+        type: DioExceptionType.badResponse,
+      );
+
+      await executor.execute<void>(() => throw exception);
+
+      final record = sink.records.single;
+      expect(record.level, LogLevel.warning);
+      expect(record.message, 'API request failed');
+      expect(record.fields['request_uri'], '/trips');
+      expect(record.fields['status_code'], 504);
+      expect(record.fields['failure_code'], 'network_timeout');
+      expect(record.fields.toString(), isNot(contains('must-not-be-logged')));
+      expect(record.fields.toString(), isNot(contains('secret')));
+    });
   });
+}
+
+final class _RecordingLogSink implements LogSink {
+  final List<LogRecord> records = [];
+
+  @override
+  void write(LogRecord record) {
+    records.add(record);
+  }
 }

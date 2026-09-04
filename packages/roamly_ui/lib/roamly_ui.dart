@@ -1,3 +1,4 @@
+export 'src/components/actions/roamly_inline_action.dart';
 export 'src/components/buttons/roamly_button.dart';
 export 'src/components/inputs/roamly_text_form_field.dart';
 export 'src/components/inputs/roamly_password_form_field.dart';

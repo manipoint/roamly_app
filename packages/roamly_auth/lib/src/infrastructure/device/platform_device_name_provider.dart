@@ -1,15 +1,21 @@
-import 'device_name_provider.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:roamly_logging/roamly_logging.dart';
+
+import 'device_name_provider.dart';
 
 /// Resolves a best-effort human-readable name for the current device.
 ///
 /// Device name resolution must never block authentication. If the platform
 /// does not provide a usable name, or the plugin fails, `null` is returned.
 final class PlatformDeviceNameProvider implements DeviceNameProvider {
-  const PlatformDeviceNameProvider({required DeviceInfoPlugin deviceInfoPlugin})
-    : _deviceInfoPlugin = deviceInfoPlugin;
+  const PlatformDeviceNameProvider({
+    required DeviceInfoPlugin deviceInfoPlugin,
+    required RoamlyLogger logger,
+  }) : _deviceInfoPlugin = deviceInfoPlugin,
+       _logger = logger;
 
   final DeviceInfoPlugin _deviceInfoPlugin;
+  final RoamlyLogger _logger;
   @override
   Future<String?> getDeviceName() async {
     try {
@@ -23,7 +29,12 @@ final class PlatformDeviceNameProvider implements DeviceNameProvider {
         ]),
         _ => null,
       };
-    } on Exception {
+    } on Exception catch (error, stackTrace) {
+      _logger.debug(
+        'Platform device name unavailable',
+        fields: {'error_type': error.runtimeType.toString()},
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }

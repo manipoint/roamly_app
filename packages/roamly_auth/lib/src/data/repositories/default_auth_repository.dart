@@ -1,6 +1,7 @@
 // DefaultAuthRepository
 
 import 'package:roamly_core/roamly_core.dart';
+import 'package:roamly_logging/roamly_logging.dart';
 import 'package:roamly_networking/roamly_networking.dart';
 
 import '../sources/auth_remote_data_source.dart';
@@ -17,13 +18,16 @@ final class DefaultAuthRepository implements AuthRepository {
     required AuthRemoteDataSource remoteDataSource,
     required AuthTokenStore tokenStore,
     required ApiRequestExecutor requestExecutor,
+    required RoamlyLogger logger,
   }) : _remoteDataSource = remoteDataSource,
        _tokenStore = tokenStore,
-       _requestExecutor = requestExecutor;
+       _requestExecutor = requestExecutor,
+       _logger = logger;
 
   final AuthRemoteDataSource _remoteDataSource;
   final AuthTokenStore _tokenStore;
   final ApiRequestExecutor _requestExecutor;
+  final RoamlyLogger _logger;
 
   @override
   Future<Result<AuthUser>> login({
@@ -99,6 +103,7 @@ final class DefaultAuthRepository implements AuthRepository {
         if (!_isUnauthorized(failure)) {
           return FailureResult<AuthUser>(failure);
         }
+        _logger.info('Expired session credentials rejected by API');
         final storageFailure = await _clearTokensSafely();
         if (storageFailure != null) {
           return FailureResult<AuthUser>(storageFailure);
@@ -134,7 +139,12 @@ final class DefaultAuthRepository implements AuthRepository {
     try {
       await _tokenStore.writeTokens(tokens);
       return null;
-    } on Exception {
+    } on Exception catch (error, stackTrace) {
+      _logger.error(
+        'Failed to persist authentication credentials',
+        fields: {'error_type': error.runtimeType.toString()},
+        stackTrace: stackTrace,
+      );
       return const AuthFailure.sessionStorage();
     }
   }
@@ -144,8 +154,14 @@ final class DefaultAuthRepository implements AuthRepository {
       final tokens = await _tokenStore.readTokens();
       return Success<AuthTokenPairModel?>(tokens);
     } on FormatException {
+      _logger.warning('Corrupted authentication credentials detected');
       return _recoverFromCorruptedTokens();
-    } on Exception {
+    } on Exception catch (error, stackTrace) {
+      _logger.error(
+        'Failed to read authentication credentials',
+        fields: {'error_type': error.runtimeType.toString()},
+        stackTrace: stackTrace,
+      );
       return const FailureResult<AuthTokenPairModel?>(
         AuthFailure.sessionStorage(),
       );
@@ -164,7 +180,12 @@ final class DefaultAuthRepository implements AuthRepository {
     try {
       await _tokenStore.clearTokens();
       return null;
-    } on Exception {
+    } on Exception catch (error, stackTrace) {
+      _logger.error(
+        'Failed to clear authentication credentials',
+        fields: {'error_type': error.runtimeType.toString()},
+        stackTrace: stackTrace,
+      );
       return const AuthFailure.sessionStorage();
     }
   }

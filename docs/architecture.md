@@ -26,6 +26,7 @@ roamly/
 │   └── roamly_app/
 └── packages/
     ├── roamly_core/
+    ├── roamly_logging/
     ├── roamly_design_system/
     ├── roamly_networking/
     ├── roamly_auth/
@@ -54,6 +55,13 @@ The executable application is the composition root. It owns:
 A framework-independent Dart package for genuinely shared primitives such as
 typed results and application failures. It must not depend on Flutter, Dio,
 Riverpod, navigation, or platform plugins.
+
+### `roamly_logging`
+
+A framework-independent structured logging package. It owns log levels,
+records, sinks, severity filtering, and credential-field redaction. Features
+receive loggers through dependency injection; they do not call `print` or bind
+their business logic directly to a vendor logging SDK.
 
 ### `roamly_design_system`
 
@@ -120,6 +128,7 @@ The intended dependency direction is:
 roamly_app
  ├── feature packages
  ├── roamly_design_system
+ ├── roamly_logging
  └── roamly_networking
 
 feature packages ──> roamly_core
@@ -194,6 +203,22 @@ route graph while feature packages provide screens and typed route arguments.
 - Deep links must resolve to the same state as in-app navigation.
 - Bottom-tab state will use a stateful shell route when the main application
   shell is implemented.
+
+## Logging conventions
+
+- The application creates the root logger and injects namespaced child loggers
+  into packages at composition boundaries.
+- Log operational state transitions, recoveries, mapped transport failures,
+  and unexpected application errors.
+- Do not log widget rebuilds, every successful HTTP request, request or response
+  bodies, credentials, access tokens, refresh tokens, or personal data.
+- Use structured fields with stable keys instead of interpolating values into
+  messages. Known credential fields are defensively redacted by
+  `roamly_logging`.
+- Expected failures use `warning`; infrastructure failures use `error`; only
+  uncaught application failures use `fatal`.
+- Vendor observability integrations must be implemented as `LogSink` adapters
+  so feature and domain code remain vendor independent.
 
 ## Design system and white-label support
 

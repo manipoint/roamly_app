@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roamly_auth/roamly_auth.dart';
 import 'package:roamly_core/roamly_core.dart';
+import 'package:roamly_logging/roamly_logging.dart';
 
 void main() {
   const device = AuthDevice(id: 'installation-1', name: 'iPhone');
@@ -179,12 +180,71 @@ void main() {
       expect(repository.logoutCalls, 1);
       expect(container.read(authControllerProvider).error, same(failure));
     });
+
+    test('logs safe authentication outcomes without credentials', () async {
+      const failure = AuthFailure.sessionStorage();
+      final sink = _RecordingLogSink();
+      final repository = _FakeAuthRepository(
+        loginResult: const FailureResult<AuthUser>(failure),
+      );
+      final container = _createContainer(
+        repository: repository,
+        logger: RoamlyLogger(
+          name: 'test.auth',
+          sink: sink,
+          minimumLevel: LogLevel.debug,
+        ),
+      );
+      addTearDown(container.dispose);
+      await container.read(authControllerProvider.future);
+
+      await container
+          .read(authControllerProvider.notifier)
+          .signIn(email: 'private@example.com', password: 'must-not-be-logged');
+
+      final output = sink.records
+          .map((record) => '${record.message} ${record.fields}')
+          .join('\n');
+      expect(output, contains('failure_code: auth_session_storage_failed'));
+      expect(output, isNot(contains('private@example.com')));
+      expect(output, isNot(contains('must-not-be-logged')));
+    });
+
+    test('logs unexpected authentication exceptions safely', () async {
+      final sink = _RecordingLogSink();
+      final repository = _FakeAuthRepository(
+        loginError: const FormatException('private response payload'),
+      );
+      final container = _createContainer(
+        repository: repository,
+        logger: RoamlyLogger(name: 'test.auth', sink: sink),
+      );
+      addTearDown(container.dispose);
+      await container.read(authControllerProvider.future);
+
+      await container
+          .read(authControllerProvider.notifier)
+          .signIn(email: 'private@example.com', password: 'must-not-be-logged');
+
+      final record = sink.records.single;
+      expect(record.level, LogLevel.error);
+      expect(record.fields, {
+        'operation': 'sign_in',
+        'error_type': 'FormatException',
+      });
+      expect(record.error, isNull);
+      expect(
+        '${record.message} ${record.fields}',
+        isNot(contains('private response payload')),
+      );
+    });
   });
 }
 
 ProviderContainer _createContainer({
   required _FakeAuthRepository repository,
   _FakeDeviceIdentityProvider? deviceProvider,
+  RoamlyLogger? logger,
 }) {
   return ProviderContainer(
     overrides: [
@@ -195,8 +255,18 @@ ProviderContainer _createContainer({
               const Success<AuthDevice>(AuthDevice(id: 'installation-1')),
             ),
       ),
+      if (logger != null) authLoggerProvider.overrideWithValue(logger),
     ],
   );
+}
+
+final class _RecordingLogSink implements LogSink {
+  final List<LogRecord> records = [];
+
+  @override
+  void write(LogRecord record) {
+    records.add(record);
+  }
 }
 
 final class _FakeDeviceIdentityProvider implements DeviceIdentityProvider {
@@ -219,6 +289,7 @@ final class _FakeAuthRepository implements AuthRepository {
     this.registerResult,
     this.logoutResult = const Success<void>(null),
     this.pendingLogin,
+    this.loginError,
   });
 
   final Result<AuthUser?> restoreResult;
@@ -226,6 +297,7 @@ final class _FakeAuthRepository implements AuthRepository {
   final Result<AuthUser>? registerResult;
   final Result<void> logoutResult;
   final Completer<Result<AuthUser>>? pendingLogin;
+  final Object? loginError;
 
   int restoreCalls = 0;
   int loginCalls = 0;
@@ -249,6 +321,9 @@ final class _FakeAuthRepository implements AuthRepository {
     loginCalls++;
     receivedEmail = email;
     receivedDevice = device;
+    if (loginError case final error?) {
+      throw error;
+    }
     if (pendingLogin case final pending?) {
       return pending.future;
     }

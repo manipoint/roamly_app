@@ -1,4 +1,5 @@
 import 'package:roamly_core/roamly_core.dart';
+import 'package:roamly_logging/roamly_logging.dart';
 
 import '../../domain/entities/auth_device.dart';
 import '../../domain/failures/auth_failure.dart';
@@ -17,15 +18,18 @@ final class DefaultDeviceIdentityProvider implements DeviceIdentityProvider {
     required SecureValueStore secureValueStore,
     required InstallationIdGenerator installationIdGenerator,
     required DeviceNameProvider deviceNameProvider,
+    required RoamlyLogger logger,
   }) : _secureValueStore = secureValueStore,
        _installationIdGenerator = installationIdGenerator,
-       _deviceNameProvider = deviceNameProvider;
+       _deviceNameProvider = deviceNameProvider,
+       _logger = logger;
 
   static const String _installationIdKey = 'auth.installation_id';
 
   final SecureValueStore _secureValueStore;
   final InstallationIdGenerator _installationIdGenerator;
   final DeviceNameProvider _deviceNameProvider;
+  final RoamlyLogger _logger;
 
   @override
   Future<Result<AuthDevice>> getCurrentDevice() async {
@@ -33,6 +37,7 @@ final class DefaultDeviceIdentityProvider implements DeviceIdentityProvider {
       final installationId = await _getOrCreateInstallationId();
 
       if (installationId == null) {
+        _logger.error('Installation identifier generation returned no value');
         return const FailureResult<AuthDevice>(AuthFailure.deviceIdentity());
       }
 
@@ -41,7 +46,12 @@ final class DefaultDeviceIdentityProvider implements DeviceIdentityProvider {
       return Success<AuthDevice>(
         AuthDevice(id: installationId, name: deviceName),
       );
-    } on Exception {
+    } on Exception catch (error, stackTrace) {
+      _logger.error(
+        'Failed to resolve device identity',
+        fields: {'error_type': error.runtimeType.toString()},
+        stackTrace: stackTrace,
+      );
       return const FailureResult<AuthDevice>(AuthFailure.deviceIdentity());
     }
   }
@@ -69,7 +79,12 @@ final class DefaultDeviceIdentityProvider implements DeviceIdentityProvider {
   Future<String?> _getOptionalDeviceName() async {
     try {
       return _normalize(await _deviceNameProvider.getDeviceName());
-    } on Exception {
+    } on Exception catch (error, stackTrace) {
+      _logger.debug(
+        'Optional device name unavailable',
+        fields: {'error_type': error.runtimeType.toString()},
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }

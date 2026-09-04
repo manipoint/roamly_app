@@ -5,6 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:roamly_app/src/app/widgets/session_loading_view.dart';
+import 'package:roamly_app/src/features/auth/presentation/pages/register_page.dart';
+import 'package:roamly_app/src/features/auth/presentation/pages/sign_in_page.dart';
+import 'package:roamly_app/src/features/home/presentation/pages/home_page.dart';
+import 'package:roamly_app/src/features/onboarding/presentation/pages/welcome_page.dart';
 import 'package:roamly_app/src/navigation/app_router.dart';
 import 'package:roamly_app/src/navigation/app_routes.dart';
 import 'package:roamly_auth/roamly_auth.dart';
@@ -61,15 +65,15 @@ void main() {
     expect(find.byType(SessionLoadingView), findsOneWidget);
   });
 
-  testWidgets('redirects a guest from root to sign in', (tester) async {
+  testWidgets('redirects a guest from root to welcome', (tester) async {
     final harness = createRouter(() async => null);
     addTearDown(harness.container.dispose);
 
     await pumpRouter(tester, harness);
     await tester.pumpAndSettle();
 
-    expect(currentPath(harness.router), AppRoutePaths.signIn);
-    expect(find.text('Sign in to continue.'), findsOneWidget);
+    expect(currentPath(harness.router), AppRoutePaths.welcome);
+    expect(find.byType(WelcomePage), findsOneWidget);
   });
 
   testWidgets('redirects an authenticated user from root to home', (
@@ -82,7 +86,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(currentPath(harness.router), AppRoutePaths.home);
-    expect(find.text(authenticatedUser.email), findsOneWidget);
+    expect(find.byType(HomePage), findsOneWidget);
   });
 
   testWidgets('prevents an authenticated user from opening auth routes', (
@@ -100,6 +104,38 @@ void main() {
     expect(currentPath(harness.router), AppRoutePaths.home);
   });
 
+  testWidgets('prevents an authenticated user from opening welcome', (
+    tester,
+  ) async {
+    final harness = createRouter(() async => authenticatedUser);
+    addTearDown(harness.container.dispose);
+
+    await pumpRouter(tester, harness);
+    await tester.pumpAndSettle();
+
+    harness.router.go(AppRoutePaths.welcome);
+    await tester.pumpAndSettle();
+
+    expect(currentPath(harness.router), AppRoutePaths.home);
+    expect(find.byType(HomePage), findsOneWidget);
+  });
+
+  testWidgets('sends a guest opening a protected route to sign in', (
+    tester,
+  ) async {
+    final harness = createRouter(() async => null);
+    addTearDown(harness.container.dispose);
+
+    await pumpRouter(tester, harness);
+    await tester.pumpAndSettle();
+
+    harness.router.go(AppRoutePaths.trips);
+    await tester.pumpAndSettle();
+
+    expect(currentPath(harness.router), AppRoutePaths.signIn);
+    expect(find.byType(SignInPage), findsOneWidget);
+  });
+
   testWidgets('allows a guest to open the registration route', (tester) async {
     final harness = createRouter(() async => null);
     addTearDown(harness.container.dispose);
@@ -111,6 +147,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(currentPath(harness.router), AppRoutePaths.register);
+    expect(find.byType(RegisterPage), findsOneWidget);
   });
 
   testWidgets('restores a protected destination after authentication', (
@@ -132,6 +169,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(currentPath(harness.router), AppRoutePaths.home);
-    expect(find.text(authenticatedUser.email), findsOneWidget);
+    expect(find.byType(HomePage), findsOneWidget);
   });
 }

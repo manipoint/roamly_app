@@ -5,6 +5,7 @@ import 'package:roamly_auth/roamly_auth.dart';
 import 'package:roamly_auth/src/data/repositories/default_auth_repository.dart';
 import 'package:roamly_auth/src/infrastructure/device/default_device_identity_provider.dart';
 import 'package:roamly_core/roamly_core.dart';
+import 'package:roamly_logging/roamly_logging.dart';
 import 'package:roamly_networking/roamly_networking.dart';
 
 void main() {
@@ -16,6 +17,7 @@ void main() {
     sendTimeout: const Duration(seconds: 5),
     receiveTimeout: const Duration(seconds: 10),
   );
+  final logger = RoamlyLogger(name: 'test.auth', sink: const NoopLogSink());
 
   setUp(() {
     FlutterSecureStorage.setMockInitialValues(<String, String>{});
@@ -25,6 +27,7 @@ void main() {
     test('constructs dependencies behind their domain contracts', () {
       final dependencies = AuthModule.create(
         apiConfig: apiConfig,
+        logger: logger,
         secureStorage: const FlutterSecureStorage(),
         deviceInfoPlugin: DeviceInfoPlugin.setMockInitialValues(),
       );
@@ -38,11 +41,13 @@ void main() {
     test('creates independent dependency graphs', () {
       final first = AuthModule.create(
         apiConfig: apiConfig,
+        logger: logger,
         secureStorage: const FlutterSecureStorage(),
         deviceInfoPlugin: DeviceInfoPlugin.setMockInitialValues(),
       );
       final second = AuthModule.create(
         apiConfig: apiConfig,
+        logger: logger,
         secureStorage: const FlutterSecureStorage(),
         deviceInfoPlugin: DeviceInfoPlugin.setMockInitialValues(),
       );
@@ -54,6 +59,7 @@ void main() {
     test('provides a stable persisted installation identity', () async {
       final dependencies = AuthModule.create(
         apiConfig: apiConfig,
+        logger: logger,
         secureStorage: const FlutterSecureStorage(),
         deviceInfoPlugin: DeviceInfoPlugin.setMockInitialValues(),
       );
