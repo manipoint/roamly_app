@@ -22,13 +22,12 @@ dependencies:
     path: ../../packages/roamly_networking
   roamly_ui:
     path: ../../packages/roamly_ui
-
+  roamly_core:
+    path: ../../packages/roamly_core
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  roamly_core:
-    path: ../../packages/roamly_core
 
 flutter:
   uses-material-design: true

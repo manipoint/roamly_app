@@ -1,40 +1,16 @@
-import 'package:flutter/foundation.dart';
-import 'package:roamly_app/src/features/preferences/domain/entities/canonical_location.dart';
-import 'package:roamly_app/src/features/preferences/domain/entities/preference_types.dart';
-import 'package:roamly_app/src/features/preferences/domain/entities/user_preferences.dart';
+import '../../domain/entities/canonical_location.dart';
+import '../../domain/entities/preference_types.dart';
+import '../../domain/entities/user_preferences.dart';
 
 /// Immutable, unsaved selections shared across onboarding screens.
-
 final class PreferenceDraft {
-  final TravelStyle? travelStyle;
-  final Set<TravelInterest> interests;
-  final BudgetTier? budgetTier;
-  final TripPace? tripPace;
-  final RecommendationScope recommendationScope;
-  final CanonicalLocation? homeLocation;
-  static const int minimumInterests = 1;
-  static const int maximumInterests = 5;
-
-  bool get isTravelStyleComplete => travelStyle != null;
-  bool get hasValidInterestCount =>
-      interests.length >= minimumInterests &&
-      interests.length <= maximumInterests;
-  bool get isInterestsAndBudgetComplete =>
-      hasValidInterestCount && budgetTier != null && tripPace != null;
-  bool get isDiscoveryScopeComplete =>
-      !recommendationScope.requiresHomeLocation || homeLocation != null;
-
-  bool get canSubmit =>
-      isTravelStyleComplete &&
-      isInterestsAndBudgetComplete &&
-      isDiscoveryScopeComplete;
   PreferenceDraft({
-    required this.travelStyle,
+    this.travelStyle,
     Iterable<TravelInterest> interests = const <TravelInterest>[],
-    required this.budgetTier,
-    required this.tripPace,
-    required this.recommendationScope,
-    required this.homeLocation,
+    this.budgetTier,
+    this.tripPace,
+    this.recommendationScope = RecommendationScope.both,
+    this.homeLocation,
   }) : interests = Set<TravelInterest>.unmodifiable(interests);
 
   /// Creates an editable starting point from saved preferences.
@@ -48,6 +24,34 @@ final class PreferenceDraft {
       homeLocation: preferences.homeLocation,
     );
   }
+
+  static const int minimumInterests = 1;
+  static const int maximumInterests = 5;
+
+  final TravelStyle? travelStyle;
+  final Set<TravelInterest> interests;
+  final BudgetTier? budgetTier;
+  final TripPace? tripPace;
+  final RecommendationScope recommendationScope;
+  final CanonicalLocation? homeLocation;
+
+  bool get isTravelStyleComplete => travelStyle != null;
+
+  bool get hasValidInterestCount =>
+      interests.length >= minimumInterests &&
+      interests.length <= maximumInterests;
+
+  bool get isInterestsAndBudgetComplete =>
+      hasValidInterestCount && budgetTier != null && tripPace != null;
+
+  bool get isDiscoveryScopeComplete =>
+      !recommendationScope.requiresHomeLocation || homeLocation != null;
+
+  /// Controls submission availability, not server onboarding status.
+  bool get canSubmit =>
+      isTravelStyleComplete &&
+      isInterestsAndBudgetComplete &&
+      isDiscoveryScopeComplete;
 
   /// Returns a new draft while retaining unspecified selections.
   ///
