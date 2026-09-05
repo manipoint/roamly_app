@@ -1,6 +1,8 @@
 /// HTTP and WebSocket transport infrastructure for Roamly.
 library;
 
+export 'src/serialization/json_reader.dart';
+
 export 'src/auth/access_token_provider.dart';
 export 'src/auth/bearer_token_interceptor.dart';
 export 'src/config/api_config.dart';
