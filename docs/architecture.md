@@ -27,16 +27,17 @@ roamly/
 └── packages/
     ├── roamly_core/
     ├── roamly_logging/
-    ├── roamly_design_system/
+    ├── roamly_ui/
     ├── roamly_networking/
     ├── roamly_auth/
     ├── roamly_travel_assistant/
     └── roamly_trips/
 ```
 
-`roamly_app`, `roamly_core`, `roamly_networking`, and `roamly_auth` currently
-exist. Additional packages are added when their first real responsibility is
-implemented. Empty speculative packages should not be created.
+`roamly_app`, `roamly_core`, `roamly_logging`, `roamly_ui`,
+`roamly_networking`, and `roamly_auth` currently exist. The travel-assistant
+and trips packages in this tree are planned. Additional packages are added
+when their first real responsibility is implemented.
 
 ## Package responsibilities
 
@@ -63,10 +64,11 @@ records, sinks, severity filtering, and credential-field redaction. Features
 receive loggers through dependency injection; they do not call `print` or bind
 their business logic directly to a vendor logging SDK.
 
-### `roamly_design_system`
+### `roamly_ui`
 
-Owns brand tokens, typography, themes, spacing, reusable components, and shared
-assets. Feature widgets consume semantic theme values instead of hardcoded
+Owns brand tokens, typography, themes, spacing, and reusable components.
+Application branding images remain in `apps/roamly_app/assets/branding`.
+Feature widgets consume semantic theme values instead of hardcoded
 colors or fonts. Brand configuration is injected at the application boundary
 to support future white-label variants.
 
@@ -127,7 +129,7 @@ The intended dependency direction is:
 ```text
 roamly_app
  ├── feature packages
- ├── roamly_design_system
+ ├── roamly_ui
  ├── roamly_logging
  └── roamly_networking
 
@@ -201,8 +203,23 @@ route graph while feature packages provide screens and typed route arguments.
 - Named routes from the legacy Navigator API are not used.
 - Authentication redirects depend on observable authentication state.
 - Deep links must resolve to the same state as in-app navigation.
-- Bottom-tab state will use a stateful shell route when the main application
-  shell is implemented.
+- Bottom-tab state uses `StatefulShellRoute.indexedStack`.
+- Preference onboarding will add a separate authenticated bootstrap gate.
+  Preference loading failures must offer retry instead of being interpreted
+  as completed or skipped onboarding.
+
+## Preference feature boundaries
+
+Preference domain, data, and presentation code initially lives under
+`apps/roamly_app/lib/src/features/preferences`. It serves both onboarding and
+future Profile editing. The existing `features/onboarding` Welcome screen is
+the guest introduction and does not represent saved preference completion.
+
+Domain entities remain pure Dart; data models own JSON parsing and enum wire
+mapping. Display labels live in application localization. Authentication stays
+in `roamly_auth`; application routing coordinates authentication and preferences.
+
+See [Preference onboarding](preference-onboarding.md) for the current plan.
 
 ## Logging conventions
 
@@ -244,5 +261,6 @@ route graph while feature packages provide screens and typed route arguments.
 ## Deferred capabilities
 
 The first release does not include social login, email verification, buses,
-trains, recommendations, analytics, or push notifications. Packages for these
-capabilities should only be introduced when their implementation is scheduled.
+trains, or push notifications. Preference onboarding and database-backed Home
+recommendations are in scope. Activity-based Trending and analytics remain
+future work.

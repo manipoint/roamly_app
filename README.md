@@ -6,8 +6,10 @@ hotel search, places, weather, currency conversion, and itinerary generation.
 
 ## Project status
 
-The backend is deployed to Google Cloud Run. The Flutter application is in its
-initial architecture and workspace setup phase.
+The backend is deployed to Google Cloud Run. Flutter has email/password
+authentication, session restoration, a welcome screen, shared UI components,
+and an authenticated navigation shell. Home is currently a placeholder.
+Preference onboarding and Home discovery integration are in progress.
 
 The first mobile release will use email and password authentication. Social
 login and email verification are intentionally deferred.
@@ -38,6 +40,9 @@ transport, and `go_router` provides Router-based navigation.
 
 See [Architecture](docs/architecture.md) for package boundaries and dependency
 rules.
+
+See [Preference onboarding](docs/preference-onboarding.md) for the implementation
+sequence, API mapping, routing rules, and Home integration.
 
 ## Development
 
