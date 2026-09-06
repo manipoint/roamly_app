@@ -36,6 +36,7 @@ void main() {
       expect(dependencies.authRepository, isA<DefaultAuthRepository>());
       expect(dependencies.deviceIdentity, isA<DeviceIdentityProvider>());
       expect(dependencies.deviceIdentity, isA<DefaultDeviceIdentityProvider>());
+      expect(dependencies.authenticatedApiClient, isA<ApiClient>());
     });
 
     test('creates independent dependency graphs', () {

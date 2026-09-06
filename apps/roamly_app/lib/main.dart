@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:roamly_app/src/app/roamly_app.dart';
 import 'package:roamly_app/src/config/app_config.dart';
+import 'package:roamly_app/src/features/preferences/composition/preference_module.dart';
+import 'package:roamly_app/src/features/preferences/presentation/providers/preference_dependency_providers.dart';
 import 'package:roamly_auth/roamly_auth.dart';
 import 'package:roamly_logging/roamly_logging.dart';
+import 'package:roamly_networking/roamly_networking.dart';
 
 void main() {
   final logger = RoamlyLogger(
@@ -54,6 +57,15 @@ void main() {
           authDependencies.deviceIdentity,
         ),
         authLoggerProvider.overrideWithValue(authLogger),
+        preferenceRepositoryProvider.overrideWith((ref) {
+          return PreferenceModule.create(
+            authenticatedClient: authDependencies.authenticatedApiClient,
+            requestExecutor: DefaultApiRequestExecutor(
+              failureMapper: DefaultDioFailureMapper(),
+              logger: logger.child('preferences.network'),
+            ),
+          );
+        }),
       ],
 
       child: const RoamlyApp(),

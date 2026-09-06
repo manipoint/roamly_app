@@ -17,10 +17,12 @@ import '../infrastructure/storage/secure_auth_token_store.dart';
 final class AuthDependencies {
   final AuthRepository authRepository;
   final DeviceIdentityProvider deviceIdentity;
+  final ApiClient authenticatedApiClient;
 
   const AuthDependencies({
     required this.authRepository,
     required this.deviceIdentity,
+    required this.authenticatedApiClient,
   });
 }
 
@@ -40,9 +42,10 @@ abstract final class AuthModule {
     final publicDio = DioFactory.create(configuration: apiConfig);
     final authenticatedDio = DioFactory.create(configuration: apiConfig);
     authenticatedDio.interceptors.add(BearerTokenInterceptor(tokenStore));
+    final authenticatedApiClient = DioApiClient(dio: authenticatedDio);
     final remoteDataSource = ApiAuthRemoteDataSource(
       publicClient: DioApiClient(dio: publicDio),
-      authenticatedClient: DioApiClient(dio: authenticatedDio),
+      authenticatedClient: authenticatedApiClient,
     );
     final authRepository = DefaultAuthRepository(
       remoteDataSource: remoteDataSource,
@@ -66,6 +69,7 @@ abstract final class AuthModule {
     return AuthDependencies(
       authRepository: authRepository,
       deviceIdentity: deviceIdentityProvider,
+      authenticatedApiClient: authenticatedApiClient,
     );
   }
 }
