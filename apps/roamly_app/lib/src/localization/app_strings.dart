@@ -70,4 +70,15 @@ abstract final class AppStrings {
   static const String signOutConfirmation =
       'You will need to sign in again on this device.';
   static const String cancel = 'Cancel';
+  static const String loadingPreferences = 'Loading your travel preferences';
+
+  static const String preferencesLoadFailed =
+      'We could not load your travel preferences. Please try again.';
+
+  static const String tryAgain = 'Try again';
+  static const String continueLabel = 'Continue';
+
+  static String preferenceProgress(int currentStep, int stepCount) {
+    return 'Step $currentStep of $stepCount';
+  }
 }
