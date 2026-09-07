@@ -1,6 +1,7 @@
 /// Asset paths owned by the Roamly application brand.
 abstract final class RoamlyAssets {
   static const String _brandingRoot = 'assets/branding';
+  static const String _travelStyleRoot = 'assets/travel_style';
 
   /// Source image used to generate platform application icons.
   static const String appIcon = '$_brandingRoot/roamly_app_icon.png';
@@ -30,6 +31,12 @@ abstract final class RoamlyAssets {
   /// Full-screen welcome background for dark mode.
   static const String welcomeBackgroundDark =
       '$_brandingRoot/wellcome_splash_dark.png';
+  static const String advanture = '$_travelStyleRoot/advanture.webp';
+  static const String beaches = '$_travelStyleRoot/beaches.webp';
+  static const String culture = '$_travelStyleRoot/culture.webp';
+  static const String food = '$_travelStyleRoot/food.webp';
+  static const String luxury = '$_travelStyleRoot/luxury.webp';
+  static const String nature = '$_travelStyleRoot/nature.webp';
 
   /// Every runtime branding asset registered by the application.
   static const List<String> all = <String>[

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:roamly_app/src/localization/app_strings.dart';
 import 'package:roamly_ui/roamly_ui.dart';
 
+import '../../../../branding/roamly_assets.dart';
+
 final class PreferenceStepScaffold extends StatelessWidget {
   const PreferenceStepScaffold({
     super.key,
@@ -34,7 +36,14 @@ final class PreferenceStepScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final backgroundAsset = brightness == Brightness.dark
+        ? RoamlyAssets.splashBackgroundDark
+        : RoamlyAssets.splashBackgroundLight;
     return RoamlyScaffold(
+      useSafeArea: false,
+      bodyPadding: EdgeInsets.zero,
+      extendBody: true,
       safeAreaBottom: false,
       bottomNavigationBar: _BottomAction(
         label: continueLabel,
@@ -42,45 +51,81 @@ final class PreferenceStepScaffold extends StatelessWidget {
         isSubmitting: isSubmitting,
         onPressed: onContinue,
       ),
-      body: CustomScrollView(
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        slivers: [
-          SliverToBoxAdapter(
-            child: _StepNavigation(
-              currentStep: currentStep,
-              stepCount: stepCount,
-              onBack: onBack,
-              onSkip: onSkip,
-            ),
-          ),
-          const SliverToBoxAdapter(
-            child: SizedBox(height: RoamlySpacing.space24),
-          ),
-          SliverToBoxAdapter(
-            child: DefaultTextStyle.merge(
-              style: Theme.of(context).textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-              child: title,
-            ),
-          ),
-          const SliverToBoxAdapter(
-            child: SizedBox(height: RoamlySpacing.space8),
-          ),
-          SliverToBoxAdapter(
-            child: Text(
-              description,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Image.asset(
+                backgroundAsset,
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+                excludeFromSemantics: true,
+                filterQuality: FilterQuality.medium,
               ),
             ),
           ),
-          const SliverToBoxAdapter(
-            child: SizedBox(height: RoamlySpacing.space24),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ColoredBox(
+                color: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.3),
+              ),
+            ),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.only(bottom: RoamlySpacing.space24),
-            sliver: SliverToBoxAdapter(child: body),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: RoamlySpacing.space20,
+              ),
+              child: CustomScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: _StepNavigation(
+                      currentStep: currentStep,
+                      stepCount: stepCount,
+                      onBack: onBack,
+                      onSkip: onSkip,
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: RoamlySpacing.space24),
+                  ),
+                  SliverToBoxAdapter(
+                    child: DefaultTextStyle.merge(
+                      style: Theme.of(context).textTheme.headlineSmall,
+                      textAlign: TextAlign.center,
+                      child: title,
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: RoamlySpacing.space8),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Text(
+                      description,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: RoamlySpacing.space24),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.only(
+                      bottom: RoamlySpacing.space24,
+                    ),
+                    sliver: SliverToBoxAdapter(child: body),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -106,7 +151,7 @@ final class _StepNavigation extends StatelessWidget {
     return Row(
       children: [
         SizedBox(
-          width: 48,
+          width: 38,
           height: 48,
           child: onBack == null
               ? null
@@ -123,13 +168,13 @@ final class _StepNavigation extends StatelessWidget {
         ),
         const SizedBox(width: RoamlySpacing.space8),
         SizedBox(
-          width: 48,
+          width: 64,
           child: onSkip == null
               ? null
-              : TextButton(
+              : RoamlyButton.ghost(
                   key: const ValueKey<String>('preference-skip'),
                   onPressed: onSkip,
-                  child: const Text(AppStrings.skip),
+                  label: AppStrings.skip,
                 ),
         ),
       ],

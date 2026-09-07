@@ -77,6 +77,46 @@ abstract final class AppStrings {
 
   static const String tryAgain = 'Try again';
   static const String continueLabel = 'Continue';
+  static const String travelStyleTitlePrefix = "What's your ";
+  static const String travelStyleTitleEmphasis = 'travel style?';
+
+  static const String travelStyleDescription =
+      "Pick what inspires you — we'll tailor every journey to you.";
+
+  static const String travelStyleBeaches = 'Beaches';
+  static const String travelStyleAdventure = 'Adventure';
+  static const String travelStyleFood = 'Food';
+  static const String travelStyleLuxury = 'Luxury';
+  static const String travelStyleNature = 'Nature';
+  static const String travelStyleCulture = 'Culture';
+  static const String interestsBudgetTitlePrefix = 'Tell us your\n ';
+  static const String interestsBudgetTitleEmphasis = 'interests & budget';
+  static const String interestsBudgetDescription =
+      'The more you share, the better we plan your perfect trip.';
+  static const String interestsQuestion = 'What interests you?';
+  static const String interestLimitMessage =
+      'You can select up to 5 interests.';
+  static const String budgetPerPerson = 'Budget per person';
+  static const String tripPreference = 'Trip preference';
+  static const String interestHiking = 'Hiking';
+  static const String interestPhotography = 'Photography';
+  static const String interestNightlife = 'Nightlife';
+  static const String interestWellness = 'Wellness';
+  static const String interestHistory = 'History';
+  static const String interestWildlife = 'Wildlife';
+  static const String interestShopping = 'Shopping';
+  static const String interestLocalCulture = 'Local Culture';
+  static const String interestEvents = 'Events';
+  static const String budget = 'Budget';
+  static const String midRange = 'Mid-range';
+  static const String premium = 'Premium';
+  static const String luxury = 'Luxury';
+  static const String paceRelaxed = 'Relaxed';
+  static const String paceRelaxedDescription = 'Slow & easy';
+  static const String paceBalanced = 'Balanced';
+  static const String paceBalancedDescription = 'Mix of both';
+  static const String pacePacked = 'Packed';
+  static const String pacePackedDescription = 'See it all';
 
   static String preferenceProgress(int currentStep, int stepCount) {
     return 'Step $currentStep of $stepCount';

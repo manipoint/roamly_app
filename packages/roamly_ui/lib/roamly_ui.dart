@@ -4,6 +4,7 @@ export 'src/components/inputs/roamly_text_form_field.dart';
 export 'src/components/inputs/roamly_password_form_field.dart';
 export 'src/components/feedback/roamly_skeleton.dart';
 export 'src/components/layout/roamly_scaffold.dart';
+export 'src/components/selection/roamly_selectable_card.dart';
 export 'src/foundations/colors/roamly_colors.dart';
 export 'src/foundations/radius/roamly_radii.dart';
 export 'src/foundations/spacing/roamly_spacing.dart';
