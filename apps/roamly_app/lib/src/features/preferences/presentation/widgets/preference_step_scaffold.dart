@@ -5,6 +5,8 @@ import 'package:roamly_ui/roamly_ui.dart';
 import '../../../../branding/roamly_assets.dart';
 
 final class PreferenceStepScaffold extends StatelessWidget {
+  static const double _bottomActionClearance = 120;
+
   const PreferenceStepScaffold({
     super.key,
     required this.currentStep,
@@ -83,6 +85,7 @@ final class PreferenceStepScaffold extends StatelessWidget {
               child: CustomScrollView(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
+                physics: ClampingScrollPhysics(),
                 slivers: [
                   SliverToBoxAdapter(
                     child: _StepNavigation(
@@ -119,7 +122,7 @@ final class PreferenceStepScaffold extends StatelessWidget {
                   ),
                   SliverPadding(
                     padding: const EdgeInsets.only(
-                      bottom: RoamlySpacing.space24,
+                      bottom: _bottomActionClearance,
                     ),
                     sliver: SliverToBoxAdapter(child: body),
                   ),

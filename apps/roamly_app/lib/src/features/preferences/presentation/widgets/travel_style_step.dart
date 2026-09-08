@@ -88,7 +88,7 @@ final class _TravelStyleGrid extends StatelessWidget {
                 crossAxisCount: columnCount,
                 crossAxisSpacing: RoamlySpacing.space12,
                 mainAxisSpacing: RoamlySpacing.space12,
-                childAspectRatio: 1.1,
+                childAspectRatio: 1.05,
               ),
               itemBuilder: (context, index) {
                 final style = TravelStyle.values[index];

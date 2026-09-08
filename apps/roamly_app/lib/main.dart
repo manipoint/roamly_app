@@ -41,6 +41,10 @@ void main() {
     apiConfig: appConfig.apiConfig,
     logger: authLogger,
   );
+  final preferenceRequestExecutor = DefaultApiRequestExecutor(
+    failureMapper: DefaultDioFailureMapper(),
+    logger: logger.child('preferences.network'),
+  );
 
   logger.info(
     'Application configured',
@@ -60,14 +64,16 @@ void main() {
         preferenceRepositoryProvider.overrideWith((ref) {
           return PreferenceModule.create(
             authenticatedClient: authDependencies.authenticatedApiClient,
-            requestExecutor: DefaultApiRequestExecutor(
-              failureMapper: DefaultDioFailureMapper(),
-              logger: logger.child('preferences.network'),
-            ),
+            requestExecutor: preferenceRequestExecutor,
+          );
+        }),
+        locationResolutionRepositoryProvider.overrideWith((ref) {
+          return PreferenceModule.createLocationResolutionRepository(
+            authenticatedClient: authDependencies.authenticatedApiClient,
+            requestExecutor: preferenceRequestExecutor,
           );
         }),
       ],
-
       child: const RoamlyApp(),
     ),
   );

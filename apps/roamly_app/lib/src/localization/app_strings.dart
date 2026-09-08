@@ -89,7 +89,7 @@ abstract final class AppStrings {
   static const String travelStyleLuxury = 'Luxury';
   static const String travelStyleNature = 'Nature';
   static const String travelStyleCulture = 'Culture';
-  static const String interestsBudgetTitlePrefix = 'Tell us your\n ';
+  static const String interestsBudgetTitlePrefix = 'Tell us your\n';
   static const String interestsBudgetTitleEmphasis = 'interests & budget';
   static const String interestsBudgetDescription =
       'The more you share, the better we plan your perfect trip.';
@@ -97,7 +97,11 @@ abstract final class AppStrings {
   static const String interestLimitMessage =
       'You can select up to 5 interests.';
   static const String budgetPerPerson = 'Budget per person';
+  static const String budgetInformation =
+      'Choose your usual spending preference per person.';
   static const String tripPreference = 'Trip preference';
+  static const String tripPreferenceInformation =
+      'Choose how full you want each day of your trip to be.';
   static const String interestHiking = 'Hiking';
   static const String interestPhotography = 'Photography';
   static const String interestNightlife = 'Nightlife';

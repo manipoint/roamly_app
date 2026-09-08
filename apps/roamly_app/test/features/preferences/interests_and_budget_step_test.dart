@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:roamly_app/src/features/preferences/domain/entities/preference_types.dart';
 import 'package:roamly_app/src/features/preferences/presentation/controllers/preference_draft_controller.dart';
 import 'package:roamly_app/src/features/preferences/presentation/controllers/preference_flow_controller.dart';
+import 'package:roamly_app/src/features/preferences/presentation/widgets/budget_tier_selector.dart';
 import 'package:roamly_app/src/features/preferences/presentation/widgets/interests_and_budget_step.dart';
+import 'package:roamly_app/src/features/preferences/presentation/widgets/trip_pace_selector.dart';
 
 void main() {
   late ProviderContainer container;
@@ -121,4 +123,33 @@ void main() {
     );
   });
 
+  testWidgets('uses compact selectors and clears the fixed bottom action', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await pumpStep(tester);
+
+    expect(find.text('0/5'), findsNothing);
+    expect(find.byType(GridView), findsNothing);
+    expect(
+      tester.getSize(find.byType(BudgetTierSelector)).height,
+      lessThan(70),
+    );
+    expect(tester.getSize(find.byType(TripPaceSelector)).height, 84);
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -1000));
+    await tester.pumpAndSettle();
+
+    final paceBottom = tester.getBottomLeft(find.byType(TripPaceSelector)).dy;
+    final buttonTop = tester
+        .getTopLeft(find.byKey(const ValueKey<String>('preference-continue')))
+        .dy;
+
+    expect(paceBottom, lessThanOrEqualTo(buttonTop));
+    expect(tester.takeException(), isNull);
+  });
 }
