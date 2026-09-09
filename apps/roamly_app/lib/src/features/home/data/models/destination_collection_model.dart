@@ -4,6 +4,7 @@ import 'package:roamly_networking/roamly_networking.dart';
 
 import '../../domain/entities/destination.dart';
 import '../../domain/entities/destination_collection.dart';
+import '../../domain/policies/home_discovery_policy.dart';
 import '../mappers/home_discovery_enum_mapper.dart';
 
 /// Parses the backend's bounded spotlight collection.
@@ -22,7 +23,7 @@ final class DestinationCollectionModel {
         ),
         items: reader.list<Destination>(
           'items',
-          maxLength: 6,
+          maxLength: HomeDiscoveryPolicy.maximumSectionLimit,
           unique: true,
           parseItem: (value) {
             return DestinationModel.fromValue(value).toDomain();

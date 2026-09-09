@@ -2,6 +2,7 @@ import 'package:roamly_networking/roamly_networking.dart';
 
 import '../../domain/entities/destination.dart';
 import '../../domain/entities/home_discovery.dart';
+import '../../domain/policies/home_discovery_policy.dart';
 import 'destination_collection_model.dart';
 import 'destination_model.dart';
 
@@ -31,7 +32,7 @@ final class HomeDiscoveryModel {
   static List<Destination> _readDestinations(JsonReader reader, String key) {
     return reader.list<Destination>(
       key,
-      maxLength: 6,
+      maxLength: HomeDiscoveryPolicy.maximumSectionLimit,
       unique: true,
       parseItem: (value) {
         return DestinationModel.fromValue(value).toDomain();
