@@ -24,8 +24,8 @@ void main() {
     expect(find.text(AppStrings.createYourAccount), findsOneWidget);
     expect(find.text(AppStrings.registerSubtitle), findsOneWidget);
 
-    final logo = tester.widget<Image>(find.byType(Image));
-    expect((logo.image as AssetImage).assetName, RoamlyAssets.logoOnLight);
+    expect(_findAssetImage(RoamlyAssets.appIcon), findsOneWidget);
+    expect(_findAssetImage(RoamlyAssets.splashBackgroundLight), findsOneWidget);
   });
 
   testWidgets('uses dark branding with the dark theme', (tester) async {
@@ -36,8 +36,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final logo = tester.widget<Image>(find.byType(Image));
-    expect((logo.image as AssetImage).assetName, RoamlyAssets.logoOnDark);
+    expect(_findAssetImage(RoamlyAssets.appIcon), findsOneWidget);
+    expect(_findAssetImage(RoamlyAssets.splashBackgroundDark), findsOneWidget);
   });
 
   testWidgets('disables the registration form while auth is loading', (
@@ -114,6 +114,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Sign-in destination'), findsOneWidget);
+  });
+}
+
+Finder _findAssetImage(String assetName) {
+  return find.byWidgetPredicate((widget) {
+    if (widget is! Image || widget.image is! AssetImage) {
+      return false;
+    }
+
+    return (widget.image as AssetImage).assetName == assetName;
   });
 }
 

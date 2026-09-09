@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 final class RoamlyTextFormField extends StatelessWidget {
   const RoamlyTextFormField({
@@ -11,6 +12,7 @@ final class RoamlyTextFormField extends StatelessWidget {
     this.keyboardType,
     this.textInputAction,
     this.autofillHints,
+    this.inputFormatters,
     this.prefixIcon,
     this.suffixIcon,
     this.obscureText = false,
@@ -31,6 +33,7 @@ final class RoamlyTextFormField extends StatelessWidget {
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final Iterable<String>? autofillHints;
+  final List<TextInputFormatter>? inputFormatters;
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final bool obscureText;
@@ -58,6 +61,7 @@ final class RoamlyTextFormField extends StatelessWidget {
       validator: validator,
       onChanged: onChanged,
       onFieldSubmitted: onFieldSubmitted,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

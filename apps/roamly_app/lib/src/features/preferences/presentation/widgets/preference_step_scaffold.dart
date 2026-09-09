@@ -80,7 +80,7 @@ final class PreferenceStepScaffold extends StatelessWidget {
             bottom: false,
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: RoamlySpacing.space20,
+                horizontal: RoamlySpacing.space16,
               ),
               child: CustomScrollView(
                 keyboardDismissBehavior:
@@ -162,7 +162,7 @@ final class _StepNavigation extends StatelessWidget {
                   key: const ValueKey<String>('preference-back'),
                   tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                   onPressed: onBack,
-                  icon: const Icon(Icons.arrow_back),
+                  icon: const Icon(Icons.arrow_back_ios_new),
                 ),
         ),
         const SizedBox(width: RoamlySpacing.space8),

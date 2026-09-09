@@ -96,6 +96,54 @@ void main() {
     );
   });
 
+  test('list optionally rejects duplicate parsed values', () {
+    final reader = JsonReader({
+      'unique': ['culture', 'food'],
+      'duplicate': ['culture', 'culture'],
+    });
+
+    expect(
+      reader.list<String>(
+        'unique',
+        unique: true,
+        parseItem: (value) => value as String,
+      ),
+      <String>['culture', 'food'],
+    );
+    expect(
+      () => reader.list<String>(
+        'duplicate',
+        unique: true,
+        parseItem: (value) => value as String,
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('uri validates schemes, authority, and length', () {
+    final reader = JsonReader({
+      'image': ' https://images.example.test/lahore.webp ',
+      'http': 'http://example.test/image.webp',
+      'relative': '/image.webp',
+    });
+
+    expect(
+      reader.uri('image'),
+      Uri.parse('https://images.example.test/lahore.webp'),
+    );
+    expect(() => reader.uri('http'), throwsFormatException);
+    expect(
+      reader.uri('http', allowedSchemes: const <String>{'http', 'https'}),
+      Uri.parse('http://example.test/image.webp'),
+    );
+    expect(() => reader.uri('relative'), throwsFormatException);
+    expect(() => reader.uri('image', maxLength: 4), throwsFormatException);
+    expect(
+      () => reader.uri('image', allowedSchemes: const <String>{}),
+      throwsArgumentError,
+    );
+  });
+
   test('reader copies input fields and does not leak invalid values', () {
     final source = <String, Object?>{'secret': 'sensitive-value'};
     final reader = JsonReader(source);

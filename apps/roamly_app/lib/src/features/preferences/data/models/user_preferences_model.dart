@@ -17,13 +17,8 @@ final class UserPreferencesModel {
       'interests',
       parseItem: PreferenceEnumMapper.interestFromJson,
       maxLength: 5,
+      unique: true,
     );
-
-    if (interests.toSet().length != interests.length) {
-      throw const FormatException(
-        'Preference interests must not contain duplicates.',
-      );
-    }
 
     final travelStyle = reader.nullable(
       'travel_style',

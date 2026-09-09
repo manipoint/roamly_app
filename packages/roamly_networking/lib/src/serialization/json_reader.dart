@@ -77,12 +77,41 @@ final class JsonReader {
     required T Function(Object? value) parseItem,
     int? minLength,
     int? maxLength,
+    bool unique = false,
   }) {
     _bounds(minLength, maxLength);
     final value = _required(key);
     if (value is! List) throw FormatException('Expected list: $key.');
     _range(value.length, minLength, maxLength, key);
-    return List<T>.unmodifiable(value.map(parseItem));
+    final result = List<T>.unmodifiable(value.map(parseItem));
+    if (unique && result.toSet().length != result.length) {
+      throw FormatException('Expected unique list items: $key.');
+    }
+    return result;
+  }
+
+  /// Reads an absolute URI and optionally restricts its allowed schemes.
+  Uri uri(
+    String key, {
+    Set<String> allowedSchemes = const <String>{'https'},
+    bool requireAuthority = true,
+    int? maxLength,
+  }) {
+    if (allowedSchemes.isEmpty ||
+        allowedSchemes.any((scheme) => scheme.trim().isEmpty)) {
+      throw ArgumentError('allowedSchemes must contain valid schemes.');
+    }
+    final normalizedSchemes = allowedSchemes
+        .map((scheme) => scheme.trim().toLowerCase())
+        .toSet();
+    final value = string(key, trim: true, minLength: 1, maxLength: maxLength);
+    final result = Uri.tryParse(value);
+    if (result == null ||
+        !normalizedSchemes.contains(result.scheme.toLowerCase()) ||
+        requireAuthority && (!result.hasAuthority || result.host.isEmpty)) {
+      throw FormatException('Expected valid URI: $key.');
+    }
+    return result;
   }
 
   /// Allows explicit null while requiring the key by default.

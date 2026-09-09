@@ -9,9 +9,58 @@ import 'package:roamly_app/src/features/auth/presentation/pages/register_page.da
 import 'package:roamly_app/src/features/auth/presentation/pages/sign_in_page.dart';
 import 'package:roamly_app/src/features/home/presentation/pages/home_page.dart';
 import 'package:roamly_app/src/features/onboarding/presentation/pages/welcome_page.dart';
+import 'package:roamly_app/src/features/preferences/domain/entities/canonical_location.dart';
+import 'package:roamly_app/src/features/preferences/domain/entities/preference_types.dart';
+import 'package:roamly_app/src/features/preferences/domain/entities/user_preferences.dart';
+import 'package:roamly_app/src/features/preferences/domain/repositories/preference_repository.dart';
+import 'package:roamly_app/src/features/preferences/presentation/providers/preference_dependency_providers.dart';
+import 'package:roamly_app/src/features/preferences/presentation/widgets/travel_style_step.dart';
 import 'package:roamly_app/src/navigation/app_router.dart';
 import 'package:roamly_app/src/navigation/app_routes.dart';
 import 'package:roamly_auth/roamly_auth.dart';
+import 'package:roamly_core/roamly_core.dart';
+
+final class _PreferenceRepository implements PreferenceRepository {
+  _PreferenceRepository({required this.onboardingCompleted});
+
+  final bool onboardingCompleted;
+
+  @override
+  Future<Result<UserPreferences>> getPreferences() async {
+    return Success<UserPreferences>(
+      UserPreferences(
+        travelStyle: null,
+        interests: const <TravelInterest>{},
+        budgetTier: null,
+        tripPace: null,
+        recommendationScope: RecommendationScope.both,
+        homeLocation: null,
+        onboardingCompleted: onboardingCompleted,
+        personalizationReady: false,
+        onboardingCompletedAt: null,
+        createdAt: null,
+        updatedAt: null,
+      ),
+    );
+  }
+
+  @override
+  Future<Result<UserPreferences>> savePreferences({
+    required TravelStyle travelStyle,
+    required Set<TravelInterest> interests,
+    required BudgetTier budgetTier,
+    required TripPace tripPace,
+    required RecommendationScope recommendationScope,
+    required CanonicalLocation? homeLocation,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Result<UserPreferences>> skipOnboarding() {
+    throw UnimplementedError();
+  }
+}
 
 void main() {
   final authenticatedUser = AuthUser(
@@ -22,13 +71,17 @@ void main() {
   );
 
   ({ProviderContainer container, GoRouter router}) createRouter(
-    Future<AuthUser?> Function() restoreSession,
-  ) {
+    Future<AuthUser?> Function() restoreSession, {
+    bool onboardingCompleted = true,
+  }) {
     final container = ProviderContainer(
       overrides: [
         authControllerProvider.overrideWithBuild((ref, notifier) {
           return restoreSession();
         }),
+        preferenceRepositoryProvider.overrideWithValue(
+          _PreferenceRepository(onboardingCompleted: onboardingCompleted),
+        ),
       ],
     );
 
@@ -102,6 +155,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(currentPath(harness.router), AppRoutePaths.home);
+  });
+
+  testWidgets('gates authenticated content until onboarding is complete', (
+    tester,
+  ) async {
+    final harness = createRouter(
+      () async => authenticatedUser,
+      onboardingCompleted: false,
+    );
+    addTearDown(harness.container.dispose);
+
+    await pumpRouter(tester, harness);
+    await tester.pumpAndSettle();
+
+    expect(currentPath(harness.router), AppRoutePaths.home);
+    expect(find.byType(TravelStyleStep), findsOneWidget);
+    expect(find.byType(HomePage), findsNothing);
   });
 
   testWidgets('prevents an authenticated user from opening welcome', (

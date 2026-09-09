@@ -121,7 +121,40 @@ abstract final class AppStrings {
   static const String paceBalancedDescription = 'Mix of both';
   static const String pacePacked = 'Packed';
   static const String pacePackedDescription = 'See it all';
+  static const String recommendationScopeQuestion =
+      'What should recommendations be based on?';
 
+  static const String recommendationScopeDescription =
+      'Choose whether you want nearby trips, international trips, or both.';
+
+  static const String localTrips = 'Local';
+  static const String localTripsDescription = 'Explore your home country';
+
+  static const String internationalTrips = 'International';
+  static const String internationalTripsDescription =
+      'Discover other countries';
+
+  static const String bothTripScopes = 'Both';
+  static const String bothTripScopesDescription =
+      'Show local and international';
+  static const String homeCity = 'Home city';
+  static const String homeCityHint = 'Search for your city';
+  static const String clearHomeCity = 'Clear home city';
+  static const String searchingLocations = 'Searching locations';
+  static const String homeCityExplanation =
+      'Used only to understand your home country. We do not access GPS.';
+  static const String discoveryTitlePrefix = 'Choose your\n';
+  static const String discoveryTitleEmphasis = 'discovery scope';
+  static const String discoveryDescription =
+      'Tell us whether you prefer local trips, international travel, or both.';
+
+  static const String noLocationsFound =
+      'No matching locations found. Try adding the city and country.';
+
+  static const String locationSearchFailed =
+      'We could not search locations. Please try again.';
+
+  static const String finishSetup = 'Finish setup';
   static String preferenceProgress(int currentStep, int stepCount) {
     return 'Step $currentStep of $stepCount';
   }

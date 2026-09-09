@@ -1,3 +1,5 @@
+import 'package:roamly_core/roamly_core.dart';
+
 import '../../domain/entities/canonical_location.dart';
 import '../../domain/entities/preference_types.dart';
 import '../../domain/entities/user_preferences.dart';
@@ -87,8 +89,7 @@ final class PreferenceDraft {
     return identical(this, other) ||
         other is PreferenceDraft &&
             travelStyle == other.travelStyle &&
-            interests.length == other.interests.length &&
-            interests.containsAll(other.interests) &&
+            CollectionEquality.unordered(interests, other.interests) &&
             budgetTier == other.budgetTier &&
             tripPace == other.tripPace &&
             recommendationScope == other.recommendationScope &&

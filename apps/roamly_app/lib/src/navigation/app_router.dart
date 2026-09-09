@@ -7,12 +7,15 @@ import 'package:roamly_app/src/features/auth/presentation/pages/register_page.da
 import 'package:roamly_app/src/features/auth/presentation/pages/sign_in_page.dart';
 import 'package:roamly_app/src/features/home/presentation/pages/home_page.dart';
 import 'package:roamly_app/src/features/onboarding/presentation/pages/welcome_page.dart';
+import 'package:roamly_app/src/features/preferences/presentation/widgets/preference_gate.dart';
 import 'package:roamly_app/src/features/profile/presentation/pages/profile_page.dart';
 import 'package:roamly_app/src/features/saved/presentation/pages/saved_page.dart';
 import 'package:roamly_app/src/features/trips/presentation/pages/trips_page.dart';
 import 'package:roamly_app/src/navigation/app_routes.dart';
 import 'package:roamly_app/src/navigation/authenticated_app_shell.dart';
 import 'package:roamly_auth/roamly_auth.dart';
+
+import '../features/preferences/presentation/widgets/preference_onboarding_flow.dart';
 
 /// Provides the application router through Riverpod.
 final appRouterProvider = Provider<GoRouter>(AppRouter.create);
@@ -139,7 +142,12 @@ abstract final class AppRouter {
         ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) {
-            return AuthenticatedAppShell(navigationShell: navigationShell);
+            return PreferenceGate(
+              authenticatedChild: AuthenticatedAppShell(
+                navigationShell: navigationShell,
+              ),
+              onboardingChild: const PreferenceOnboardingFlow(),
+            );
           },
           branches: [
             StatefulShellBranch(
