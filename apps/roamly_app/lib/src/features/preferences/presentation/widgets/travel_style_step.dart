@@ -36,7 +36,7 @@ final class TravelStyleStep extends ConsumerWidget {
         ),
       ),
       description: AppStrings.travelStyleDescription,
-      isContinueEnabled: draft.travelStyle != null,
+      isContinueEnabled: draft.hasValidTravelStyleCount,
       isSubmitting: savedPreferences.isLoading,
       onSkip: savedPreferences.isLoading
           ? null
@@ -51,11 +51,11 @@ final class TravelStyleStep extends ConsumerWidget {
         ref.read(preferenceFlowControllerProvider.notifier).next();
       },
       body: _TravelStyleGrid(
-        selectedStyle: draft.travelStyle,
+        selectedStyles: draft.travelStyles,
         onSelected: (style) {
           ref
               .read(preferenceDraftControllerProvider.notifier)
-              .selectTravelStyle(style);
+              .toggleTravelStyle(style);
         },
       ),
     );
@@ -64,11 +64,11 @@ final class TravelStyleStep extends ConsumerWidget {
 
 final class _TravelStyleGrid extends StatelessWidget {
   const _TravelStyleGrid({
-    required this.selectedStyle,
+    required this.selectedStyles,
     required this.onSelected,
   });
 
-  final TravelStyle? selectedStyle;
+  final Set<TravelStyle> selectedStyles;
   final ValueChanged<TravelStyle> onSelected;
 
   @override
@@ -98,7 +98,7 @@ final class _TravelStyleGrid extends StatelessWidget {
                   label: _labelFor(style),
                   image: _imageFor(style),
                   icon: _iconFor(style),
-                  isSelected: selectedStyle == style,
+                  isSelected: selectedStyles.contains(style),
                   onTap: () => onSelected(style),
                 );
               },

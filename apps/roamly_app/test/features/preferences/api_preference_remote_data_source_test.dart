@@ -5,7 +5,7 @@ import 'package:roamly_app/src/features/preferences/domain/entities/preference_t
 import 'package:roamly_networking/roamly_networking.dart';
 
 Map<String, Object?> _response() => {
-  'travel_style': null,
+  'travel_styles': <String>[],
   'interests': <String>[],
   'budget_tier': null,
   'trip_pace': null,
@@ -72,7 +72,11 @@ void main() {
 
   Future<void> save({CanonicalLocation? homeLocation}) async {
     await source.savePreferences(
-      travelStyle: TravelStyle.nature,
+      travelStyles: {
+        TravelStyle.nature,
+        TravelStyle.beaches,
+        TravelStyle.adventure,
+      },
       interests: {TravelInterest.localCulture, TravelInterest.hiking},
       budgetTier: BudgetTier.midRange,
       tripPace: TripPace.balanced,
@@ -100,7 +104,7 @@ void main() {
       expect(client.path, 'users/me/preferences');
       expect(client.calls, 1);
       expect(client.body, {
-        'travel_style': 'nature',
+        'travel_styles': ['adventure', 'beaches', 'nature'],
         'interests': ['hiking', 'local_culture'],
         'budget_tier': 'mid_range',
         'trip_pace': 'balanced',

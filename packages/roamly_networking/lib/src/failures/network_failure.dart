@@ -1,6 +1,5 @@
 import 'package:roamly_core/roamly_core.dart';
 
-/// Describes the transport-level category of a network failure.
 enum NetworkFailureKind {
   connection,
   timeout,
@@ -15,18 +14,17 @@ enum NetworkFailureKind {
   unknown,
 }
 
-/// A safe transport failure produced from an HTTP or WebSocket operation.
+/// Safe transport failure with optional structured backend classification.
 final class NetworkFailure extends AppFailure {
   const NetworkFailure({
     required super.code,
     required super.isRetryable,
     required this.kind,
     this.statusCode,
+    this.backendCode,
   });
 
-  /// Machine-readable category used by application logic.
   final NetworkFailureKind kind;
-
-  /// HTTP response status when one was received.
   final int? statusCode;
+  final String? backendCode;
 }

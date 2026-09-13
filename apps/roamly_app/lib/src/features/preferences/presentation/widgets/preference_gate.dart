@@ -7,9 +7,11 @@ import 'package:roamly_ui/roamly_ui.dart';
 final class PreferenceGate extends ConsumerWidget {
   const PreferenceGate({
     super.key,
+    required this.loadingChild,
     required this.authenticatedChild,
     required this.onboardingChild,
   });
+  final Widget loadingChild;
   final Widget authenticatedChild;
   final Widget onboardingChild;
 
@@ -28,7 +30,7 @@ final class PreferenceGate extends ConsumerWidget {
         },
       );
     }
-    return const _PreferenceLoadingView();
+    return loadingChild;
   }
 }
 
@@ -62,50 +64,6 @@ class _PreferenceLoadFailure extends StatelessWidget {
               onPressed: onRetry,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PreferenceLoadingView extends StatelessWidget {
-  const _PreferenceLoadingView();
-
-  @override
-  Widget build(BuildContext context) {
-    return RoamlyScaffold(
-      body: Semantics(
-        container: true,
-        liveRegion: true,
-        label: AppStrings.loadingPreferences,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              key: ValueKey("preference-loading"),
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                RoamlySkeleton(
-                  width: 220,
-                  height: 32,
-                  borderRadius: RoamlyRadii.medium,
-                ),
-                SizedBox(height: RoamlySpacing.space16),
-                RoamlySkeleton(
-                  width: double.infinity,
-                  height: 18,
-                  borderRadius: RoamlyRadii.small,
-                ),
-                SizedBox(height: RoamlySpacing.space32),
-                RoamlySkeleton(
-                  width: double.infinity,
-                  height: 140,
-                  borderRadius: RoamlyRadii.large,
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

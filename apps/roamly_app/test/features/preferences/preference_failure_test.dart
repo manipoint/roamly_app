@@ -5,6 +5,11 @@ import 'package:roamly_core/roamly_core.dart';
 void main() {
   final cases = [
     (
+      PreferenceFailure.invalidTravelStyleCount(),
+      PreferenceFailureKind.invalidTravelStyleCount,
+      'preference_invalid_travelstyle_count',
+    ),
+    (
       PreferenceFailure.invalidInterestCount(),
       PreferenceFailureKind.invalidInterestCount,
       'preference_invalid_interest_count',

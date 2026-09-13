@@ -20,11 +20,11 @@ final class UserPreferencesModel {
       unique: true,
     );
 
-    final travelStyle = reader.nullable(
-      'travel_style',
-      () => PreferenceEnumMapper.travelStyleFromJson(
-        reader.string('travel_style'),
-      ),
+    final travelStyles = reader.list(
+      'travel_styles',
+      parseItem: PreferenceEnumMapper.travelStyleFromJson,
+      maxLength: 3,
+      unique: true
     );
 
     final budgetTier = reader.nullable(
@@ -70,7 +70,7 @@ final class UserPreferencesModel {
 
     return UserPreferencesModel._(
       UserPreferences(
-        travelStyle: travelStyle,
+        travelStyles: travelStyles,
         interests: interests,
         budgetTier: budgetTier,
         tripPace: tripPace,

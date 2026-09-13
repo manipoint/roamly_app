@@ -14,7 +14,7 @@ import 'package:roamly_core/roamly_core.dart';
 
 UserPreferences _preferences({required bool completed}) {
   return UserPreferences(
-    travelStyle: null,
+    travelStyles: const <TravelStyle>{},
     interests: const <TravelInterest>{},
     budgetTier: null,
     tripPace: null,
@@ -41,7 +41,7 @@ final class _Repository implements PreferenceRepository {
 
   @override
   Future<Result<UserPreferences>> savePreferences({
-    required TravelStyle travelStyle,
+    required Set<TravelStyle> travelStyles,
     required Set<TravelInterest> interests,
     required BudgetTier budgetTier,
     required TripPace tripPace,
@@ -70,6 +70,10 @@ void main() {
         overrides: [preferenceRepositoryProvider.overrideWithValue(repository)],
         child: const MaterialApp(
           home: PreferenceGate(
+            loadingChild: Text(
+              'loading-content',
+              key: ValueKey<String>('preference-loading'),
+            ),
             authenticatedChild: Text(
               'authenticated-content',
               key: ValueKey<String>('authenticated-content'),

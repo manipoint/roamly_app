@@ -1,3 +1,4 @@
+import 'package:roamly_app/src/app/validator/roamly_value_validators.dart';
 import 'package:roamly_networking/roamly_networking.dart';
 
 import '../../domain/entities/canonical_location.dart';
@@ -13,13 +14,16 @@ final class CanonicalLocationModel {
     final provider = reader
         .string('provider', trim: true, minLength: 1, maxLength: 32)
         .toLowerCase();
-    final countryCode = reader
-        .string('country_code', trim: true, minLength: 2, maxLength: 2)
-        .toUpperCase();
+    final countryCode = reader.string(
+      'country_code',
+      trim: true,
+      minLength: RoamlyValueValidators.countryCodeLength,
+      maxLength: RoamlyValueValidators.countryCodeLength,
+    );
     if (!RegExp(r'^[a-z0-9_-]+$').hasMatch(provider)) {
       throw const FormatException('Invalid location provider.');
     }
-    if (!RegExp(r'^[A-Z]{2}$').hasMatch(countryCode)) {
+    if (!RoamlyValueValidators.isValidCountryCode(countryCode)) {
       throw const FormatException('Invalid location country_code.');
     }
     return CanonicalLocationModel._(
@@ -50,7 +54,7 @@ final class CanonicalLocationModel {
       'provider': location.provider,
       'provider_location_id': location.providerLocationId,
       'canonical_name': location.canonicalName,
-      'country_code': location.countryCode,
+      'country_code': location.countryCode.toUpperCase(),
       'latitude': location.latitude,
       'longitude': location.longitude,
     });

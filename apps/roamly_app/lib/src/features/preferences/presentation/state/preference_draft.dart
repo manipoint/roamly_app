@@ -7,18 +7,19 @@ import '../../domain/entities/user_preferences.dart';
 /// Immutable, unsaved selections shared across onboarding screens.
 final class PreferenceDraft {
   PreferenceDraft({
-    this.travelStyle,
+    Iterable<TravelStyle> travelStyles = const <TravelStyle>[],
     Iterable<TravelInterest> interests = const <TravelInterest>[],
     this.budgetTier,
     this.tripPace,
     this.recommendationScope = RecommendationScope.both,
     this.homeLocation,
-  }) : interests = Set<TravelInterest>.unmodifiable(interests);
+  }) : interests = Set<TravelInterest>.unmodifiable(interests),
+       travelStyles = Set<TravelStyle>.unmodifiable(travelStyles);
 
   /// Creates an editable starting point from saved preferences.
   factory PreferenceDraft.fromPreferences(UserPreferences preferences) {
     return PreferenceDraft(
-      travelStyle: preferences.travelStyle,
+      travelStyles: preferences.travelStyles,
       interests: preferences.interests,
       budgetTier: preferences.budgetTier,
       tripPace: preferences.tripPace,
@@ -27,17 +28,20 @@ final class PreferenceDraft {
     );
   }
 
+  static const int maximumTravelStyles = 3;
+
   static const int minimumInterests = 1;
   static const int maximumInterests = 5;
 
-  final TravelStyle? travelStyle;
+  final Set<TravelStyle> travelStyles;
   final Set<TravelInterest> interests;
   final BudgetTier? budgetTier;
   final TripPace? tripPace;
   final RecommendationScope recommendationScope;
   final CanonicalLocation? homeLocation;
 
-  bool get isTravelStyleComplete => travelStyle != null;
+  bool get hasValidTravelStyleCount =>
+      travelStyles.isNotEmpty && travelStyles.length <= maximumTravelStyles;
 
   bool get hasValidInterestCount =>
       interests.length >= minimumInterests &&
@@ -51,7 +55,7 @@ final class PreferenceDraft {
 
   /// Controls submission availability, not server onboarding status.
   bool get canSubmit =>
-      isTravelStyleComplete &&
+      hasValidTravelStyleCount &&
       isInterestsAndBudgetComplete &&
       isDiscoveryScopeComplete;
 
@@ -60,7 +64,7 @@ final class PreferenceDraft {
   /// Use [clearHomeLocation] when the user removes or edits a selected city.
   /// Create a new [PreferenceDraft] to reset all selections.
   PreferenceDraft copyWith({
-    TravelStyle? travelStyle,
+    Iterable<TravelStyle>? travelStyles,
     Iterable<TravelInterest>? interests,
     BudgetTier? budgetTier,
     TripPace? tripPace,
@@ -73,7 +77,7 @@ final class PreferenceDraft {
     }
 
     return PreferenceDraft(
-      travelStyle: travelStyle ?? this.travelStyle,
+      travelStyles: travelStyles ?? this.travelStyles,
       interests: interests ?? this.interests,
       budgetTier: budgetTier ?? this.budgetTier,
       tripPace: tripPace ?? this.tripPace,
@@ -88,7 +92,7 @@ final class PreferenceDraft {
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is PreferenceDraft &&
-            travelStyle == other.travelStyle &&
+            CollectionEquality.unordered(travelStyles, other.travelStyles) &&
             CollectionEquality.unordered(interests, other.interests) &&
             budgetTier == other.budgetTier &&
             tripPace == other.tripPace &&
@@ -98,7 +102,7 @@ final class PreferenceDraft {
 
   @override
   int get hashCode => Object.hash(
-    travelStyle,
+    Object.hashAllUnordered(travelStyles),
     Object.hashAllUnordered(interests),
     budgetTier,
     tripPace,

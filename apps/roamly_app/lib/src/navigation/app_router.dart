@@ -6,6 +6,7 @@ import 'package:roamly_app/src/features/assistant/presentation/pages/assistant_p
 import 'package:roamly_app/src/features/auth/presentation/pages/register_page.dart';
 import 'package:roamly_app/src/features/auth/presentation/pages/sign_in_page.dart';
 import 'package:roamly_app/src/features/home/presentation/pages/home_page.dart';
+import 'package:roamly_app/src/features/home/presentation/pages/home_startup_loading_page.dart';
 import 'package:roamly_app/src/features/onboarding/presentation/pages/welcome_page.dart';
 import 'package:roamly_app/src/features/preferences/presentation/widgets/preference_gate.dart';
 import 'package:roamly_app/src/features/profile/presentation/pages/profile_page.dart';
@@ -143,6 +144,7 @@ abstract final class AppRouter {
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) {
             return PreferenceGate(
+              loadingChild: const HomeStartupLoadingPage(),
               authenticatedChild: AuthenticatedAppShell(
                 navigationShell: navigationShell,
               ),

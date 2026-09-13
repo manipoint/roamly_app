@@ -28,7 +28,7 @@ final class ApiPreferenceRemoteDataSource
 
   @override
   Future<UserPreferencesModel> savePreferences({
-    required TravelStyle travelStyle,
+    required Set<TravelStyle> travelStyles,
     required Set<TravelInterest> interests,
     required BudgetTier budgetTier,
     required TripPace tripPace,
@@ -38,9 +38,12 @@ final class ApiPreferenceRemoteDataSource
     // Stable ordering produces the same payload for equivalent selections.
     final serializedInterests =
         interests.map(PreferenceEnumMapper.interestToJson).toList()..sort();
+    final serializedTravelStyle =
+        travelStyles.map(PreferenceEnumMapper.travelStyleToJson).toList()
+          ..sort();
 
     final payload = <String, Object?>{
-      'travel_style': PreferenceEnumMapper.travelStyleToJson(travelStyle),
+      'travel_styles': serializedTravelStyle,
       'interests': serializedInterests,
       'budget_tier': PreferenceEnumMapper.budgetTierToJson(budgetTier),
       'trip_pace': PreferenceEnumMapper.tripPaceToJson(tripPace),

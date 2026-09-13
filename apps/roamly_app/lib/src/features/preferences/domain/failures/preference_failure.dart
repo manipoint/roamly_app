@@ -2,6 +2,7 @@ import 'package:roamly_core/roamly_core.dart';
 
 /// Expected failures specific to preference operations.
 enum PreferenceFailureKind {
+  invalidTravelStyleCount,
   invalidInterestCount,
   homeLocationRequired,
   invalidHomeLocation,
@@ -15,7 +16,9 @@ final class PreferenceFailure extends AppFailure {
   const PreferenceFailure.invalidInterestCount()
     : kind = PreferenceFailureKind.invalidInterestCount,
       super(code: 'preference_invalid_interest_count', isRetryable: false);
-
+  const PreferenceFailure.invalidTravelStyleCount()
+    : kind = PreferenceFailureKind.invalidTravelStyleCount,
+      super(code: 'preference_invalid_travelstyle_count', isRetryable: false);
   const PreferenceFailure.homeLocationRequired()
     : kind = PreferenceFailureKind.homeLocationRequired,
       super(code: 'preference_home_location_required', isRetryable: false);

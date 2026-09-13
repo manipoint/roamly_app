@@ -1,3 +1,5 @@
+import 'package:roamly_app/src/features/home/domain/entities/destination_collection_query.dart';
+import 'package:roamly_app/src/features/home/domain/entities/destination_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roamly_app/src/features/home/domain/entities/home_discovery.dart';
@@ -7,7 +9,14 @@ import 'package:roamly_core/roamly_core.dart';
 
 final class _Repository implements HomeDiscoveryRepository {
   @override
-  Future<Result<HomeDiscovery>> getHomeDiscovery({required int limit}) {
+  Future<Result<DestinationPage>> getDestinations({
+    required DestinationCollectionQuery query,
+    int limit = 20,
+    String? cursor,
+  }) => throw StateError('Unexpected catalogue request in Home-only test');
+
+  @override
+  Future<Result<HomeDiscovery>> getHome({required int limit}) {
     throw UnsupportedError('No request is expected in this test.');
   }
 }
@@ -20,8 +29,8 @@ void main() {
     expect(
       () => container.read(homeDiscoveryRepositoryProvider),
       throwsA(
-        isA<StateError>().having(
-          (error) => error.message,
+        isA<Exception>().having(
+          (error) => error.toString(),
           'message',
           contains('must be overridden by the application'),
         ),

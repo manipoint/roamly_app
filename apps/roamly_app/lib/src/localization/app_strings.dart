@@ -57,6 +57,14 @@ abstract final class AppStrings {
       'Unable to create your account. Please try again.';
   static const String sessionRestoreFailed =
       'Unable to restore your session. Please sign in again.';
+  static const String homeSearchHint = 'Where to next?';
+  static const String homeSearchScope = 'Search this selection of destinations';
+  static const String homeViewAll = 'View all';
+  static const String homeRefresh = 'Refresh destinations';
+  static const String homeNoMatches =
+      'No matches in this selection. Try another search or category.';
+  static const String homeClearFilters = 'Clear filters';
+  static const String homeAllCategories = 'All';
   static const String homeTab = 'Home';
   static const String tripsTab = 'Trips';
   static const String assistantTab = 'AI Assistant';
@@ -153,8 +161,19 @@ abstract final class AppStrings {
 
   static const String locationSearchFailed =
       'We could not search locations. Please try again.';
-
+  static const String homeTitle = 'Discover your next trip';
+  static const String homeLoading = 'Loading destinations';
+  static const String homeLoadFailed =
+      'We could not load destinations. Please try again.';
+  static const String homeEmpty = 'No destinations available yet.';
+  static const String homeSuggested = 'Suggested for you';
+  static const String homeExplore = 'Explore destinations';
+  static const String homePopular = 'Popular destinations';
+  static const String homeFeatured = 'Featured destinations';
+  static const String homeTrending = 'Trending destinations';
   static const String finishSetup = 'Finish setup';
+  static const String homeLoadMore = 'Load more';
+  static const String homeLoadMoreFailed = 'Could not load more destinations.';
   static String preferenceProgress(int currentStep, int stepCount) {
     return 'Step $currentStep of $stepCount';
   }

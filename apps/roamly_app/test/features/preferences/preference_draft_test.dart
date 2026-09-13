@@ -23,6 +23,25 @@ void main() {
     expect(() => draft.interests.clear(), throwsUnsupportedError);
   });
 
+  test('copyWith replaces, preserves and clears immutable styles', () {
+    final original = PreferenceDraft(travelStyles: [TravelStyle.nature]);
+    final source = <TravelStyle>{TravelStyle.food, TravelStyle.culture};
+    final changed = original.copyWith(travelStyles: source);
+    source.clear();
+    expect(changed.travelStyles, {TravelStyle.food, TravelStyle.culture});
+    expect(() => changed.travelStyles.clear(), throwsUnsupportedError);
+    expect(original.travelStyles, {TravelStyle.nature});
+    expect(changed.copyWith().travelStyles, changed.travelStyles);
+    expect(
+      changed.copyWith(travelStyles: []).hasValidTravelStyleCount,
+      isFalse,
+    );
+    expect(
+      changed.copyWith(travelStyles: TravelStyle.values).canSubmit,
+      isFalse,
+    );
+  });
+
   test('interest order does not change equality or hash code', () {
     final first = PreferenceDraft(
       interests: [TravelInterest.hiking, TravelInterest.history],
@@ -36,7 +55,7 @@ void main() {
 
   test('complete selections require home for geographic filtering', () {
     final draft = PreferenceDraft(
-      travelStyle: TravelStyle.nature,
+      travelStyles: [TravelStyle.nature],
       interests: [TravelInterest.hiking],
       budgetTier: BudgetTier.budget,
       tripPace: TripPace.relaxed,
@@ -79,6 +98,23 @@ void main() {
 
     tearDown(() => container.dispose());
 
+    test('rejects fourth style and permits deselection and replacement', () {
+      for (final style in TravelStyle.values.take(3)) {
+        expect(controller.toggleTravelStyle(style), isTrue);
+      }
+      final before = container.read(preferenceDraftControllerProvider);
+      expect(controller.toggleTravelStyle(TravelStyle.luxury), isFalse);
+      expect(container.read(preferenceDraftControllerProvider), same(before));
+      expect(controller.toggleTravelStyle(TravelStyle.beaches), isTrue);
+      expect(controller.toggleTravelStyle(TravelStyle.luxury), isTrue);
+      expect(container.read(preferenceDraftControllerProvider).travelStyles, {
+        TravelStyle.adventure,
+        TravelStyle.food,
+        TravelStyle.luxury,
+      });
+      expect(before.travelStyles, contains(TravelStyle.beaches));
+    });
+
     test('rejects sixth interest but permits removal and replacement', () {
       for (final interest in TravelInterest.values.take(5)) {
         expect(controller.toggleInterest(interest), isTrue);
@@ -93,7 +129,7 @@ void main() {
     });
 
     test('reset clears all selections including home and scope', () {
-      controller.selectTravelStyle(TravelStyle.nature);
+      controller.toggleTravelStyle(TravelStyle.nature);
       controller.toggleInterest(TravelInterest.hiking);
       controller.selectBudgetTier(BudgetTier.budget);
       controller.selectTripPace(TripPace.relaxed);

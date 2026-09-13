@@ -3,6 +3,7 @@ import 'package:roamly_app/src/localization/app_strings.dart';
 abstract final class RoamlyValidators {
   static const int minimumRegistrationPasswordLength = 12;
   static const int maximumPasswordLength = 128;
+
   static final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   static String? validateEmail(String? value) {

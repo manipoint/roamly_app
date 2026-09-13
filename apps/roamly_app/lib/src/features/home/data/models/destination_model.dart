@@ -1,60 +1,65 @@
+import 'package:roamly_app/src/app/validator/roamly_value_validators.dart';
 import 'package:roamly_networking/roamly_networking.dart';
 
 import '../../../preferences/data/mappers/preference_enum_mapper.dart';
 import '../../../preferences/domain/entities/preference_types.dart';
 import '../../domain/entities/destination.dart';
+import 'media_asset_model.dart';
 
 /// Strict transport representation of a Home destination card.
 final class DestinationModel {
   const DestinationModel._(this._destination);
-
-  static final RegExp _uuidPattern = RegExp(
-    r'^[0-9a-fA-F]{8}-'
-    r'[0-9a-fA-F]{4}-'
-    r'[0-9a-fA-F]{4}-'
-    r'[0-9a-fA-F]{4}-'
-    r'[0-9a-fA-F]{12}$',
-  );
-
-  static final RegExp _slugPattern = RegExp(r'^[a-z0-9]+(?:-[a-z0-9]+)*$');
-
-  static final RegExp _countryCodePattern = RegExp(r'^[A-Z]{2}$');
 
   final Destination _destination;
 
   factory DestinationModel.fromJson(Map<String, Object?> json) {
     final reader = JsonReader(json);
 
-    final id = reader.string('id', trim: true, minLength: 36, maxLength: 36);
+    final id = reader.string(
+      'id',
+      trim: true,
+      minLength: RoamlyValueValidators.uuidLength,
+      maxLength: RoamlyValueValidators.uuidLength,
+    );
 
-    if (!_uuidPattern.hasMatch(id)) {
+    if (!RoamlyValueValidators.isValidUuid(id)) {
       throw const FormatException('Invalid destination id.');
     }
 
     final slug = reader.string(
       'slug',
       trim: true,
-      minLength: 1,
-      maxLength: 120,
+      minLength: RoamlyValueValidators.minimumSlugLength,
+      maxLength: RoamlyValueValidators.maximumSlugLength,
     );
 
-    if (!_slugPattern.hasMatch(slug)) {
+    if (!RoamlyValueValidators.isValidSlug(slug)) {
       throw const FormatException('Invalid destination slug.');
     }
 
-    final countryCode = reader
-        .string('country_code', trim: true, minLength: 2, maxLength: 2)
-        .toUpperCase();
+    final countryCode = reader.string(
+      'country_code',
+      trim: true,
+      minLength: RoamlyValueValidators.countryCodeLength,
+      maxLength: RoamlyValueValidators.countryCodeLength,
+    );
 
-    if (!_countryCodePattern.hasMatch(countryCode)) {
+    if (!RoamlyValueValidators.isValidCountryCode(countryCode)) {
       throw const FormatException('Invalid destination country code.');
     }
 
-    final imageUri = reader.uri(
-      'image_url',
-      allowedSchemes: const <String>{'https'},
-      maxLength: 2048,
-    );
+    // Prefer the current contract; only absent cover_image permits legacy data.
+    final hasCoverImage = json.containsKey('cover_image');
+    final coverImage = hasCoverImage
+        ? MediaAssetModel.fromJson(reader.object('cover_image')).toDomain()
+        : null;
+    final imageUri =
+        coverImage?.uri ??
+        reader.uri(
+          'image_url',
+          allowedSchemes: const <String>{'https'},
+          maxLength: 2048,
+        );
 
     final styles = reader.list<TravelStyle>(
       'styles',
@@ -76,27 +81,29 @@ final class DestinationModel {
       Destination(
         id: id.toLowerCase(),
         slug: slug,
-        name: reader.string('name', trim: true, minLength: 1, maxLength: 120),
+        name: reader.string('name', trim: true, minLength: 2, maxLength: 120),
         countryName: reader.string(
           'country_name',
           trim: true,
-          minLength: 1,
+          minLength: 2,
           maxLength: 120,
         ),
         countryCode: countryCode,
         summary: reader.string(
           'summary',
           trim: true,
-          minLength: 1,
-          maxLength: 500,
+          minLength: 20,
+          maxLength: 600,
         ),
         imageUri: imageUri,
-        imageAlt: reader.string(
-          'image_alt',
-          trim: true,
-          minLength: 1,
-          maxLength: 200,
-        ),
+        imageAlt:
+            coverImage?.altText ??
+            reader.string(
+              'image_alt',
+              trim: true,
+              minLength: 2,
+              maxLength: 200,
+            ),
         latitude: reader.number('latitude', min: -90, max: 90),
         longitude: reader.number('longitude', min: -180, max: 180),
         budgetTier: PreferenceEnumMapper.budgetTierFromJson(

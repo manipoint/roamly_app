@@ -31,7 +31,9 @@ void main() {
     required String code,
     required bool isRetryable,
     int? statusCode,
+    String? backendCode,
   }) {
+    expect(failure.backendCode, backendCode);
     expect(failure.kind, kind);
     expect(failure.code, code);
     expect(failure.isRetryable, isRetryable);
@@ -209,6 +211,114 @@ void main() {
         code: 'network_unknown',
         isRetryable: false,
         statusCode: 418,
+      );
+    });
+
+    test(
+      'preserves backend classification without changing transport policy',
+      () {
+        for (final testCase in statusCases) {
+          final failure = mapper.map(
+            exception(
+              type: DioExceptionType.badResponse,
+              statusCode: testCase.statusCode,
+              responseData: {
+                'error': {
+                  'code': 'invalid_cursor',
+                  'message': 'private detail',
+                },
+              },
+            ),
+          );
+          expectFailure(
+            failure,
+            kind: testCase.kind,
+            code: testCase.code,
+            isRetryable: testCase.isRetryable,
+            statusCode: testCase.statusCode,
+            backendCode: 'invalid_cursor',
+          );
+        }
+      },
+    );
+
+    test('accepts bounded backend codes without altering them', () {
+      for (final code in ['a', 'invalid_cursor', 'error_42', 'a' * 64]) {
+        final failure = mapper.map(
+          exception(
+            type: DioExceptionType.badResponse,
+            statusCode: 422,
+            responseData: {
+              'error': {'code': code},
+            },
+          ),
+        );
+        expect(failure.backendCode, code);
+      }
+    });
+
+    test('ignores malformed error envelopes and invalid backend codes', () {
+      final bodies = <Object?>[
+        null,
+        'not JSON',
+        [],
+        {},
+        {'code': 'invalid_cursor'},
+        {'error': null},
+        {'error': []},
+        {'error': 'invalid_cursor'},
+        {'error': {}},
+        for (final code in <Object?>[
+          null,
+          42,
+          [],
+          {},
+          '',
+          'a' * 65,
+          'INVALID_CURSOR',
+          'invalid-cursor',
+          ' invalid_cursor',
+          'invalid_cursor ',
+          'invalid_cursor\n',
+          'invalid\ncursor',
+          '1invalid',
+          '_invalid',
+          'érror',
+        ])
+          {
+            'error': {'code': code},
+          },
+      ];
+      for (final body in bodies) {
+        final failure = mapper.map(
+          exception(
+            type: DioExceptionType.badResponse,
+            statusCode: 422,
+            responseData: body,
+          ),
+        );
+        expectFailure(
+          failure,
+          kind: NetworkFailureKind.validation,
+          code: 'request_validation_failed',
+          isRetryable: false,
+          statusCode: 422,
+        );
+      }
+    });
+
+    test('handles an absent response object', () {
+      final failure = mapper.map(
+        DioException(
+          requestOptions: RequestOptions(path: '/resource'),
+          type: DioExceptionType.badResponse,
+        ),
+      );
+      expectFailure(
+        failure,
+        kind: NetworkFailureKind.unknown,
+        code: 'network_unknown',
+        isRetryable: false,
       );
     });
 

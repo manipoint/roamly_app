@@ -103,6 +103,48 @@ void main() {
       expect(mapper.receivedException, same(exception));
     });
 
+    test(
+      'preserves invalid cursor through the real mapper without logging the body',
+      () async {
+        final sink = _RecordingLogSink();
+        final executor = DefaultApiRequestExecutor(
+          failureMapper: const DefaultDioFailureMapper(),
+          logger: RoamlyLogger(name: 'network', sink: sink),
+        );
+        final options = RequestOptions(path: '/destinations');
+        var calls = 0;
+        final result = await executor.execute<void>(() async {
+          calls++;
+          throw DioException(
+            requestOptions: options,
+            type: DioExceptionType.badResponse,
+            response: Response<Object?>(
+              requestOptions: options,
+              statusCode: 422,
+              data: {
+                'error': {
+                  'code': 'invalid_cursor',
+                  'message': 'private-response-detail',
+                },
+              },
+            ),
+          );
+        });
+        final failure =
+            (result as FailureResult<void>).failure as NetworkFailure;
+        expect(failure.backendCode, 'invalid_cursor');
+        expect(failure.code, 'request_validation_failed');
+        expect(failure.statusCode, 422);
+        expect(failure.isRetryable, isFalse);
+        expect(calls, 1);
+        expect(
+          sink.records.single.fields.toString(),
+          isNot(contains('private-response-detail')),
+        );
+        expect(sink.records.single.message, 'API request failed');
+      },
+    );
+
     test('does not swallow an asynchronous unexpected exception', () async {
       final mapper = RecordingFailureMapper(mappedFailure);
       final executor = DefaultApiRequestExecutor(

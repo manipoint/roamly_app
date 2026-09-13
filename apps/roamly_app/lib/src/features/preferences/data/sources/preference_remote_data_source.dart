@@ -15,7 +15,7 @@ abstract interface class PreferenceRemoteDataSource {
   /// A null home location is sent explicitly so a previous location
   /// can be cleared when the selected scope permits it.
   Future<UserPreferencesModel> savePreferences({
-    required TravelStyle travelStyle,
+    required Set<TravelStyle> travelStyles,
     required Set<TravelInterest> interests,
     required BudgetTier budgetTier,
     required TripPace tripPace,

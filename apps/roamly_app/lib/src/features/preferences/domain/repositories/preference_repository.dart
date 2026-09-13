@@ -19,7 +19,7 @@ abstract interface class PreferenceRepository {
   ///
   /// Returns the backend-confirmed state after a successful save.
   Future<Result<UserPreferences>> savePreferences({
-    required TravelStyle travelStyle,
+    required Set<TravelStyle> travelStyles,
     required Set<TravelInterest> interests,
     required BudgetTier budgetTier,
     required TripPace tripPace,

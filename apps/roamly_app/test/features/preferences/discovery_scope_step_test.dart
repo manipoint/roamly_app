@@ -33,7 +33,9 @@ UserPreferences _preferences({
   CanonicalLocation? homeLocation,
 }) {
   return UserPreferences(
-    travelStyle: onboardingCompleted ? TravelStyle.nature : null,
+    travelStyles: onboardingCompleted
+        ? <TravelStyle>{TravelStyle.nature}
+        : const <TravelStyle>{},
     interests: onboardingCompleted
         ? const <TravelInterest>{TravelInterest.hiking}
         : const <TravelInterest>{},
@@ -62,7 +64,7 @@ final class _PreferenceRepository implements PreferenceRepository {
 
   @override
   Future<Result<UserPreferences>> savePreferences({
-    required TravelStyle travelStyle,
+    required Set<TravelStyle> travelStyles,
     required Set<TravelInterest> interests,
     required BudgetTier budgetTier,
     required TripPace tripPace,
@@ -139,7 +141,7 @@ void main() {
     );
 
     final draft = container.read(preferenceDraftControllerProvider.notifier);
-    draft.selectTravelStyle(TravelStyle.nature);
+    draft.toggleTravelStyle(TravelStyle.nature);
     draft.toggleInterest(TravelInterest.hiking);
     draft.selectBudgetTier(BudgetTier.midRange);
     draft.selectTripPace(TripPace.balanced);

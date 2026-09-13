@@ -14,10 +14,11 @@ import 'package:roamly_networking/roamly_networking.dart';
 final class _Source implements PreferenceRemoteDataSource {
   int calls = 0;
   Set<TravelInterest>? capturedInterests;
+  Set<TravelStyle>? capturedStyles;
   CanonicalLocation? capturedLocation;
   Object? error;
   final response = UserPreferencesModel.fromJson({
-    'travel_style': null,
+    'travel_styles': <String>[],
     'interests': <String>[],
     'budget_tier': null,
     'trip_pace': null,
@@ -42,13 +43,14 @@ final class _Source implements PreferenceRemoteDataSource {
   Future<UserPreferencesModel> skipOnboarding() => _result();
   @override
   Future<UserPreferencesModel> savePreferences({
-    required TravelStyle travelStyle,
+    required Set<TravelStyle> travelStyles,
     required Set<TravelInterest> interests,
     required BudgetTier budgetTier,
     required TripPace tripPace,
     required RecommendationScope recommendationScope,
     required CanonicalLocation? homeLocation,
   }) {
+    capturedStyles = travelStyles;
     capturedInterests = interests;
     capturedLocation = homeLocation;
     return _result();
@@ -82,11 +84,14 @@ void main() {
   });
 
   Future<Result<UserPreferences>> save({
+    Set<TravelStyle>? travelStyles,
     Set<TravelInterest>? interests,
     RecommendationScope scope = RecommendationScope.both,
     CanonicalLocation? location,
   }) => repository.savePreferences(
-    travelStyle: TravelStyle.nature,
+    travelStyles:
+        travelStyles ??
+        {TravelStyle.nature, TravelStyle.beaches, TravelStyle.adventure},
     interests: interests ?? {TravelInterest.hiking},
     budgetTier: BudgetTier.budget,
     tripPace: TripPace.relaxed,
@@ -118,6 +123,32 @@ void main() {
       );
     }
     expect(source.calls, 3);
+  });
+
+  test('invalid style counts do not invoke executor or source', () async {
+    for (final styles in [
+      <TravelStyle>{},
+      TravelStyle.values.take(4).toSet(),
+    ]) {
+      expectFailure(
+        await save(travelStyles: styles),
+        PreferenceFailureKind.invalidTravelStyleCount,
+      );
+    }
+    expect(executor.calls, 0);
+    expect(source.calls, 0);
+  });
+
+  test('captures immutable styles before asynchronous execution', () async {
+    final gate = Completer<void>();
+    executor.gate = gate.future;
+    final styles = {TravelStyle.nature, TravelStyle.food};
+    final pending = save(travelStyles: styles);
+    styles.clear();
+    gate.complete();
+    await pending;
+    expect(source.capturedStyles, {TravelStyle.nature, TravelStyle.food});
+    expect(() => source.capturedStyles!.clear(), throwsUnsupportedError);
   });
 
   test('invalid interest counts do not invoke executor or source', () async {

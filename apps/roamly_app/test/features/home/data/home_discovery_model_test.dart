@@ -94,6 +94,42 @@ void main() {
       expect(discovery.spotlight.items.single.name, 'Destination 3');
     });
 
+    test('accepts the current backend cover_image contract', () {
+      Map<String, Object?> card(int index) {
+        final json = _destination(index);
+        final url = json.remove('image_url');
+        final alt = json.remove('image_alt');
+        return json
+          ..['destination_type'] = 'city'
+          ..['cover_image'] = <String, Object?>{
+            'id': '00000000-0000-4000-8000-000000000099',
+            'url': url,
+            'alt_text': alt,
+            'caption': null,
+            'width': 1200,
+            'height': 800,
+          };
+      }
+
+      final discovery = HomeDiscoveryModel.fromJson(<String, Object?>{
+        'personalization_ready': true,
+        'suggested': <Object?>[card(1)],
+        'suggested_local': <Object?>[card(1)],
+        'suggested_international': <Object?>[],
+        'popular': <Object?>[card(2)],
+        'spotlight': <String, Object?>{
+          'kind': 'featured',
+          'items': <Object?>[card(3)],
+        },
+      }).toDomain();
+      expect(
+        discovery.suggested.single.imageUri.toString(),
+        'https://images.example.test/destination-1.webp',
+      );
+      expect(discovery.popular.single.imageAlt, 'Destination 2 landscape');
+      expect(discovery.spotlight.items.single.name, 'Destination 3');
+    });
+
     test('allows empty server-ranked sections', () {
       final discovery = HomeDiscoveryModel.fromJson(<String, Object?>{
         'personalization_ready': false,

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:roamly_app/src/app/roamly_app.dart';
 import 'package:roamly_app/src/config/app_config.dart';
+import 'package:roamly_app/src/features/home/composition/home_module.dart';
+import 'package:roamly_app/src/features/home/presentation/providers/home_dependency_providers.dart';
 import 'package:roamly_app/src/features/preferences/composition/preference_module.dart';
 import 'package:roamly_app/src/features/preferences/presentation/providers/preference_dependency_providers.dart';
 import 'package:roamly_auth/roamly_auth.dart';
@@ -40,11 +42,14 @@ void main() {
   final authDependencies = AuthModule.create(
     apiConfig: appConfig.apiConfig,
     logger: authLogger,
+    enableHttpDebugLogging: kDebugMode,
   );
-  final preferenceRequestExecutor = DefaultApiRequestExecutor(
-    failureMapper: DefaultDioFailureMapper(),
-    logger: logger.child('preferences.network'),
-  );
+ ApiRequestExecutor requestExecutorFor(String feature) {
+    return DefaultApiRequestExecutor(
+      failureMapper: DefaultDioFailureMapper(),
+      logger: logger.child('$feature.network'),
+    );
+  }
 
   logger.info(
     'Application configured',
@@ -64,15 +69,22 @@ void main() {
         preferenceRepositoryProvider.overrideWith((ref) {
           return PreferenceModule.create(
             authenticatedClient: authDependencies.authenticatedApiClient,
-            requestExecutor: preferenceRequestExecutor,
+            requestExecutor: requestExecutorFor('preference'),
           );
         }),
         locationResolutionRepositoryProvider.overrideWith((ref) {
           return PreferenceModule.createLocationResolutionRepository(
             authenticatedClient: authDependencies.authenticatedApiClient,
-            requestExecutor: preferenceRequestExecutor,
+            requestExecutor: requestExecutorFor('location'),
           );
+          
         }),
+        homeDiscoveryRepositoryProvider.overrideWith(
+          (ref) => HomeModule.create(
+            authenticatedClient: authDependencies.authenticatedApiClient,
+            requestExecutor: requestExecutorFor('home'),
+          ),
+        ),
       ],
       child: const RoamlyApp(),
     ),

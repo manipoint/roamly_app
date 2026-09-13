@@ -3,7 +3,7 @@ import 'package:roamly_app/src/features/preferences/data/models/user_preferences
 import 'package:roamly_app/src/features/preferences/domain/entities/preference_types.dart';
 
 Map<String, Object?> _payload() => {
-  'travel_style': null,
+  'travel_styles': <String>[],
   'interests': <String>[],
   'budget_tier': null,
   'trip_pace': null,
@@ -20,7 +20,7 @@ void main() {
   test('new account accepts empty interests and null optional values', () {
     final value = UserPreferencesModel.fromJson(_payload()).toDomain();
     expect(value.interests, isEmpty);
-    expect(value.travelStyle, isNull);
+    expect(value.travelStyles, isEmpty);
     expect(value.homeLocation, isNull);
     expect(value.recommendationScope, RecommendationScope.both);
     expect(value.onboardingCompleted, isFalse);
@@ -30,7 +30,7 @@ void main() {
   test('maps saved preferences, location and timestamps', () {
     final value = UserPreferencesModel.fromJson({
       ..._payload(),
-      'travel_style': 'nature',
+      'travel_styles': ['nature', 'food', 'adventure'],
       'interests': ['hiking', 'local_culture'],
       'budget_tier': 'mid_range',
       'trip_pace': 'balanced',
@@ -49,7 +49,11 @@ void main() {
       'created_at': '2026-09-05T07:00:00Z',
       'updated_at': '2026-09-05T07:01:00Z',
     }).toDomain();
-    expect(value.travelStyle, TravelStyle.nature);
+    expect(value.travelStyles, {
+      TravelStyle.nature,
+      TravelStyle.food,
+      TravelStyle.adventure,
+    });
     expect(value.interests, {
       TravelInterest.hiking,
       TravelInterest.localCulture,
@@ -62,6 +66,7 @@ void main() {
     expect(value.updatedAt, DateTime.utc(2026, 9, 5, 7, 1));
     expect(value.personalizationReady, isTrue);
     expect(() => value.interests.clear(), throwsUnsupportedError);
+    expect(() => value.travelStyles.clear(), throwsUnsupportedError);
   });
 
   test('skipping keeps completion and personalization independent', () {
@@ -79,6 +84,25 @@ void main() {
         () => UserPreferencesModel.fromJson(_payload()..remove(key)),
         throwsFormatException,
         reason: key,
+      );
+    }
+  });
+
+  test('rejects duplicate, excessive and malformed travel styles', () {
+    for (final styles in <Object?>[
+      ['nature', 'nature'],
+      ['nature', 'food', 'adventure', 'beaches'],
+      ['unknown'],
+      [42],
+      null,
+      'nature',
+    ]) {
+      expect(
+        () => UserPreferencesModel.fromJson({
+          ..._payload(),
+          'travel_styles': styles,
+        }),
+        throwsFormatException,
       );
     }
   });
@@ -103,7 +127,7 @@ void main() {
 
   test('rejects malformed enum, boolean, location and timestamp fields', () {
     for (final entry in <String, Object?>{
-      'travel_style': 'unknown',
+      'travel_styles': ['unknown'],
       'budget_tier': 1,
       'trip_pace': 'fast',
       'recommendation_scope': null,

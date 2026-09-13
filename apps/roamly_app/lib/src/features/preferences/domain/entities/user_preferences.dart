@@ -6,7 +6,7 @@ import 'preference_types.dart';
 /// Saved travel preferences and onboarding state returned by the backend.
 final class UserPreferences {
   UserPreferences({
-    required this.travelStyle,
+    required Iterable<TravelStyle> travelStyles,
     required Iterable<TravelInterest> interests,
     required this.budgetTier,
     required this.tripPace,
@@ -17,10 +17,11 @@ final class UserPreferences {
     required this.onboardingCompletedAt,
     required this.createdAt,
     required this.updatedAt,
-  }) : interests = Set<TravelInterest>.unmodifiable(interests);
+  }) : interests = Set<TravelInterest>.unmodifiable(interests),
+       travelStyles = Set<TravelStyle>.unmodifiable(travelStyles);
 
   /// May be absent when onboarding has not been completed or was skipped.
-  final TravelStyle? travelStyle;
+  final Set<TravelStyle> travelStyles;
 
   /// Unique interests; their selection order has no business meaning.
   final Set<TravelInterest> interests;
@@ -44,7 +45,7 @@ final class UserPreferences {
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is UserPreferences &&
-            travelStyle == other.travelStyle &&
+            CollectionEquality.unordered(travelStyles, other.travelStyles) &&
             CollectionEquality.unordered(interests, other.interests) &&
             budgetTier == other.budgetTier &&
             tripPace == other.tripPace &&
@@ -59,7 +60,7 @@ final class UserPreferences {
 
   @override
   int get hashCode => Object.hash(
-    travelStyle,
+    Object.hashAllUnordered(travelStyles),
     Object.hashAllUnordered(interests),
     budgetTier,
     tripPace,

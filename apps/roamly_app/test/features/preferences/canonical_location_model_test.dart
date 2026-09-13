@@ -6,7 +6,7 @@ void main() {
     'provider': ' Google ',
     'provider_location_id': 'lahore-id',
     'canonical_name': 'Lahore, Pakistan',
-    'country_code': 'pk',
+    'country_code': 'PK',
     'latitude': 31,
     'longitude': 74.3587,
   };
@@ -38,11 +38,12 @@ void main() {
   });
 
   test('enforces location-specific string rules', () {
-    for (final entry in {
-      'provider': 'bad provider',
-      'country_code': '12',
-      'canonical_name': ' ',
-    }.entries) {
+    for (final entry in <MapEntry<String, Object?>>[
+      const MapEntry('provider', 'bad provider'),
+      const MapEntry('country_code', '12'),
+      const MapEntry('country_code', 'pk'),
+      const MapEntry('canonical_name', ' '),
+    ]) {
       expect(
         () => CanonicalLocationModel.fromJson({
           ...payload(),

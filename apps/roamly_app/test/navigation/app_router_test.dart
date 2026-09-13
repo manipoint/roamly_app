@@ -8,6 +8,9 @@ import 'package:roamly_app/src/app/widgets/session_loading_view.dart';
 import 'package:roamly_app/src/features/auth/presentation/pages/register_page.dart';
 import 'package:roamly_app/src/features/auth/presentation/pages/sign_in_page.dart';
 import 'package:roamly_app/src/features/home/presentation/pages/home_page.dart';
+import 'package:roamly_app/src/features/home/domain/entities/destination_collection.dart';
+import 'package:roamly_app/src/features/home/domain/entities/home_discovery.dart';
+import 'package:roamly_app/src/features/home/presentation/controllers/home_discovery_controller.dart';
 import 'package:roamly_app/src/features/onboarding/presentation/pages/welcome_page.dart';
 import 'package:roamly_app/src/features/preferences/domain/entities/canonical_location.dart';
 import 'package:roamly_app/src/features/preferences/domain/entities/preference_types.dart';
@@ -29,7 +32,7 @@ final class _PreferenceRepository implements PreferenceRepository {
   Future<Result<UserPreferences>> getPreferences() async {
     return Success<UserPreferences>(
       UserPreferences(
-        travelStyle: null,
+        travelStyles: const{},
         interests: const <TravelInterest>{},
         budgetTier: null,
         tripPace: null,
@@ -46,7 +49,7 @@ final class _PreferenceRepository implements PreferenceRepository {
 
   @override
   Future<Result<UserPreferences>> savePreferences({
-    required TravelStyle travelStyle,
+    required Set<TravelStyle> travelStyles,
     required Set<TravelInterest> interests,
     required BudgetTier budgetTier,
     required TripPace tripPace,
@@ -76,6 +79,17 @@ void main() {
   }) {
     final container = ProviderContainer(
       overrides: [
+        homeDiscoveryControllerProvider.overrideWithBuild(
+          (ref, notifier) => HomeDiscovery(
+            personalizationReady: false,
+            suggested: const [],
+            popular: const [],
+            spotlight: DestinationCollection(
+              kind: DiscoveryCollectionKind.featured,
+              items: const [],
+            ),
+          ),
+        ),
         authControllerProvider.overrideWithBuild((ref, notifier) {
           return restoreSession();
         }),

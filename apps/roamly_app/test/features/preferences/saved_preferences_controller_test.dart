@@ -13,7 +13,7 @@ import 'package:roamly_app/src/features/preferences/presentation/state/preferenc
 import 'package:roamly_core/roamly_core.dart';
 
 final _initialPreferences = UserPreferences(
-  travelStyle: null,
+  travelStyles: const {},
   interests: <TravelInterest>{},
   budgetTier: null,
   tripPace: null,
@@ -27,7 +27,7 @@ final _initialPreferences = UserPreferences(
 );
 
 final _savedPreferences = UserPreferences(
-  travelStyle: TravelStyle.nature,
+  travelStyles: {TravelStyle.nature},
   interests: <TravelInterest>{TravelInterest.hiking},
   budgetTier: BudgetTier.midRange,
   tripPace: TripPace.balanced,
@@ -58,7 +58,7 @@ final class _FakeRepository implements PreferenceRepository {
 
   @override
   Future<Result<UserPreferences>> savePreferences({
-    required TravelStyle travelStyle,
+    required Set<TravelStyle> travelStyles,
     required Set<TravelInterest> interests,
     required BudgetTier budgetTier,
     required TripPace tripPace,
@@ -67,7 +67,7 @@ final class _FakeRepository implements PreferenceRepository {
   }) async {
     saveCalls++;
     capturedDraft = PreferenceDraft(
-      travelStyle: travelStyle,
+      travelStyles: travelStyles,
       interests: interests,
       budgetTier: budgetTier,
       tripPace: tripPace,
@@ -85,7 +85,7 @@ final class _FakeRepository implements PreferenceRepository {
 }
 
 PreferenceDraft _completeDraft() => PreferenceDraft(
-  travelStyle: TravelStyle.nature,
+  travelStyles: const {TravelStyle.nature},
   interests: const <TravelInterest>{TravelInterest.hiking},
   budgetTier: BudgetTier.midRange,
   tripPace: TripPace.balanced,

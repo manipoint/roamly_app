@@ -45,7 +45,7 @@ final class SavedPreferencesController extends AsyncNotifier<UserPreferences> {
       () => ref
           .read(preferenceRepositoryProvider)
           .savePreferences(
-            travelStyle: draft.travelStyle!,
+            travelStyles: draft.travelStyles,
             interests: draft.interests,
             budgetTier: draft.budgetTier!,
             tripPace: draft.tripPace!,

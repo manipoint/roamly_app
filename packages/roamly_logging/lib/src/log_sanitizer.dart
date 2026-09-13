@@ -48,15 +48,27 @@ final class LogSanitizer {
         normalized.contains('signingkey') ||
         normalized.contains('hashkey') ||
         normalized.contains('cookie') ||
+        normalized.contains('accesstoken') ||
+        normalized.contains('refreshtoken') ||
+        normalized.contains('idtoken') ||
+        normalized.contains('sessiontoken') ||
+        normalized.contains('jwttoken') ||
+        normalized.contains('otp') ||
+        normalized.contains('passcode') ||
+        normalized.contains('pincode') ||
+        normalized.contains('cardnumber') ||
+        normalized.contains('cardholder') ||
+        normalized.contains('securitycode') ||
+        normalized.contains('cvv') ||
+        normalized.contains('email') ||
+        normalized.contains('phonenumber') ||
+        normalized == 'phone' ||
+        normalized == 'pin' ||
         normalized == 'secret' ||
         normalized == 'credentials' ||
         normalized == 'credential' ||
         normalized == 'token' ||
-        normalized.endsWith('accesstoken') ||
-        normalized.endsWith('refreshtoken') ||
-        normalized.endsWith('idtoken') ||
-        normalized.endsWith('sessiontoken') ||
-        normalized.endsWith('jwttoken');
+        normalized == 'homelocation';
   }
 
   String _sanitizeUri(Uri value) {

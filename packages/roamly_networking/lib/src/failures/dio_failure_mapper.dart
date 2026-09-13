@@ -1,111 +1,94 @@
 import 'package:dio/dio.dart';
+
 import 'network_failure.dart';
 
 abstract interface class DioFailureMapper {
   NetworkFailure map(DioException exception);
 }
 
-/// Default mapping policy for HTTP transport failures.
-
 final class DefaultDioFailureMapper implements DioFailureMapper {
   const DefaultDioFailureMapper();
+
+  static final RegExp _backendCodePattern = RegExp(r'^[a-z][a-z0-9_]{0,63}$');
+
   @override
   NetworkFailure map(DioException exception) {
     return switch (exception.type) {
       DioExceptionType.connectionTimeout ||
       DioExceptionType.receiveTimeout ||
       DioExceptionType.sendTimeout ||
-      DioExceptionType.transformTimeout => _timeout(),
-      DioExceptionType.connectionError => _connection(),
+      DioExceptionType.transformTimeout => const NetworkFailure(
+        code: 'network_timeout',
+        isRetryable: true,
+        kind: NetworkFailureKind.timeout,
+      ),
+      DioExceptionType.connectionError => const NetworkFailure(
+        code: 'network_connection_failed',
+        isRetryable: true,
+        kind: NetworkFailureKind.connection,
+      ),
       DioExceptionType.cancel => const NetworkFailure(
         code: 'request_cancelled',
         isRetryable: false,
         kind: NetworkFailureKind.cancelled,
       ),
-      DioExceptionType.badResponse => _fromStatusCode(
-        exception.response?.statusCode,
-      ),
+      DioExceptionType.badResponse => _fromResponse(exception.response),
       DioExceptionType.badCertificate ||
       DioExceptionType.unknown => const NetworkFailure(
-        code: "network_unknown",
+        code: 'network_unknown',
         isRetryable: false,
         kind: NetworkFailureKind.unknown,
       ),
     };
   }
 
-  static NetworkFailure _timeout() {
-    return const NetworkFailure(
-      code: 'network_timeout',
-      isRetryable: true,
-      kind: NetworkFailureKind.timeout,
-    );
-  }
+  static NetworkFailure _fromResponse(Response<dynamic>? response) {
+    final statusCode = response?.statusCode;
+    final backendCode = _readBackendCode(response?.data);
 
-  static NetworkFailure _connection() {
-    return const NetworkFailure(
-      code: 'network_connection_failed',
-      isRetryable: true,
-      kind: NetworkFailureKind.connection,
-    );
-  }
-
-  static NetworkFailure _fromStatusCode(int? statusCode) {
-    return switch (statusCode) {
-      400 || 422 => NetworkFailure(
-        code: 'request_validation_failed',
-        isRetryable: false,
-        kind: NetworkFailureKind.validation,
-        statusCode: statusCode,
+    final (code, kind, retryable) = switch (statusCode) {
+      400 || 422 => (
+        'request_validation_failed',
+        NetworkFailureKind.validation,
+        false,
       ),
-      401 => NetworkFailure(
-        code: 'unauthorized',
-        isRetryable: false,
-        kind: NetworkFailureKind.unauthorized,
-        statusCode: statusCode,
+      401 => ('unauthorized', NetworkFailureKind.unauthorized, false),
+      403 => ('forbidden', NetworkFailureKind.forbidden, false),
+      404 => ('resource_not_found', NetworkFailureKind.notFound, false),
+      408 => ('network_timeout', NetworkFailureKind.timeout, true),
+      409 => ('resource_conflict', NetworkFailureKind.conflict, false),
+      429 => ('rate_limited', NetworkFailureKind.rateLimited, true),
+      int status when status >= 500 && status <= 599 => (
+        'server_error',
+        NetworkFailureKind.server,
+        true,
       ),
-      403 => NetworkFailure(
-        code: "forbidden",
-        isRetryable: false,
-        kind: NetworkFailureKind.forbidden,
-        statusCode: statusCode,
-      ),
-      404 => NetworkFailure(
-        code: "resource_not_found",
-        isRetryable: false,
-        kind: NetworkFailureKind.notFound,
-        statusCode: statusCode,
-      ),
-      408 => NetworkFailure(
-        code: 'network_timeout',
-        isRetryable: true,
-        kind: NetworkFailureKind.timeout,
-        statusCode: statusCode,
-      ),
-      409 => NetworkFailure(
-        code: "resource_conflict",
-        isRetryable: false,
-        kind: NetworkFailureKind.conflict,
-        statusCode: statusCode,
-      ),
-      429 => NetworkFailure(
-        code: "rate_limited",
-        isRetryable: true,
-        kind: NetworkFailureKind.rateLimited,
-        statusCode: statusCode,
-      ),
-      int code when code >= 500 && code <= 599 => NetworkFailure(
-        code: 'server_error',
-        isRetryable: true,
-        kind: NetworkFailureKind.server,
-        statusCode: statusCode,
-      ),
-      _ => NetworkFailure(
-        code: "network_unknown",
-        isRetryable: false,
-        kind: NetworkFailureKind.unknown,
-        statusCode: statusCode,
-      ),
+      _ => ('network_unknown', NetworkFailureKind.unknown, false),
     };
+
+    return NetworkFailure(
+      code: code,
+      kind: kind,
+      isRetryable: retryable,
+      statusCode: statusCode,
+      backendCode: backendCode,
+    );
+  }
+
+  static String? _readBackendCode(Object? data) {
+    if (data is! Map) return null;
+
+    final error = data['error'];
+    if (error is! Map) return null;
+
+    final code = error['code'];
+    if (code is! String ||
+        code.isEmpty ||
+        code.length > 64 ||
+        !_backendCodePattern.hasMatch(code)) {
+      return null;
+    }
+
+    return code;
   }
 }

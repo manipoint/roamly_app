@@ -1,3 +1,7 @@
+import 'package:roamly_app/src/features/home/domain/entities/destination_collection_query.dart';
+import 'package:roamly_app/src/features/home/domain/entities/destination_page.dart';
+import 'package:roamly_app/src/features/home/data/models/destination_page_model.dart';
+import 'package:roamly_app/src/features/home/domain/failures/destination_catalogue_failure.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roamly_app/src/features/home/data/models/home_discovery_model.dart';
 import 'package:roamly_app/src/features/home/data/repositories/default_home_discovery_repository.dart';
@@ -19,6 +23,27 @@ HomeDiscoveryModel _response() {
 
 final class _Source implements HomeRemoteDataSource {
   int calls = 0;
+  int catalogueCalls = 0;
+  DestinationCollectionQuery? query;
+  String? cursor;
+  final page = DestinationPageModel.fromJson({
+    'items': <Object?>[],
+    'next_cursor': null,
+  });
+  @override
+  Future<DestinationPageModel> getDestinations({
+    required DestinationCollectionQuery query,
+    required int limit,
+    String? cursor,
+  }) async {
+    catalogueCalls++;
+    this.query = query;
+    this.limit = limit;
+    this.cursor = cursor;
+    if (error case final value?) throw value;
+    return page;
+  }
+
   int? limit;
   Object? error;
   HomeDiscoveryModel response = _response();
@@ -71,6 +96,149 @@ void main() {
     expect(failure, isA<HomeDiscoveryFailure>());
     expect((failure as HomeDiscoveryFailure).kind, kind);
   }
+
+  group('getDestinations', () {
+    const query = DestinationCollectionQuery.popular();
+    Future<Result<DestinationPage>> load({int limit = 20, String? cursor}) =>
+        repository.getDestinations(query: query, limit: limit, cursor: cursor);
+    void expectFailure(
+      Result<DestinationPage> result,
+      DestinationCatalogueFailureKind kind,
+    ) {
+      final failure = (result as FailureResult<DestinationPage>).failure;
+      expect(failure, isA<DestinationCatalogueFailure>());
+      expect((failure as DestinationCatalogueFailure).kind, kind);
+    }
+
+    test(
+      'first page uses default limit and returns source page unchanged',
+      () async {
+        final result = await repository.getDestinations(query: query);
+        expect(
+          (result as Success<DestinationPage>).value,
+          same(source.page.toDomain()),
+        );
+        expect(source.query, same(query));
+        expect(source.limit, 20);
+        expect(source.cursor, isNull);
+        expect(source.catalogueCalls, 1);
+        expect(source.calls, 0);
+        expect(executor.calls, 1);
+      },
+    );
+    test(
+      'forwards continuation cursor unchanged with the query and limit',
+      () async {
+        const suggested = DestinationCollectionQuery.suggested();
+        await repository.getDestinations(
+          query: suggested,
+          limit: 50,
+          cursor: 'opaque_-cursor',
+        );
+        expect(source.query, same(suggested));
+        expect(source.limit, 50);
+        expect(source.cursor, 'opaque_-cursor');
+        expect(source.catalogueCalls, 1);
+        expect(executor.calls, 1);
+      },
+    );
+    test('accepts minimum and maximum page sizes', () async {
+      for (final limit in [1, 50]) {
+        expect(await load(limit: limit), isA<Success<DestinationPage>>());
+        expect(source.limit, limit);
+      }
+      expect(source.catalogueCalls, 2);
+    });
+    test('invalid limits and cursor lengths avoid all network work', () async {
+      for (final limit in [0, -1, 51]) {
+        expectFailure(
+          await load(limit: limit),
+          DestinationCatalogueFailureKind.invalidLimit,
+        );
+      }
+      for (final cursor in ['', 'a' * 513]) {
+        expectFailure(
+          await load(cursor: cursor),
+          DestinationCatalogueFailureKind.invalidCursor,
+        );
+      }
+      expect(executor.calls, 0);
+      expect(source.catalogueCalls, 0);
+    });
+    test(
+      'maps only HTTP 422 invalid_cursor to the catalogue failure',
+      () async {
+        executor.failure = const NetworkFailure(
+          code: 'request_validation_failed',
+          kind: NetworkFailureKind.validation,
+          isRetryable: false,
+          statusCode: 422,
+          backendCode: 'invalid_cursor',
+        );
+        expectFailure(
+          await load(cursor: 'stale'),
+          DestinationCatalogueFailureKind.invalidCursor,
+        );
+        expect(executor.calls, 1);
+      },
+    );
+    test('preserves other validation and network failures unchanged', () async {
+      for (final failure in [
+        const NetworkFailure(
+          code: 'request_validation_failed',
+          kind: NetworkFailureKind.validation,
+          isRetryable: false,
+          statusCode: 422,
+        ),
+        const NetworkFailure(
+          code: 'request_validation_failed',
+          kind: NetworkFailureKind.validation,
+          isRetryable: false,
+          statusCode: 422,
+          backendCode: 'invalid_limit',
+        ),
+        const NetworkFailure(
+          code: 'request_validation_failed',
+          kind: NetworkFailureKind.validation,
+          isRetryable: false,
+          statusCode: 400,
+          backendCode: 'invalid_cursor',
+        ),
+        const NetworkFailure(
+          code: 'network_timeout',
+          kind: NetworkFailureKind.timeout,
+          isRetryable: true,
+        ),
+        const NetworkFailure(
+          code: 'unauthorized',
+          kind: NetworkFailureKind.unauthorized,
+          isRetryable: false,
+          statusCode: 401,
+        ),
+      ]) {
+        executor.failure = failure;
+        expect(
+          ((await load()) as FailureResult<DestinationPage>).failure,
+          same(failure),
+        );
+      }
+      expect(executor.calls, 5);
+    });
+    test('maps malformed responses without retrying', () async {
+      source.error = const FormatException('bad response');
+      expectFailure(
+        await load(),
+        DestinationCatalogueFailureKind.invalidResponse,
+      );
+      expect(source.catalogueCalls, 1);
+      expect(executor.calls, 1);
+    });
+    test('propagates unexpected programming errors', () async {
+      final error = StateError('bug');
+      source.error = error;
+      await expectLater(load(), throwsA(same(error)));
+    });
+  });
 
   test('returns server-ranked discovery and forwards the limit', () async {
     final result = await repository.getHome(limit: 4);

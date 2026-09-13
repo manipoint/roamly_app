@@ -23,8 +23,19 @@ final class PreferenceDraftController extends Notifier<PreferenceDraft> {
     state = PreferenceDraft.fromPreferences(preferences);
   }
 
-  void selectTravelStyle(TravelStyle style) {
-    state = state.copyWith(travelStyle: style);
+  /// Toggles a style; rejects additions beyond the limit but always allows removal.
+  bool toggleTravelStyle(TravelStyle style) {
+    final updatedStyles = Set<TravelStyle>.of(state.travelStyles);
+    if (updatedStyles.remove(style)) {
+      state = state.copyWith(travelStyles: updatedStyles);
+      return true;
+    }
+    if (updatedStyles.length >= PreferenceDraft.maximumTravelStyles) {
+      return false;
+    }
+    updatedStyles.add(style);
+    state = state.copyWith(travelStyles: updatedStyles);
+    return true;
   }
 
   /// Adds or removes an interest.

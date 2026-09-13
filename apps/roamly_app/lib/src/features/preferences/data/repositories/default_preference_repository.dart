@@ -30,7 +30,7 @@ final class DefaultPreferenceRepository implements PreferenceRepository {
 
   @override
   Future<Result<UserPreferences>> savePreferences({
-    required TravelStyle travelStyle,
+    required Set<TravelStyle> travelStyles,
     required Set<TravelInterest> interests,
     required BudgetTier budgetTier,
     required TripPace tripPace,
@@ -38,10 +38,16 @@ final class DefaultPreferenceRepository implements PreferenceRepository {
     required CanonicalLocation? homeLocation,
   }) async {
     final selectedInterests = Set<TravelInterest>.unmodifiable(interests);
+    final selectedtravelStyles = Set<TravelStyle>.unmodifiable(travelStyles);
 
     if (selectedInterests.isEmpty || selectedInterests.length > 5) {
       return FailureResult<UserPreferences>(
         PreferenceFailure.invalidInterestCount(),
+      );
+    }
+    if (selectedtravelStyles.isEmpty || selectedtravelStyles.length > 3) {
+      return FailureResult<UserPreferences>(
+        PreferenceFailure.invalidTravelStyleCount(),
       );
     }
 
@@ -67,7 +73,7 @@ final class DefaultPreferenceRepository implements PreferenceRepository {
 
     return _execute(
       () => _remoteDataSource.savePreferences(
-        travelStyle: travelStyle,
+        travelStyles: selectedtravelStyles,
         interests: selectedInterests,
         budgetTier: budgetTier,
         tripPace: tripPace,

@@ -32,6 +32,7 @@ abstract final class AuthModule {
   static AuthDependencies create({
     required ApiConfig apiConfig,
     required RoamlyLogger logger,
+    bool enableHttpDebugLogging = false,
     FlutterSecureStorage? secureStorage,
     DeviceInfoPlugin? deviceInfoPlugin,
   }) {
@@ -41,6 +42,15 @@ abstract final class AuthModule {
     final tokenStore = SecureAuthTokenStore(storage: secureValueStore);
     final publicDio = DioFactory.create(configuration: apiConfig);
     final authenticatedDio = DioFactory.create(configuration: apiConfig);
+    if (enableHttpDebugLogging) {
+      publicDio.interceptors.add(
+        ApiDebugLoggingInterceptor(logger: logger.child('http.public')),
+      );
+
+      authenticatedDio.interceptors.add(
+        ApiDebugLoggingInterceptor(logger: logger.child('http.authenticated')),
+      );
+    }
     authenticatedDio.interceptors.add(BearerTokenInterceptor(tokenStore));
     final authenticatedApiClient = DioApiClient(dio: authenticatedDio);
     final remoteDataSource = ApiAuthRemoteDataSource(

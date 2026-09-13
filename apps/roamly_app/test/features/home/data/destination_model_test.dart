@@ -7,7 +7,7 @@ Map<String, Object?> _json() => <String, Object?>{
   'slug': 'lahore-pakistan',
   'name': ' Lahore ',
   'country_name': 'Pakistan',
-  'country_code': 'pk',
+  'country_code': 'PK',
   'summary': 'Historic architecture and food culture.',
   'image_url': 'https://images.example.test/lahore.webp',
   'image_alt': 'Lahore Fort at sunset',
@@ -37,6 +37,52 @@ void main() {
     });
   });
 
+  test('prefers nested cover image over legacy image fields', () {
+    final json = _json()
+      ..['cover_image'] = <String, Object?>{
+        'id': '00000000-0000-4000-8000-000000000099',
+        'url': 'https://images.example.test/new-cover.webp',
+        'alt_text': ' New cover description ',
+        'caption': null,
+        'width': null,
+        'height': null,
+      };
+    final destination = DestinationModel.fromJson(json).toDomain();
+    expect(
+      destination.imageUri.toString(),
+      'https://images.example.test/new-cover.webp',
+    );
+    expect(destination.imageAlt, 'New cover description');
+  });
+
+  test('rejects malformed cover images even when legacy fields are valid', () {
+    final invalidCovers = <Object?>[
+      null,
+      'https://images.example.test/cover.webp',
+      <Object?>[],
+      <String, Object?>{},
+      <String, Object?>{'url': 'https://images.example.test/cover.webp'},
+      for (final url in [
+        'http://images.example.test/cover.webp',
+        '/cover.webp',
+        'invalid',
+      ])
+        <String, Object?>{'url': url, 'alt_text': 'Cover'},
+      <String, Object?>{
+        'url': 'https://images.example.test/cover.webp',
+        'alt_text': ' ',
+      },
+      <String, Object?>{
+        'url': 'https://images.example.test/cover.webp',
+        'alt_text': 42,
+      },
+    ];
+    for (final cover in invalidCovers) {
+      final json = _json()..['cover_image'] = cover;
+      expect(() => DestinationModel.fromJson(json), throwsFormatException);
+    }
+  });
+
   test('rejects duplicate taxonomy values through JsonReader', () {
     final json = _json()..['styles'] = <Object?>['culture', 'culture'];
 
@@ -58,6 +104,7 @@ void main() {
     final invalidCases = <Map<String, Object?>>[
       _json()..['id'] = 'not-a-uuid',
       _json()..['slug'] = 'Lahore Pakistan',
+      _json()..['country_code'] = 'pk',
       _json()..['latitude'] = 91,
       _json()..['longitude'] = -181,
       _json()..['budget_tier'] = 'cheap',
