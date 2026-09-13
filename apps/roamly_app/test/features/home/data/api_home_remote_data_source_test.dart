@@ -26,6 +26,30 @@ Map<String, Object?> _response() => <String, Object?>{
   'spotlight': <String, Object?>{'kind': 'featured', 'items': <Object?>[]},
 };
 
+Map<String, Object?> _detailResponse() => <String, Object?>{
+  'id': '00000000-0000-4000-8000-000000000001',
+  'slug': 'bali-indonesia',
+  'name': 'Bali',
+  'destination_type': 'island',
+  'country_name': 'Indonesia',
+  'country_code': 'ID',
+  'summary': 'A tropical island rich in culture and natural beauty.',
+  'full_description':
+      'Explore beaches, temples, local traditions, and scenic landscapes.',
+  'location': <String, Object?>{
+    'latitude': -8.4095,
+    'longitude': 115.1889,
+    'map_zoom': 9,
+  },
+  'budget_tier': 'mid_range',
+  'styles': <Object?>['beaches'],
+  'interests': <Object?>['photography'],
+  'gallery': <Object?>[],
+  'places': <Object?>[],
+  'places_next_cursor': null,
+  'has_more_places': false,
+};
+
 final class _Client implements ApiClient {
   Object? response = _response();
   Object? error;
@@ -108,5 +132,54 @@ void main() {
 
     await expectLater(source.getHome(limit: 3), throwsA(same(error)));
     expect(client.calls, 1);
+  });
+
+  group('getDestinationDetail', () {
+    test('normalizes the slug used in the request path', () async {
+      client.response = _detailResponse();
+
+      final model = await source.getDestinationDetail(
+        slug: '  bali-indonesia  ',
+      );
+
+      expect(client.calls, 1);
+      expect(client.path, 'destinations/bali-indonesia');
+      expect(client.queryParameters, isNull);
+      expect(model.toDomain().slug, 'bali-indonesia');
+    });
+
+    test('rejects invalid slugs before network work', () async {
+      for (final slug in ['', '   ', 'Bali Indonesia', '../bali']) {
+        await expectLater(
+          source.getDestinationDetail(slug: slug),
+          throwsA(isA<ArgumentError>()),
+        );
+      }
+
+      expect(client.calls, 0);
+    });
+
+    test('rejects malformed detail response roots', () async {
+      for (final response in <Object?>[null, <Object?>[], 'invalid']) {
+        client.response = response;
+        await expectLater(
+          source.getDestinationDetail(slug: 'bali-indonesia'),
+          throwsFormatException,
+        );
+      }
+
+      expect(client.calls, 3);
+    });
+
+    test('propagates detail transport failures without retrying', () async {
+      final error = Exception('transport failure');
+      client.error = error;
+
+      await expectLater(
+        source.getDestinationDetail(slug: 'bali-indonesia'),
+        throwsA(same(error)),
+      );
+      expect(client.calls, 1);
+    });
   });
 }

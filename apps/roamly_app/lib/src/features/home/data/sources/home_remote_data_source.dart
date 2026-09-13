@@ -1,3 +1,4 @@
+import 'package:roamly_app/src/features/home/data/models/destination_detail_model.dart';
 import 'package:roamly_app/src/features/home/data/models/home_discovery_model.dart';
 
 import '../../domain/entities/destination_collection_query.dart';
@@ -9,5 +10,8 @@ abstract interface class HomeRemoteDataSource {
     required DestinationCollectionQuery query,
     required int limit,
     String? cursor,
+  });
+  Future<DestinationDetailModel> getDestinationDetail({
+    required String slug
   });
 }

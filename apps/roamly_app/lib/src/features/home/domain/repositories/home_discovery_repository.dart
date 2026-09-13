@@ -1,6 +1,7 @@
 import 'package:roamly_core/roamly_core.dart';
 
 import '../entities/destination_collection_query.dart';
+import '../entities/destination_detail.dart';
 import '../entities/destination_page.dart';
 import '../entities/home_discovery.dart';
 
@@ -17,5 +18,9 @@ abstract interface class HomeDiscoveryRepository {
     required DestinationCollectionQuery query,
     int limit = 20,
     String? cursor,
+  });
+  /// Returns complete destination editorial content using its stable slug.
+  Future<Result<DestinationDetail>> getDestinationDetail({
+    required String slug,
   });
 }

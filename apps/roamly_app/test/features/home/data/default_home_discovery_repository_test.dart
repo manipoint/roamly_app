@@ -1,7 +1,10 @@
 import 'package:roamly_app/src/features/home/domain/entities/destination_collection_query.dart';
+import 'package:roamly_app/src/features/home/domain/entities/destination_detail.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination_page.dart';
+import 'package:roamly_app/src/features/home/data/models/destination_detail_model.dart';
 import 'package:roamly_app/src/features/home/data/models/destination_page_model.dart';
 import 'package:roamly_app/src/features/home/domain/failures/destination_catalogue_failure.dart';
+import 'package:roamly_app/src/features/home/domain/failures/destination_detail_failure.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roamly_app/src/features/home/data/models/home_discovery_model.dart';
 import 'package:roamly_app/src/features/home/data/repositories/default_home_discovery_repository.dart';
@@ -21,9 +24,37 @@ HomeDiscoveryModel _response() {
   });
 }
 
+DestinationDetailModel _detailResponse() {
+  return DestinationDetailModel.fromJson(<String, Object?>{
+    'id': '00000000-0000-4000-8000-000000000001',
+    'slug': 'bali-indonesia',
+    'name': 'Bali',
+    'destination_type': 'island',
+    'country_name': 'Indonesia',
+    'country_code': 'ID',
+    'summary': 'A tropical island rich in culture and natural beauty.',
+    'full_description':
+        'Explore beaches, temples, local traditions, and scenic landscapes.',
+    'location': <String, Object?>{
+      'latitude': -8.4095,
+      'longitude': 115.1889,
+      'map_zoom': 9,
+    },
+    'budget_tier': 'mid_range',
+    'styles': <Object?>['beaches'],
+    'interests': <Object?>['photography'],
+    'gallery': <Object?>[],
+    'places': <Object?>[],
+    'places_next_cursor': null,
+    'has_more_places': false,
+  });
+}
+
 final class _Source implements HomeRemoteDataSource {
   int calls = 0;
   int catalogueCalls = 0;
+  int detailCalls = 0;
+  String? detailSlug;
   DestinationCollectionQuery? query;
   String? cursor;
   final page = DestinationPageModel.fromJson({
@@ -47,6 +78,7 @@ final class _Source implements HomeRemoteDataSource {
   int? limit;
   Object? error;
   HomeDiscoveryModel response = _response();
+  DestinationDetailModel detailResponse = _detailResponse();
 
   @override
   Future<HomeDiscoveryModel> getHome({required int limit}) async {
@@ -56,6 +88,18 @@ final class _Source implements HomeRemoteDataSource {
       throw value;
     }
     return response;
+  }
+
+  @override
+  Future<DestinationDetailModel> getDestinationDetail({
+    required String slug,
+  }) async {
+    detailCalls++;
+    detailSlug = slug;
+    if (error case final value?) {
+      throw value;
+    }
+    return detailResponse;
   }
 }
 
@@ -96,6 +140,103 @@ void main() {
     expect(failure, isA<HomeDiscoveryFailure>());
     expect((failure as HomeDiscoveryFailure).kind, kind);
   }
+
+  group('getDestinationDetail', () {
+    Future<Result<DestinationDetail>> load([String slug = 'bali-indonesia']) {
+      return repository.getDestinationDetail(slug: slug);
+    }
+
+    void expectFailure(
+      Result<DestinationDetail> result,
+      DestinationDetailFailureKind kind,
+    ) {
+      expect(result, isA<FailureResult<DestinationDetail>>());
+      final failure = (result as FailureResult<DestinationDetail>).failure;
+      expect(failure, isA<DestinationDetailFailure>());
+      expect((failure as DestinationDetailFailure).kind, kind);
+    }
+
+    test('normalizes a valid slug and returns the domain detail', () async {
+      final result = await load('  bali-indonesia  ');
+
+      expect(
+        (result as Success<DestinationDetail>).value,
+        same(source.detailResponse.toDomain()),
+      );
+      expect(source.detailSlug, 'bali-indonesia');
+      expect(source.detailCalls, 1);
+      expect(executor.calls, 1);
+    });
+
+    test('invalid slugs avoid executor and remote work', () async {
+      for (final slug in ['', '   ', 'Bali Indonesia', '../bali']) {
+        expectFailure(
+          await load(slug),
+          DestinationDetailFailureKind.invalidSlug,
+        );
+      }
+
+      expect(executor.calls, 0);
+      expect(source.detailCalls, 0);
+    });
+
+    test('maps only the documented not-found response', () async {
+      executor.failure = const NetworkFailure(
+        code: 'not_found',
+        kind: NetworkFailureKind.notFound,
+        isRetryable: false,
+        statusCode: 404,
+        backendCode: 'destination_not_found',
+      );
+
+      expectFailure(await load(), DestinationDetailFailureKind.notFound);
+      expect(executor.calls, 1);
+      expect(source.detailCalls, 0);
+    });
+
+    test('preserves unrelated network failures unchanged', () async {
+      for (final failure in [
+        const NetworkFailure(
+          code: 'not_found',
+          kind: NetworkFailureKind.notFound,
+          isRetryable: false,
+          statusCode: 404,
+          backendCode: 'place_not_found',
+        ),
+        const NetworkFailure(
+          code: 'network_timeout',
+          kind: NetworkFailureKind.timeout,
+          isRetryable: true,
+        ),
+      ]) {
+        executor.failure = failure;
+
+        final result = await load();
+
+        expect(
+          (result as FailureResult<DestinationDetail>).failure,
+          same(failure),
+        );
+      }
+      expect(executor.calls, 2);
+      expect(source.detailCalls, 0);
+    });
+
+    test('maps malformed responses without retrying', () async {
+      source.error = const FormatException('bad response');
+
+      expectFailure(await load(), DestinationDetailFailureKind.invalidResponse);
+      expect(source.detailCalls, 1);
+      expect(executor.calls, 1);
+    });
+
+    test('does not disguise unexpected programming errors', () async {
+      final error = StateError('bug');
+      source.error = error;
+
+      await expectLater(load(), throwsA(same(error)));
+    });
+  });
 
   group('getDestinations', () {
     const query = DestinationCollectionQuery.popular();

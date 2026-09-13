@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:roamly_app/src/features/home/domain/entities/destination_collection_query.dart';
+import 'package:roamly_app/src/features/home/domain/entities/destination_detail.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -86,6 +87,13 @@ final class _Repository implements HomeDiscoveryRepository {
   Future<Result<HomeDiscovery>> getHome({required int limit}) async {
     calls++;
     return pending?.future ?? result;
+  }
+
+  @override
+  Future<Result<DestinationDetail>> getDestinationDetail({
+    required String slug,
+  }) {
+    throw StateError('Unexpected destination detail request.');
   }
 }
 

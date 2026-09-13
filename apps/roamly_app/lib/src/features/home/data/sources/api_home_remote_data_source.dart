@@ -1,4 +1,5 @@
 import 'package:roamly_app/src/features/home/data/api/home_api_paths.dart';
+import 'package:roamly_app/src/features/home/data/models/destination_detail_model.dart';
 import 'package:roamly_app/src/features/home/data/models/destination_page_model.dart';
 import 'package:roamly_app/src/features/home/data/models/home_discovery_model.dart';
 import 'package:roamly_app/src/features/home/data/sources/home_remote_data_source.dart';
@@ -6,6 +7,7 @@ import 'package:roamly_app/src/features/home/domain/entities/destination_collect
 import 'package:roamly_app/src/features/preferences/data/mappers/preference_enum_mapper.dart';
 import 'package:roamly_networking/roamly_networking.dart';
 
+import '../../../../app/validator/roamly_value_validators.dart';
 import '../../domain/policies/home_discovery_policy.dart';
 
 final class ApiHomeRemoteDataSource implements HomeRemoteDataSource {
@@ -65,5 +67,19 @@ final class ApiHomeRemoteDataSource implements HomeRemoteDataSource {
     final reader = JsonReader(<String, Object?>{'response': response});
 
     return DestinationPageModel.fromJson(reader.object('response'));
+  }
+
+  @override
+  Future<DestinationDetailModel> getDestinationDetail({
+    required String slug,
+  }) async {
+    final normalizedSlug = slug.trim();
+    if (!RoamlyValueValidators.isValidSlug(normalizedSlug)) {
+      throw ArgumentError.value(slug, 'slug', 'Destination slug is invalid.');
+    }
+
+    final response = await _apiClient.get(HomeApiPaths.destinationDetail(normalizedSlug));
+    final reader = JsonReader(<String, Object?>{'response': response});
+    return DestinationDetailModel.fromJson(reader.object('response'));
   }
 }
