@@ -1,10 +1,13 @@
+import 'package:roamly_app/src/features/home/data/models/destination_place_detail_model.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination_collection_query.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination_detail.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination_page.dart';
+import 'package:roamly_app/src/features/home/domain/entities/destination_place_detail.dart';
 import 'package:roamly_app/src/features/home/data/models/destination_detail_model.dart';
 import 'package:roamly_app/src/features/home/data/models/destination_page_model.dart';
 import 'package:roamly_app/src/features/home/domain/failures/destination_catalogue_failure.dart';
 import 'package:roamly_app/src/features/home/domain/failures/destination_detail_failure.dart';
+import 'package:roamly_app/src/features/home/domain/failures/destination_place_detail_failure.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roamly_app/src/features/home/data/models/home_discovery_model.dart';
 import 'package:roamly_app/src/features/home/data/repositories/default_home_discovery_repository.dart';
@@ -50,11 +53,40 @@ DestinationDetailModel _detailResponse() {
   });
 }
 
+DestinationPlaceDetailModel _placeDetailResponse({
+  String destinationSlug = 'tokyo-japan',
+  String placeSlug = 'meiji-shrine',
+}) {
+  return DestinationPlaceDetailModel.fromJson(<String, Object?>{
+    'id': '00000000-0000-4000-8000-000000000010',
+    'slug': placeSlug,
+    'name': 'Meiji Shrine',
+    'place_type': 'religious_site',
+    'summary': 'Visit a peaceful shrine surrounded by a large forest in Tokyo.',
+    'location': <String, Object?>{
+      'latitude': 35.6748,
+      'longitude': 139.6996,
+      'map_zoom': null,
+    },
+    'address': '1 Yoyogi Kamizonocho, Shibuya, Tokyo',
+    'is_featured': true,
+    'cover_image': null,
+    'destination_slug': destinationSlug,
+    'full_description':
+        'Meiji Shrine is a peaceful Shinto shrine surrounded by a forest '
+        'in the centre of Tokyo.',
+    'gallery': <Object?>[],
+  });
+}
+
 final class _Source implements HomeRemoteDataSource {
   int calls = 0;
   int catalogueCalls = 0;
   int detailCalls = 0;
+  int placeDetailCalls = 0;
   String? detailSlug;
+  String? placeDestinationSlug;
+  String? placeSlug;
   DestinationCollectionQuery? query;
   String? cursor;
   final page = DestinationPageModel.fromJson({
@@ -79,6 +111,7 @@ final class _Source implements HomeRemoteDataSource {
   Object? error;
   HomeDiscoveryModel response = _response();
   DestinationDetailModel detailResponse = _detailResponse();
+  DestinationPlaceDetailModel placeDetailResponse = _placeDetailResponse();
 
   @override
   Future<HomeDiscoveryModel> getHome({required int limit}) async {
@@ -100,6 +133,20 @@ final class _Source implements HomeRemoteDataSource {
       throw value;
     }
     return detailResponse;
+  }
+
+  @override
+  Future<DestinationPlaceDetailModel> getDestinationPlaceDetail({
+    required String destinationSlug,
+    required String placeSlug,
+  }) async {
+    placeDetailCalls++;
+    placeDestinationSlug = destinationSlug;
+    this.placeSlug = placeSlug;
+    if (error case final value?) {
+      throw value;
+    }
+    return placeDetailResponse;
   }
 }
 
@@ -227,6 +274,162 @@ void main() {
 
       expectFailure(await load(), DestinationDetailFailureKind.invalidResponse);
       expect(source.detailCalls, 1);
+      expect(executor.calls, 1);
+    });
+
+    test('does not disguise unexpected programming errors', () async {
+      final error = StateError('bug');
+      source.error = error;
+
+      await expectLater(load(), throwsA(same(error)));
+    });
+  });
+
+  group('getDestinationPlaceDetail', () {
+    Future<Result<DestinationPlaceDetail>> load({
+      String destinationSlug = 'tokyo-japan',
+      String placeSlug = 'meiji-shrine',
+    }) {
+      return repository.getDestinationPlaceDetail(
+        destinationSlug: destinationSlug,
+        placeSlug: placeSlug,
+      );
+    }
+
+    void expectFailure(
+      Result<DestinationPlaceDetail> result,
+      DestinationPlaceDetailFailureKind kind,
+    ) {
+      expect(result, isA<FailureResult<DestinationPlaceDetail>>());
+      final failure = (result as FailureResult<DestinationPlaceDetail>).failure;
+      expect(failure, isA<DestinationPlaceDetailFailure>());
+      expect((failure as DestinationPlaceDetailFailure).kind, kind);
+    }
+
+    test('normalizes both slugs and returns the matching detail', () async {
+      final result = await load(
+        destinationSlug: '  tokyo-japan  ',
+        placeSlug: '  meiji-shrine  ',
+      );
+
+      expect(
+        (result as Success<DestinationPlaceDetail>).value,
+        same(source.placeDetailResponse.toDomain()),
+      );
+      expect(source.placeDestinationSlug, 'tokyo-japan');
+      expect(source.placeSlug, 'meiji-shrine');
+      expect(source.placeDetailCalls, 1);
+      expect(executor.calls, 1);
+    });
+
+    test('invalid destination slug avoids executor and remote work', () async {
+      for (final slug in ['', '   ', 'Tokyo Japan', '../tokyo']) {
+        expectFailure(
+          await load(destinationSlug: slug),
+          DestinationPlaceDetailFailureKind.invalidDestinationSlug,
+        );
+      }
+
+      expect(executor.calls, 0);
+      expect(source.placeDetailCalls, 0);
+    });
+
+    test('invalid place slug avoids executor and remote work', () async {
+      for (final slug in ['', '   ', 'Meiji Shrine', '../meiji']) {
+        expectFailure(
+          await load(placeSlug: slug),
+          DestinationPlaceDetailFailureKind.invalidPlaceSlug,
+        );
+      }
+
+      expect(executor.calls, 0);
+      expect(source.placeDetailCalls, 0);
+    });
+
+    test('maps both documented not-found responses', () async {
+      for (final backendCode in [
+        'destination_not_found',
+        'destination_place_not_found',
+      ]) {
+        executor.failure = NetworkFailure(
+          code: 'not_found',
+          kind: NetworkFailureKind.notFound,
+          isRetryable: false,
+          statusCode: 404,
+          backendCode: backendCode,
+        );
+
+        expectFailure(await load(), DestinationPlaceDetailFailureKind.notFound);
+      }
+
+      expect(executor.calls, 2);
+      expect(source.placeDetailCalls, 0);
+    });
+
+    test('preserves unrelated network failures unchanged', () async {
+      for (final failure in [
+        const NetworkFailure(
+          code: 'not_found',
+          kind: NetworkFailureKind.notFound,
+          isRetryable: false,
+          statusCode: 404,
+          backendCode: 'place_not_found',
+        ),
+        const NetworkFailure(
+          code: 'network_timeout',
+          kind: NetworkFailureKind.timeout,
+          isRetryable: true,
+        ),
+      ]) {
+        executor.failure = failure;
+
+        final result = await load();
+
+        expect(
+          (result as FailureResult<DestinationPlaceDetail>).failure,
+          same(failure),
+        );
+      }
+
+      expect(executor.calls, 2);
+      expect(source.placeDetailCalls, 0);
+    });
+
+    test('maps malformed responses to an invalid-response failure', () async {
+      source.error = const FormatException('bad response');
+
+      expectFailure(
+        await load(),
+        DestinationPlaceDetailFailureKind.invalidResponse,
+      );
+      expect(source.placeDetailCalls, 1);
+      expect(executor.calls, 1);
+    });
+
+    test(
+      'rejects a response whose destination identity does not match',
+      () async {
+        source.placeDetailResponse = _placeDetailResponse(
+          destinationSlug: 'kyoto-japan',
+        );
+
+        expectFailure(
+          await load(),
+          DestinationPlaceDetailFailureKind.invalidResponse,
+        );
+        expect(source.placeDetailCalls, 1);
+        expect(executor.calls, 1);
+      },
+    );
+
+    test('rejects a response whose place identity does not match', () async {
+      source.placeDetailResponse = _placeDetailResponse(placeSlug: 'senso-ji');
+
+      expectFailure(
+        await load(),
+        DestinationPlaceDetailFailureKind.invalidResponse,
+      );
+      expect(source.placeDetailCalls, 1);
       expect(executor.calls, 1);
     });
 

@@ -5,9 +5,11 @@ final class TripsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      key: ValueKey<String>('trips-page'),
-      child: Text('Trips'),
+    return const SafeArea(
+      bottom: false,
+      left: false,
+      right: false,
+      child: Center(key: ValueKey<String>('trips-page'), child: Text('Trips')),
     );
   }
 }

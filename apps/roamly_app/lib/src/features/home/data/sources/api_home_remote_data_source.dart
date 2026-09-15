@@ -1,6 +1,7 @@
 import 'package:roamly_app/src/features/home/data/api/home_api_paths.dart';
 import 'package:roamly_app/src/features/home/data/models/destination_detail_model.dart';
 import 'package:roamly_app/src/features/home/data/models/destination_page_model.dart';
+import 'package:roamly_app/src/features/home/data/models/destination_place_detail_model.dart';
 import 'package:roamly_app/src/features/home/data/models/home_discovery_model.dart';
 import 'package:roamly_app/src/features/home/data/sources/home_remote_data_source.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination_collection_query.dart';
@@ -78,8 +79,42 @@ final class ApiHomeRemoteDataSource implements HomeRemoteDataSource {
       throw ArgumentError.value(slug, 'slug', 'Destination slug is invalid.');
     }
 
-    final response = await _apiClient.get(HomeApiPaths.destinationDetail(normalizedSlug));
+    final response = await _apiClient.get(
+      HomeApiPaths.destinationDetail(normalizedSlug),
+    );
     final reader = JsonReader(<String, Object?>{'response': response});
     return DestinationDetailModel.fromJson(reader.object('response'));
+  }
+
+  @override
+  Future<DestinationPlaceDetailModel> getDestinationPlaceDetail({
+    required String destinationSlug,
+    required String placeSlug,
+  }) async {
+    final normalizedDestinationSlug = destinationSlug.trim();
+    final normalizedPlaceSlug = placeSlug.trim();
+    if (!RoamlyValueValidators.isValidSlug(normalizedDestinationSlug)) {
+      throw ArgumentError.value(
+        destinationSlug,
+        'destinationSlug',
+        'Destination slug is invalid.',
+      );
+    }
+    if (!RoamlyValueValidators.isValidSlug(normalizedPlaceSlug)) {
+      throw ArgumentError.value(
+        placeSlug,
+        'placeSlug',
+        'Destination place slug is invalid.',
+      );
+    }
+    final response = await _apiClient.get(
+      HomeApiPaths.destinationPlaceDetail(
+        destinationSlug: normalizedDestinationSlug,
+        placeSlug: normalizedPlaceSlug,
+      ),
+    );
+
+    final reader = JsonReader({'response': response});
+    return DestinationPlaceDetailModel.fromJson(reader.object('response'));
   }
 }

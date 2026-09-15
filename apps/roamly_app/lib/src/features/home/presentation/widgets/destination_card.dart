@@ -8,7 +8,7 @@ import 'home_destination_image.dart';
 enum DestinationCardVariant { compact, editorial, grid }
 
 final class DestinationCard extends StatelessWidget {
-   DestinationCard({
+  DestinationCard({
     super.key,
     required this.destination,
     required this.onTap,
@@ -113,7 +113,6 @@ final class DestinationCard extends StatelessWidget {
   }
 }
 
-
 final class _EditorialLayout extends StatelessWidget {
   const _EditorialLayout({required this.image, required this.copy});
 
@@ -160,7 +159,6 @@ final class _EditorialLayout extends StatelessWidget {
     );
   }
 }
-
 
 final class _DestinationCopy extends StatelessWidget {
   const _DestinationCopy({

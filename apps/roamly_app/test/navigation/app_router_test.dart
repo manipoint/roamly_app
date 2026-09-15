@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:roamly_app/src/app/widgets/session_loading_view.dart';
 import 'package:roamly_app/src/features/auth/presentation/pages/register_page.dart';
 import 'package:roamly_app/src/features/auth/presentation/pages/sign_in_page.dart';
+import 'package:roamly_app/src/features/home/presentation/pages/destination_detail_page.dart';
 import 'package:roamly_app/src/features/home/presentation/pages/home_page.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination_collection.dart';
 import 'package:roamly_app/src/features/home/domain/entities/home_discovery.dart';
@@ -32,7 +33,7 @@ final class _PreferenceRepository implements PreferenceRepository {
   Future<Result<UserPreferences>> getPreferences() async {
     return Success<UserPreferences>(
       UserPreferences(
-        travelStyles: const{},
+        travelStyles: const {},
         interests: const <TravelInterest>{},
         budgetTier: null,
         tripPace: null,
@@ -154,6 +155,26 @@ void main() {
 
     expect(currentPath(harness.router), AppRoutePaths.home);
     expect(find.byType(HomePage), findsOneWidget);
+  });
+
+  testWidgets('opens an authenticated destination deep link without extra', (
+    tester,
+  ) async {
+    final harness = createRouter(() async => authenticatedUser);
+    addTearDown(harness.container.dispose);
+
+    await pumpRouter(tester, harness);
+    await tester.pumpAndSettle();
+
+    harness.router.go('/home/destinations/bali-indonesia');
+    await tester.pumpAndSettle();
+
+    expect(currentPath(harness.router), '/home/destinations/bali-indonesia');
+    final page = tester.widget<DestinationDetailPage>(
+      find.byType(DestinationDetailPage),
+    );
+    expect(page.slug, 'bali-indonesia');
+    expect(page.initialTitle, isNull);
   });
 
   testWidgets('prevents an authenticated user from opening auth routes', (

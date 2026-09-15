@@ -6,6 +6,7 @@ import 'package:roamly_app/src/features/home/domain/entities/destination.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination_collection_query.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination_detail.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination_page.dart';
+import 'package:roamly_app/src/features/home/domain/entities/destination_place_detail.dart';
 import 'package:roamly_app/src/features/home/domain/entities/home_discovery.dart';
 import 'package:roamly_app/src/features/home/domain/repositories/home_discovery_repository.dart';
 import 'package:roamly_app/src/features/home/presentation/pages/destination_collection_page.dart';
@@ -63,6 +64,12 @@ class _Repository implements HomeDiscoveryRepository {
   Future<Result<DestinationDetail>> getDestinationDetail({
     required String slug,
   }) => throw StateError('Unexpected destination detail request');
+
+  @override
+  Future<Result<DestinationPlaceDetail>> getDestinationPlaceDetail({
+    required String destinationSlug,
+    required String placeSlug,
+  }) => throw StateError('Unexpected destination place detail request');
 }
 
 void main() {

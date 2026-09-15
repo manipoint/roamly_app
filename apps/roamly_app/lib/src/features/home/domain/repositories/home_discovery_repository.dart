@@ -1,3 +1,4 @@
+import 'package:roamly_app/src/features/home/domain/entities/destination_place_detail.dart';
 import 'package:roamly_core/roamly_core.dart';
 
 import '../entities/destination_collection_query.dart';
@@ -22,5 +23,12 @@ abstract interface class HomeDiscoveryRepository {
   /// Returns complete destination editorial content using its stable slug.
   Future<Result<DestinationDetail>> getDestinationDetail({
     required String slug,
+  });
+
+   Future<Result<DestinationPlaceDetail>> getDestinationPlaceDetail({
+    required String destinationSlug,
+    required String placeSlug,
+
+
   });
 }

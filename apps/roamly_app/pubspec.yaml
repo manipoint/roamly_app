@@ -24,6 +24,7 @@ dependencies:
     path: ../../packages/roamly_ui
   roamly_core:
     path: ../../packages/roamly_core
+  map_launcher: ^6.0.0
 
 dev_dependencies:
   flutter_test:

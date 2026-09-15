@@ -174,6 +174,34 @@ abstract final class AppStrings {
   static const String finishSetup = 'Finish setup';
   static const String homeLoadMore = 'Load more';
   static const String homeLoadMoreFailed = 'Could not load more destinations.';
+  static const String destinationDetails = 'Destination details';
+  static const String destinationDetailLoading = 'Loading destination details';
+  static const String destinationDetailLoadFailed =
+      'We could not load this destination. Please try again.';
+  static const String destinationDetailNotFound =
+      'This destination is no longer available.';
+  static const String destinationDetailInvalid =
+      'This destination link is invalid.';
+  static const String destinationAbout = 'About';
+  static const String destinationGallery = 'Gallery';
+  static const String destinationPlaces = 'Places to visit';
+  static const String destinationPlaceDetails = 'Place details';
+  static const String destinationPlaceAbout = 'About this place';
+  static const String destinationPlaceGallery = destinationGallery;
+  static const String destinationPlaceLoadFailed =
+      'We could not load this place. Please try again.';
+  static const String destinationPlaceNotFound =
+      'This place is no longer available.';
+  static const String destinationPlaceInvalid = 'This place link is invalid.';
+  static const String viewImageFullScreen = 'View image full screen';
+  static const String viewOnMap = 'View on map';
+  static const String directions = 'Directions';
+  static const String mapOpenFailed = 'Could not open directions.';
+  static const String chooseMapApp = 'Open with';
+  static const String noMapAppAvailable =
+      'Install Apple Maps, Google Maps or Waze to open directions.';
+  static String mediaPosition(int current, int total) => '$current / $total';
+  static String mapMarkerFor(String name) => 'Map marker for $name';
   static String preferenceProgress(int currentStep, int stepCount) {
     return 'Step $currentStep of $stepCount';
   }

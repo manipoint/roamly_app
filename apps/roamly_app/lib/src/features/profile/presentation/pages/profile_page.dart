@@ -51,42 +51,47 @@ final class ProfilePage extends ConsumerWidget {
         ? '?'
         : email.substring(0, 1).toUpperCase();
 
-    return CustomScrollView(
-      key: const ValueKey<String>('profile-page'),
-      slivers: <Widget>[
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            RoamlySpacing.space20,
-            RoamlySpacing.space24,
-            RoamlySpacing.space20,
-            RoamlySpacing.space32,
+    return SafeArea(
+      bottom: false,
+      left: false,
+      right: false,
+      child: CustomScrollView(
+        key: const ValueKey<String>('profile-page'),
+        slivers: <Widget>[
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              RoamlySpacing.space20,
+              RoamlySpacing.space24,
+              RoamlySpacing.space20,
+              RoamlySpacing.space32,
+            ),
+            sliver: SliverList.list(
+              children: <Widget>[
+                Text(
+                  AppStrings.profile,
+                  style: Theme.of(context).textTheme.headlineLarge,
+                ),
+                const SizedBox(height: RoamlySpacing.space24),
+                _ProfileIdentityCard(email: email, avatarLabel: avatarLabel),
+                const SizedBox(height: RoamlySpacing.space32),
+                Text(
+                  AppStrings.account,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: RoamlySpacing.space12),
+                RoamlyButton.destructive(
+                  key: const ValueKey<String>('profile-logout-button'),
+                  label: AppStrings.signOut,
+                  leadingIcon: const Icon(Icons.logout_rounded),
+                  expand: true,
+                  isLoading: authState.isLoading,
+                  onPressed: () => _confirmAndLogout(context, ref),
+                ),
+              ],
+            ),
           ),
-          sliver: SliverList.list(
-            children: <Widget>[
-              Text(
-                AppStrings.profile,
-                style: Theme.of(context).textTheme.headlineLarge,
-              ),
-              const SizedBox(height: RoamlySpacing.space24),
-              _ProfileIdentityCard(email: email, avatarLabel: avatarLabel),
-              const SizedBox(height: RoamlySpacing.space32),
-              Text(
-                AppStrings.account,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: RoamlySpacing.space12),
-              RoamlyButton.destructive(
-                key: const ValueKey<String>('profile-logout-button'),
-                label: AppStrings.signOut,
-                leadingIcon: const Icon(Icons.logout_rounded),
-                expand: true,
-                isLoading: authState.isLoading,
-                onPressed: () => _confirmAndLogout(context, ref),
-              ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

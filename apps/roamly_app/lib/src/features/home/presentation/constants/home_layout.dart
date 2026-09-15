@@ -16,6 +16,7 @@ abstract final class HomeLayout {
   static const double gridMinCardWidth = 160;
   static const int gridMaxColumns = 4;
   static const double gridImageAspectRatio = 4 / 3;
+  static const double heroImageAspectRatio = 1;
 
   static int gridColumnCount(double viewportWidth) {
     return gridColumnCountForAvailableWidth(viewportWidth - gridPadding * 2);

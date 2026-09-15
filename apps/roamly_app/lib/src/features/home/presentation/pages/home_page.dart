@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination_collection_query.dart';
+import 'package:roamly_app/src/navigation/app_routes.dart';
 import 'package:roamly_ui/roamly_ui.dart';
 
 import '../../../../branding/widgets/roamly_app_icon.dart';
@@ -34,6 +36,17 @@ final class _HomePageState extends ConsumerState<HomePage> {
     await ref.read(homeDiscoveryControllerProvider.notifier).reload();
   }
 
+  Future<void> _openDestination(
+    BuildContext routeContext,
+    Destination destination,
+  ) async {
+    await routeContext.pushNamed<void>(
+      AppRouteNames.destinationDetail,
+      pathParameters: <String, String>{'slug': destination.slug},
+      extra: destination.name,
+    );
+  }
+
   void _clearFilters() {
     setState(() {
       _search.clear();
@@ -45,144 +58,155 @@ final class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     final discovery = ref.watch(homeDiscoveryControllerProvider);
     if (discovery.isLoading && !discovery.hasValue) {
-      return const HomeLoadingView();
+      return const SafeArea(
+        bottom: false,
+        left: false,
+        right: false,
+        child: HomeLoadingView(),
+      );
     }
 
     final theme = Theme.of(context);
-    return RefreshIndicator(
-      onRefresh: _reload,
-      child: CustomScrollView(
-        key: const ValueKey<String>('home-page'),
-        physics: const AlwaysScrollableScrollPhysics(),
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              RoamlySpacing.space16,
-              RoamlySpacing.space12,
-              RoamlySpacing.space16,
-              RoamlySpacing.space16,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      const RoamlyAppIcon(size: RoamlySpacing.space40),
-                      const SizedBox(width: RoamlySpacing.space8),
-                      Expanded(
-                        child: Text.rich(
-                          TextSpan(
-                            children: [
-                              const TextSpan(text: AppStrings.appNamePrefix),
-                              TextSpan(
-                                text: AppStrings.appNameEmphasis,
-                                style: TextStyle(
-                                  color: theme.colorScheme.primary,
+    return SafeArea(
+      bottom: false,
+      left: false,
+      right: false,
+      child: RefreshIndicator(
+        onRefresh: _reload,
+        child: CustomScrollView(
+          key: const ValueKey<String>('home-page'),
+          physics: const AlwaysScrollableScrollPhysics(),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                RoamlySpacing.space16,
+                RoamlySpacing.space12,
+                RoamlySpacing.space16,
+                RoamlySpacing.space16,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        const RoamlyAppIcon(size: RoamlySpacing.space40),
+                        const SizedBox(width: RoamlySpacing.space8),
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(
+                              children: [
+                                const TextSpan(text: AppStrings.appNamePrefix),
+                                TextSpan(
+                                  text: AppStrings.appNameEmphasis,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.primary,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          style: theme.textTheme.headlineSmall,
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: AppStrings.homeRefresh,
-                        onPressed: discovery.isLoading ? null : _reload,
-                        icon: const Icon(Icons.refresh_rounded),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: RoamlySpacing.space20),
-                  Semantics(
-                    label: AppStrings.homeSearchScope,
-                    child: RoamlyTextFormField(
-                      controller: _search,
-                      hint: AppStrings.homeSearchHint,
-                      textInputAction: TextInputAction.search,
-                      prefixIcon: const Icon(Icons.search_rounded),
-                      suffixIcon: _search.text.isEmpty
-                          ? null
-                          : IconButton(
-                              tooltip: AppStrings.homeClearFilters,
-                              onPressed: _clearFilters,
-                              icon: const Icon(Icons.close),
+                              ],
                             ),
-                      onChanged: (_) => setState(() {}),
-                      onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
+                            style: theme.textTheme.headlineSmall,
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: AppStrings.homeRefresh,
+                          onPressed: discovery.isLoading ? null : _reload,
+                          icon: const Icon(Icons.refresh_rounded),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: RoamlySpacing.space20),
+                    Semantics(
+                      label: AppStrings.homeSearchScope,
+                      child: RoamlyTextFormField(
+                        controller: _search,
+                        hint: AppStrings.homeSearchHint,
+                        textInputAction: TextInputAction.search,
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        suffixIcon: _search.text.isEmpty
+                            ? null
+                            : IconButton(
+                                tooltip: AppStrings.homeClearFilters,
+                                onPressed: _clearFilters,
+                                icon: const Icon(Icons.close),
+                              ),
+                        onChanged: (_) => setState(() {}),
+                        onFieldSubmitted: (_) =>
+                            FocusScope.of(context).unfocus(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(
-                horizontal: RoamlySpacing.space16,
-              ),
-              child: Row(
-                children: [
-                  _chip(
-                    null,
-                    AppStrings.homeAllCategories,
-                    Icons.explore_outlined,
-                  ),
-                  _chip(
-                    TravelStyle.beaches,
-                    AppStrings.travelStyleBeaches,
-                    Icons.beach_access_outlined,
-                  ),
-                  _chip(
-                    TravelStyle.culture,
-                    AppStrings.travelStyleCulture,
-                    Icons.account_balance_outlined,
-                  ),
-                  _chip(
-                    TravelStyle.nature,
-                    AppStrings.travelStyleNature,
-                    Icons.landscape_outlined,
-                  ),
-                  _chip(
-                    TravelStyle.adventure,
-                    AppStrings.travelStyleAdventure,
-                    Icons.hiking_outlined,
-                  ),
-                  _chip(
-                    TravelStyle.food,
-                    AppStrings.travelStyleFood,
-                    Icons.restaurant_outlined,
-                  ),
-                  _chip(
-                    TravelStyle.luxury,
-                    AppStrings.travelStyleLuxury,
-                    Icons.diamond_outlined,
-                  ),
-                ],
+            SliverToBoxAdapter(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: RoamlySpacing.space16,
+                ),
+                child: Row(
+                  children: [
+                    _chip(
+                      null,
+                      AppStrings.homeAllCategories,
+                      Icons.explore_outlined,
+                    ),
+                    _chip(
+                      TravelStyle.beaches,
+                      AppStrings.travelStyleBeaches,
+                      Icons.beach_access_outlined,
+                    ),
+                    _chip(
+                      TravelStyle.culture,
+                      AppStrings.travelStyleCulture,
+                      Icons.account_balance_outlined,
+                    ),
+                    _chip(
+                      TravelStyle.nature,
+                      AppStrings.travelStyleNature,
+                      Icons.landscape_outlined,
+                    ),
+                    _chip(
+                      TravelStyle.adventure,
+                      AppStrings.travelStyleAdventure,
+                      Icons.hiking_outlined,
+                    ),
+                    _chip(
+                      TravelStyle.food,
+                      AppStrings.travelStyleFood,
+                      Icons.restaurant_outlined,
+                    ),
+                    _chip(
+                      TravelStyle.luxury,
+                      AppStrings.travelStyleLuxury,
+                      Icons.diamond_outlined,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SliverToBoxAdapter(
-            child: SizedBox(height: RoamlySpacing.space8),
-          ),
-          ...discovery.when<List<Widget>>(
-            skipLoadingOnRefresh: true,
-            skipLoadingOnReload: true,
-            loading: () => const <Widget>[],
-            error: (_, _) => [
-              _message(
-                AppStrings.homeLoadFailed,
-                action: AppStrings.tryAgain,
-                onPressed: _reload,
-              ),
-            ],
-            data: _sections,
-          ),
-          const SliverToBoxAdapter(
-            child: SizedBox(height: RoamlySpacing.space24),
-          ),
-        ],
+            const SliverToBoxAdapter(
+              child: SizedBox(height: RoamlySpacing.space8),
+            ),
+            ...discovery.when<List<Widget>>(
+              skipLoadingOnRefresh: true,
+              skipLoadingOnReload: true,
+              loading: () => const <Widget>[],
+              error: (_, _) => [
+                _message(
+                  AppStrings.homeLoadFailed,
+                  action: AppStrings.tryAgain,
+                  onPressed: _reload,
+                ),
+              ],
+              data: _sections,
+            ),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: RoamlySpacing.space24),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -254,6 +278,7 @@ final class _HomePageState extends ConsumerState<HomePage> {
           child: HomeDiscoverySection(
             title: AppStrings.homePopular,
             destinations: popular,
+            onDestinationSelected: _openDestination,
             query: const DestinationCollectionQuery.popular(),
           ),
         ),
@@ -264,6 +289,7 @@ final class _HomePageState extends ConsumerState<HomePage> {
             destinations: suggested,
             editorial: true,
             query: DestinationCollectionQuery.suggested(),
+            onDestinationSelected: _openDestination,
           ),
         ),
       if (featured.isNotEmpty)
@@ -273,6 +299,7 @@ final class _HomePageState extends ConsumerState<HomePage> {
                 ? AppStrings.homeFeatured
                 : AppStrings.homeTrending,
             destinations: featured,
+            onDestinationSelected: _openDestination,
             query: discovery.spotlight.kind == DiscoveryCollectionKind.featured
                 ? const DestinationCollectionQuery.featured()
                 : null,

@@ -49,6 +49,28 @@ Map<String, Object?> _detailResponse() => <String, Object?>{
   'places_next_cursor': null,
   'has_more_places': false,
 };
+Map<String, Object?> _placeDetailResponse() {
+  return <String, Object?>{
+    'id': '00000000-0000-4000-8000-000000000010',
+    'slug': 'meiji-shrine',
+    'name': 'Meiji Shrine',
+    'place_type': 'religious_site',
+    'summary': 'Visit a peaceful shrine surrounded by a large forest in Tokyo.',
+    'location': <String, Object?>{
+      'latitude': 35.6748,
+      'longitude': 139.6996,
+      'map_zoom': null,
+    },
+    'address': '1 Yoyogi Kamizonocho, Shibuya, Tokyo',
+    'is_featured': true,
+    'cover_image': null,
+    'destination_slug': 'tokyo-japan',
+    'full_description':
+        'Meiji Shrine is a peaceful Shinto shrine surrounded by a forest '
+        'in the centre of Tokyo.',
+    'gallery': <Object?>[],
+  };
+}
 
 final class _Client implements ApiClient {
   Object? response = _response();
@@ -179,6 +201,77 @@ void main() {
         source.getDestinationDetail(slug: 'bali-indonesia'),
         throwsA(same(error)),
       );
+      expect(client.calls, 1);
+    });
+  });
+  group('getDestinationPlaceDetail', () {
+    test('normalizes both slugs and requests the nested endpoint', () async {
+      client.response = _placeDetailResponse();
+
+      final model = await source.getDestinationPlaceDetail(
+        destinationSlug: '  tokyo-japan  ',
+        placeSlug: '  meiji-shrine  ',
+      );
+
+      expect(client.calls, 1);
+      expect(client.path, 'destinations/tokyo-japan/places/meiji-shrine');
+      expect(client.queryParameters, isNull);
+
+      final detail = model.toDomain();
+
+      expect(detail.destinationSlug, 'tokyo-japan');
+      expect(detail.place.slug, 'meiji-shrine');
+    });
+
+    test('rejects invalid slugs before network work', () async {
+      for (final input in <(String, String)>[
+        ('', 'meiji-shrine'),
+        ('Tokyo Japan', 'meiji-shrine'),
+        ('tokyo-japan', ''),
+        ('tokyo-japan', 'Meiji Shrine'),
+        ('../tokyo', 'meiji-shrine'),
+        ('tokyo-japan', '../meiji'),
+      ]) {
+        await expectLater(
+          source.getDestinationPlaceDetail(
+            destinationSlug: input.$1,
+            placeSlug: input.$2,
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
+      }
+
+      expect(client.calls, 0);
+    });
+
+    test('rejects malformed response roots', () async {
+      for (final response in <Object?>[null, <Object?>[], 'invalid']) {
+        client.response = response;
+
+        await expectLater(
+          source.getDestinationPlaceDetail(
+            destinationSlug: 'tokyo-japan',
+            placeSlug: 'meiji-shrine',
+          ),
+          throwsFormatException,
+        );
+      }
+
+      expect(client.calls, 3);
+    });
+
+    test('propagates transport failures unchanged', () async {
+      final error = Exception('transport failure');
+      client.error = error;
+
+      await expectLater(
+        source.getDestinationPlaceDetail(
+          destinationSlug: 'tokyo-japan',
+          placeSlug: 'meiji-shrine',
+        ),
+        throwsA(same(error)),
+      );
+
       expect(client.calls, 1);
     });
   });

@@ -5,18 +5,22 @@ import 'dart:ui' as ui;
 import 'package:roamly_app/src/features/home/domain/entities/destination_collection_query.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination_detail.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination_page.dart';
+import 'package:roamly_app/src/features/home/domain/entities/destination_place_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination.dart';
 import 'package:roamly_app/src/features/home/domain/entities/destination_collection.dart';
 import 'package:roamly_app/src/features/home/domain/entities/home_discovery.dart';
+import 'package:roamly_app/src/features/home/domain/entities/map_location.dart';
 import 'package:roamly_app/src/features/home/domain/failures/home_discovery_failure.dart';
 import 'package:roamly_app/src/features/home/domain/repositories/home_discovery_repository.dart';
-import 'package:roamly_app/src/features/home/presentation/pages/home_page.dart';
 import 'package:roamly_app/src/features/home/presentation/pages/destination_collection_page.dart';
+import 'package:roamly_app/src/features/home/presentation/pages/destination_detail_page.dart';
+import 'package:roamly_app/src/features/home/presentation/pages/home_page.dart';
 import 'package:roamly_app/src/features/home/presentation/constants/home_layout.dart';
 import 'package:roamly_app/src/features/home/presentation/providers/home_dependency_providers.dart';
 import 'package:roamly_app/src/features/home/presentation/widgets/destination_card.dart';
@@ -24,6 +28,7 @@ import 'package:roamly_app/src/features/home/presentation/widgets/home_discovery
 import 'package:roamly_app/src/features/home/presentation/widgets/home_loading_view.dart';
 import 'package:roamly_app/src/features/preferences/domain/entities/preference_types.dart';
 import 'package:roamly_app/src/localization/app_strings.dart';
+import 'package:roamly_app/src/navigation/app_routes.dart';
 import 'package:roamly_core/roamly_core.dart';
 import 'package:roamly_ui/roamly_ui.dart';
 
@@ -62,6 +67,30 @@ HomeDiscovery _data({bool empty = false}) {
   );
 }
 
+DestinationDetail _detail(String slug) {
+  final isKyoto = slug == 'kyoto';
+  return DestinationDetail(
+    id: isKyoto
+        ? '00000000-0000-4000-8000-000000000002'
+        : '00000000-0000-4000-8000-000000000001',
+    slug: slug,
+    name: isKyoto ? 'Kyoto' : 'Bali',
+    type: isKyoto ? DestinationType.city : DestinationType.island,
+    countryName: isKyoto ? 'Japan' : 'Indonesia',
+    countryCode: isKyoto ? 'JP' : 'ID',
+    summary: 'Discover beautiful landscapes and local culture.',
+    fullDescription:
+        'Explore historic landmarks, local traditions, and scenic landscapes.',
+    location: const MapLocation(latitude: 0, longitude: 0, mapZoom: 9),
+    budgetTier: BudgetTier.midRange,
+    styles: [isKyoto ? TravelStyle.culture : TravelStyle.beaches],
+    interests: const [TravelInterest.photography],
+    gallery: const [],
+    places: const [],
+    placesNextCursor: null,
+  );
+}
+
 final class _Repository implements HomeDiscoveryRepository {
   @override
   Future<Result<DestinationPage>> getDestinations({
@@ -79,6 +108,7 @@ final class _Repository implements HomeDiscoveryRepository {
   }
 
   final catalogueQueries = <DestinationCollectionQuery>[];
+  final detailSlugs = <String>[];
 
   int calls = 0;
   Result<HomeDiscovery> result = Success(_data());
@@ -92,8 +122,17 @@ final class _Repository implements HomeDiscoveryRepository {
   @override
   Future<Result<DestinationDetail>> getDestinationDetail({
     required String slug,
+  }) async {
+    detailSlugs.add(slug);
+    return Success(_detail(slug));
+  }
+
+  @override
+  Future<Result<DestinationPlaceDetail>> getDestinationPlaceDetail({
+    required String destinationSlug,
+    required String placeSlug,
   }) {
-    throw StateError('Unexpected destination detail request.');
+    throw StateError('Unexpected destination place detail request.');
   }
 }
 
@@ -119,22 +158,48 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const RepaintBoundary(
+            key: ValueKey('home-preview'),
+            child: RoamlyScaffold(
+              bodyPadding: EdgeInsets.zero,
+              body: HomePage(),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '${AppRoutePaths.home}/${AppRoutePaths.destinationDetail}',
+          name: AppRouteNames.destinationDetail,
+          builder: (context, state) {
+            final initialTitle = state.extra;
+            return DestinationDetailPage(
+              slug: state.pathParameters['slug']!,
+              initialTitle: initialTitle is String ? initialTitle : null,
+            );
+          },
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           homeDiscoveryRepositoryProvider.overrideWithValue(repository),
         ],
-        child: MaterialApp(
+        child: MaterialApp.router(
           theme: dark ? RoamlyTheme.dark : RoamlyTheme.light,
-          home: MediaQuery(
-            data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-            child: const RepaintBoundary(
-              key: ValueKey('home-preview'),
-              child: RoamlyScaffold(
-                bodyPadding: EdgeInsets.zero,
-                body: HomePage(),
-              ),
-            ),
+          routerConfig: router,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(scale)),
+            child: child!,
           ),
         ),
       ),
@@ -255,43 +320,43 @@ void main() {
     ]);
     await tester.tap(find.byType(DestinationCard).first);
     await tester.pumpAndSettle();
+    expect(find.byType(DestinationDetailPage), findsOneWidget);
     expect(find.text('Japan'), findsWidgets);
     expect(
       find.text('Discover beautiful landscapes and local culture.'),
       findsWidgets,
     );
+    expect(repository.detailSlugs, ['kyoto']);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('direct card tap opens a scrollable destination sheet', (
+  testWidgets('direct card tap opens the destination detail route', (
     tester,
   ) async {
     await pump(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.byType(DestinationCard).first);
     await tester.pumpAndSettle();
-    final sheet = find.byType(BottomSheet);
-    expect(sheet, findsOneWidget);
+    final page = find.byType(DestinationDetailPage);
+    expect(page, findsOneWidget);
     expect(
-      find.descendant(of: sheet, matching: find.text('Bali')),
-      findsOneWidget,
+      find.descendant(of: page, matching: find.text('Bali')),
+      findsWidgets,
     );
-    final summary = find.descendant(
-      of: sheet,
-      matching: find.text('Discover beautiful landscapes and local culture.'),
+    final summary = find.text(
+      'Discover beautiful landscapes and local culture.',
     );
     expect(summary, findsOneWidget);
     final text = tester.widget<Text>(summary);
     expect(text.maxLines, isNull);
-    expect(
-      find.descendant(of: sheet, matching: find.byType(SingleChildScrollView)),
-      findsOneWidget,
-    );
+    expect(find.byType(CustomScrollView), findsOneWidget);
+    expect(repository.detailSlugs, ['bali']);
     expect(repository.calls, 1);
     expect(tester.takeException(), isNull);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
-    expect(find.byType(BottomSheet), findsNothing);
+    expect(find.byType(DestinationDetailPage), findsNothing);
+    expect(find.byType(HomePage), findsOneWidget);
   });
 
   for (final variant in DestinationCardVariant.values) {

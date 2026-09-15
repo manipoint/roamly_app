@@ -5,9 +5,14 @@ class AssistantPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-     return const Center(
-      key: ValueKey<String>('assistant-page'),
-      child: Text('Assistant'),
+    return const SafeArea(
+      bottom: false,
+      left: false,
+      right: false,
+      child: Center(
+        key: ValueKey<String>('assistant-page'),
+        child: Text('Assistant'),
+      ),
     );
   }
 }

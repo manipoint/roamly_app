@@ -20,6 +20,9 @@ final class AuthenticatedAppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return RoamlyScaffold(
       bodyPadding: EdgeInsets.zero,
+      // Each branch owns its top inset so immersive child routes can draw
+      // behind the status bar without affecting standard tab pages.
+      safeAreaTop: false,
       body: navigationShell,
       bottomNavigationBar: RoamlyBottomNavigationBar(
         selectedIndex: navigationShell.currentIndex,

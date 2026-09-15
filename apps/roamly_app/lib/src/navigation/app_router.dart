@@ -5,6 +5,7 @@ import 'package:roamly_app/src/app/auth_gate.dart';
 import 'package:roamly_app/src/features/assistant/presentation/pages/assistant_page.dart';
 import 'package:roamly_app/src/features/auth/presentation/pages/register_page.dart';
 import 'package:roamly_app/src/features/auth/presentation/pages/sign_in_page.dart';
+import 'package:roamly_app/src/features/home/presentation/pages/destination_detail_page.dart';
 import 'package:roamly_app/src/features/home/presentation/pages/home_page.dart';
 import 'package:roamly_app/src/features/home/presentation/pages/home_startup_loading_page.dart';
 import 'package:roamly_app/src/features/onboarding/presentation/pages/welcome_page.dart';
@@ -16,6 +17,7 @@ import 'package:roamly_app/src/navigation/app_routes.dart';
 import 'package:roamly_app/src/navigation/authenticated_app_shell.dart';
 import 'package:roamly_auth/roamly_auth.dart';
 
+import '../features/home/presentation/pages/destination_place_detail_page.dart';
 import '../features/preferences/presentation/widgets/preference_onboarding_flow.dart';
 
 /// Provides the application router through Riverpod.
@@ -160,6 +162,37 @@ abstract final class AppRouter {
                   builder: (context, state) {
                     return const HomePage();
                   },
+                  routes: [
+                    GoRoute(
+                      path: AppRoutePaths.destinationDetail,
+                      name: AppRouteNames.destinationDetail,
+                      builder: (context, state) {
+                        final initialTitle = state.extra;
+                        return DestinationDetailPage(
+                          slug: state.pathParameters['slug']!,
+                          initialTitle: initialTitle is String
+                              ? initialTitle
+                              : null,
+                        );
+                      },
+                      routes: [
+                        GoRoute(
+                          path: AppRoutePaths.destinationPlaceDetail,
+                          name: AppRouteNames.destinationPlaceDetail,
+                          builder: (context, state) {
+                            final initialTitle = state.extra;
+                            return DestinationPlaceDetailPage(
+                              destinationSlug: state.pathParameters['slug']!,
+                              placeSlug: state.pathParameters['placeSlug']!,
+                              initialTitle: initialTitle is String
+                                  ? initialTitle
+                                  : null,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),

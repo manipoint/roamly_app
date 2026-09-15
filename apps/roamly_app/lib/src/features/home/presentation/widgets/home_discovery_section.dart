@@ -7,21 +7,24 @@ import 'package:roamly_app/src/features/home/presentation/pages/destination_coll
 import 'package:roamly_app/src/features/home/presentation/widgets/destination_card.dart';
 import 'package:roamly_app/src/localization/app_strings.dart';
 import 'package:roamly_ui/roamly_ui.dart';
-import 'home_destination_image.dart';
+
 import '../../domain/entities/destination.dart';
 
-class HomeDiscoverySection extends StatelessWidget {
+final class HomeDiscoverySection extends StatelessWidget {
   const HomeDiscoverySection({
     super.key,
     required this.title,
     required this.destinations,
     required this.query,
+    required this.onDestinationSelected,
     this.editorial = false,
   });
   final String title;
   final List<Destination> destinations;
   final DestinationCollectionQuery? query;
   final bool editorial;
+  final void Function(BuildContext context, Destination destination)
+  onDestinationSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +93,7 @@ class HomeDiscoverySection extends StatelessWidget {
                         destination: destinations[i],
                         variant: variant,
                         onTap: () =>
-                            showHomeDestination(context, destinations[i]),
+                            onDestinationSelected(context, destinations[i]),
                       ),
                     ),
                   ],
@@ -112,7 +115,7 @@ class HomeDiscoverySection extends StatelessWidget {
         builder: (_) => DestinationCollectionPage(
           title: title,
           query: collectionQuery,
-          onDestinationSelected: showHomeDestination,
+          onDestinationSelected: onDestinationSelected,
         ),
       ),
     );
@@ -130,53 +133,5 @@ class HomeDiscoverySection extends StatelessWidget {
       HomeLayout.compactMaxWidth,
     );
     return math.min(availableWidth, preferredWidth).toDouble();
-  }
-
-  void showHomeDestination(BuildContext context, Destination destination) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (context) {
-        final theme = Theme.of(context);
-        final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
-        return SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-            RoamlySpacing.space20,
-            RoamlySpacing.space20,
-            RoamlySpacing.space20,
-            RoamlySpacing.space24 + bottomInset,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: RoamlyRadii.large,
-                child: AspectRatio(
-                  aspectRatio: HomeLayout.gridImageAspectRatio,
-                  child: HomeDestinationImage(destination: destination),
-                ),
-              ),
-              const SizedBox(height: RoamlySpacing.space20),
-              Semantics(
-                header: true,
-                child: Text(
-                  destination.name,
-                  style: theme.textTheme.headlineSmall,
-                ),
-              ),
-              const SizedBox(height: RoamlySpacing.space4),
-              Text(
-                destination.countryName,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: RoamlySpacing.space16),
-              Text(destination.summary, style: theme.textTheme.bodyMedium),
-            ],
-          ),
-        );
-      },
-    );
   }
 }

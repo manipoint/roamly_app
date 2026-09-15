@@ -35,7 +35,9 @@ final class HomeDiscoveryController extends AsyncNotifier<HomeDiscovery> {
     final generation = _generation;
     final repository = ref.read(homeDiscoveryRepositoryProvider);
     state = const AsyncLoading<HomeDiscovery>();
-    final nextState = await AsyncValue.guard<HomeDiscovery>(() => _fetch(repository));
+    final nextState = await AsyncValue.guard<HomeDiscovery>(
+      () => _fetch(repository),
+    );
     if (!ref.mounted || generation != _generation) {
       return false;
     }

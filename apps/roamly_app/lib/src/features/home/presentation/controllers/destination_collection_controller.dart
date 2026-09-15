@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/misc.dart';
 import 'package:roamly_core/roamly_core.dart';
 
 import '../../domain/entities/destination.dart';
@@ -9,8 +6,10 @@ import '../../domain/entities/destination_collection_query.dart';
 import '../../domain/entities/destination_page.dart';
 import '../../domain/failures/destination_catalogue_failure.dart';
 import '../../domain/repositories/home_discovery_repository.dart';
+import '../policies/home_cache_policy.dart';
 import '../providers/home_dependency_providers.dart';
 import '../state/destination_collection_state.dart';
+import '../support/successful_result_retention.dart';
 
 final destinationCollectionControllerProvider = AsyncNotifierProvider
     .autoDispose
@@ -25,25 +24,17 @@ final class DestinationCollectionController
   DestinationCollectionController(this.query);
 
   static const int _pageSize = 20;
-  static const Duration _cacheDuration = Duration(minutes: 5);
 
   final DestinationCollectionQuery query;
 
   int _generation = 0;
   bool _isRefreshing = false;
 
-  KeepAliveLink? _cacheLink;
-  Timer? _cacheTimer;
+  SuccessfulResultRetention? _retention;
 
   @override
   Future<DestinationCollectionState> build() async {
     _generation++;
-
-    ref.onDispose(() {
-      _cacheTimer?.cancel();
-      _cacheTimer = null;
-      _cacheLink = null;
-    });
 
     final repository = ref.watch(homeDiscoveryRepositoryProvider);
     final collection = await _firstPage(repository);
@@ -169,7 +160,7 @@ final class DestinationCollectionController
 
       if (failure is DestinationCatalogueFailure &&
           failure.kind == DestinationCatalogueFailureKind.invalidCursor) {
-        return reload();
+        return _restartAfterInvalidCursor(repository);
       }
 
       _showLoadMoreFailure(current, failure);
@@ -180,6 +171,27 @@ final class DestinationCollectionController
       }
       rethrow;
     }
+  }
+
+  Future<bool> _restartAfterInvalidCursor(
+    HomeDiscoveryRepository repository,
+  ) async {
+    final generation = ++_generation;
+    state = const AsyncLoading<DestinationCollectionState>();
+
+    final next = await AsyncValue.guard<DestinationCollectionState>(
+      () => _firstPage(repository),
+    );
+
+    if (!_isCurrent(generation)) return false;
+
+    state = next;
+
+    if (next.hasValue) {
+      _retainSuccessfulState();
+    }
+
+    return next.hasValue;
   }
 
   Future<DestinationCollectionState> _firstPage(
@@ -212,14 +224,11 @@ final class DestinationCollectionController
   void _retainSuccessfulState() {
     if (!ref.mounted) return;
 
-    _cacheLink ??= ref.keepAlive();
-
-    _cacheTimer?.cancel();
-    _cacheTimer = Timer(_cacheDuration, () {
-      _cacheLink?.close();
-      _cacheLink = null;
-      _cacheTimer = null;
-    });
+    final retention = _retention ??= SuccessfulResultRetention(
+      ref: ref,
+      duration: HomeCachePolicy.destinationCollection,
+    );
+    retention.retain();
   }
 
   bool _isCurrent(int generation) {
