@@ -160,13 +160,55 @@ void main() {
     );
   });
 
-  test('classifies HTTP 503 as transient for reconnect', () async {
+  const handshakeCases = [
+    (200, WebSocketFailureKind.protocol, false),
+    (400, WebSocketFailureKind.protocol, false),
+    (401, WebSocketFailureKind.unauthorized, false),
+    (403, WebSocketFailureKind.forbidden, false),
+    (404, WebSocketFailureKind.protocol, false),
+    (408, WebSocketFailureKind.timeout, true),
+    (429, WebSocketFailureKind.rateLimited, true),
+    (500, WebSocketFailureKind.connection, true),
+    (501, WebSocketFailureKind.protocol, false),
+    (502, WebSocketFailureKind.connection, true),
+    (503, WebSocketFailureKind.connection, true),
+    (504, WebSocketFailureKind.connection, true),
+  ];
+
+  for (final (status, kind, retryable) in handshakeCases) {
+    test('classifies HTTP $status and preserves handshake status', () async {
+      final result = expectLater(
+        transport.connect(uri: uri, connectTimeout: deadline),
+        throwsA(
+          failure(kind)
+              .having((error) => error.isRetryable, 'isRetryable', retryable)
+              .having((error) => error.httpStatusCode, 'httpStatusCode', status)
+              .having((error) => error.closeCode, 'closeCode', isNull),
+        ),
+      );
+      final request = await nextRequest();
+      request.response.statusCode = status;
+      await request.response.close();
+      await result;
+    });
+  }
+
+  test('invalid upgrade remains a non-retryable protocol failure', () async {
     final result = expectLater(
       transport.connect(uri: uri, connectTimeout: deadline),
-      throwsA(failure(WebSocketFailureKind.connection)),
+      throwsA(
+        failure(WebSocketFailureKind.protocol)
+            .having((error) => error.isRetryable, 'isRetryable', isFalse)
+            .having((error) => error.httpStatusCode, 'httpStatusCode', isNull)
+            .having((error) => error.closeCode, 'closeCode', isNull),
+      ),
     );
     final request = await nextRequest();
-    request.response.statusCode = HttpStatus.serviceUnavailable;
+    request.response
+      ..statusCode = HttpStatus.switchingProtocols
+      ..headers.set(HttpHeaders.connectionHeader, 'Upgrade')
+      ..headers.set(HttpHeaders.upgradeHeader, 'websocket');
+    // Deliberately omit Sec-WebSocket-Accept.
     await request.response.close();
     await result;
   });

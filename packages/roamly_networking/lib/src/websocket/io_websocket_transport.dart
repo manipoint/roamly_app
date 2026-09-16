@@ -182,11 +182,25 @@ final class _IoWebSocketConnection implements WebSocketConnection {
 WebSocketFailure _mapFailure(Object error) {
   if (error is WebSocketFailure) return error;
 
+  if (error is WebSocketException) {
+    final kind = switch (error.httpStatusCode) {
+      HttpStatus.unauthorized => WebSocketFailureKind.unauthorized,
+      HttpStatus.forbidden => WebSocketFailureKind.forbidden,
+      HttpStatus.requestTimeout => WebSocketFailureKind.timeout,
+      HttpStatus.tooManyRequests => WebSocketFailureKind.rateLimited,
+      HttpStatus.internalServerError ||
+      HttpStatus.badGateway ||
+      HttpStatus.serviceUnavailable ||
+      HttpStatus.gatewayTimeout => WebSocketFailureKind.connection,
+      _ => WebSocketFailureKind.protocol,
+    };
+    return WebSocketFailure(kind: kind, httpStatusCode: error.httpStatusCode);
+  }
+
   final kind = switch (error) {
     TimeoutException() => WebSocketFailureKind.timeout,
     HandshakeException() => WebSocketFailureKind.protocol,
     SocketException() => WebSocketFailureKind.connection,
-    WebSocketException() => WebSocketFailureKind.protocol,
     _ => WebSocketFailureKind.unknown,
   };
 
