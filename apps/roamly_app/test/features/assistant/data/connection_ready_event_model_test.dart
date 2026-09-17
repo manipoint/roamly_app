@@ -186,11 +186,33 @@ void main() {
     }
   });
 
-  test('requires a positive integer message byte limit', () {
+  test('rejects timing values above the supported socket policy', () {
+    final heartbeat = _event();
+    _payload(heartbeat)['heartbeat_interval_seconds'] = 300.1;
+    _payload(heartbeat)['idle_timeout_seconds'] = 301;
+    expect(
+      () => ConnectionReadyEventModel.fromJson(heartbeat),
+      throwsFormatException,
+    );
+
+    final idle = _event();
+    _payload(idle)['idle_timeout_seconds'] = 600.1;
+    expect(
+      () => ConnectionReadyEventModel.fromJson(idle),
+      throwsFormatException,
+    );
+  });
+
+  test('requires a bounded positive integer message byte limit', () {
     final valid = _event();
     _payload(valid)['max_message_bytes'] = 1;
     expect(ConnectionReadyEventModel.fromJson(valid).maxMessageBytes, 1);
-    for (final value in <Object>[0, -1, 1.5, '65536', true]) {
+    _payload(valid)['max_message_bytes'] = 1024 * 1024;
+    expect(
+      ConnectionReadyEventModel.fromJson(valid).maxMessageBytes,
+      1024 * 1024,
+    );
+    for (final value in <Object>[0, -1, 1024 * 1024 + 1, 1.5, '65536', true]) {
       final json = _event();
       _payload(json)['max_message_bytes'] = value;
       expect(
