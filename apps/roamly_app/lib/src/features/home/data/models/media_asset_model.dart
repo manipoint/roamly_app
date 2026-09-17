@@ -52,10 +52,5 @@ final class MediaAssetModel {
     );
   }
 
-  factory MediaAssetModel.fromValue(Object? value) {
-    final reader = JsonReader(<String, Object?>{'media': value});
-    return MediaAssetModel.fromJson(reader.object('media'));
-  }
-
   MediaAsset toDomain() => _mediaAsset;
 }

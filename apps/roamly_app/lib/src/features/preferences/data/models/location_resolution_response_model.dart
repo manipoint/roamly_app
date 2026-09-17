@@ -23,20 +23,12 @@ final class LocationResolutionResponseModel {
       maxLength: 120,
     );
 
-    final options = reader.list<CanonicalLocation>(
+    final options = reader.objectList<CanonicalLocation>(
       'options',
       maxLength: 5,
-      parseItem: _parseLocation,
+      parseItem: (json) => CanonicalLocationModel.fromJson(json).toDomain(),
     );
 
     return LocationResolutionResponseModel._(query: query, options: options);
-  }
-
-  static CanonicalLocation _parseLocation(Object? value) {
-    final reader = JsonReader(<String, Object?>{'location': value});
-
-    return CanonicalLocationModel.fromJson(
-      reader.object('location'),
-    ).toDomain();
   }
 }

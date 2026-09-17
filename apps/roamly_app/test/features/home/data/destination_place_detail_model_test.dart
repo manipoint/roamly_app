@@ -157,9 +157,11 @@ void main() {
     );
   });
 
-  test('fromValue rejects a non-object response', () {
+  test('rejects a non-object gallery item', () {
+    final payload = _payload()..['gallery'] = <Object?>[<Object?>[]];
+
     expect(
-      () => DestinationPlaceDetailModel.fromValue(<Object?>[]),
+      () => DestinationPlaceDetailModel.fromJson(payload),
       throwsFormatException,
     );
   });

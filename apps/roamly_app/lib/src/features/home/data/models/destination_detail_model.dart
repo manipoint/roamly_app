@@ -48,16 +48,16 @@ final class DestinationDetailModel {
     if (!RoamlyValueValidators.isValidCountryCode(countryCode)) {
       throw const FormatException('Invalid destination country code.');
     }
-    final gallery = reader.list<MediaAsset>(
+    final gallery = reader.objectList<MediaAsset>(
       'gallery',
       maxLength: _maximumGallerySize,
-      parseItem: (value) => MediaAssetModel.fromValue(value).toDomain(),
+      parseItem: (json) => MediaAssetModel.fromJson(json).toDomain(),
     );
-    final places = reader.list<DestinationPlacePreview>(
+    final places = reader.objectList<DestinationPlacePreview>(
       'places',
       maxLength: _maximumPlacePreviewSize,
-      parseItem: (value) =>
-          DestinationPlacePreviewModel.fromValue(value).toDomain(),
+      parseItem: (json) =>
+          DestinationPlacePreviewModel.fromJson(json).toDomain(),
     );
     _ensureUnique(gallery.map((media) => media.id), field: 'gallery ids');
     _ensureUnique(places.map((place) => place.id), field: 'place ids');
@@ -134,11 +134,6 @@ final class DestinationDetailModel {
         placesNextCursor: placesNextCursor,
       ),
     );
-  }
-
-  factory DestinationDetailModel.fromValue(Object? value) {
-    final reader = JsonReader(<String, Object?>{'destination_detail': value});
-    return DestinationDetailModel.fromJson(reader.object('destination_detail'));
   }
 
   DestinationDetail toDomain() => _detail;

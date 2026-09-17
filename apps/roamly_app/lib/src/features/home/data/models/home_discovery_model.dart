@@ -30,12 +30,12 @@ final class HomeDiscoveryModel {
   HomeDiscovery toDomain() => _discovery;
 
   static List<Destination> _readDestinations(JsonReader reader, String key) {
-    return reader.list<Destination>(
+    return reader.objectList<Destination>(
       key,
       maxLength: HomeDiscoveryPolicy.maximumSectionLimit,
       unique: true,
-      parseItem: (value) {
-        return DestinationModel.fromValue(value).toDomain();
+      parseItem: (json) {
+        return DestinationModel.fromJson(json).toDomain();
       },
     );
   }

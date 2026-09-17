@@ -64,11 +64,7 @@ final class JsonReader {
 
   /// Reads a nested object with string keys.
   Map<String, Object?> object(String key) {
-    final value = _required(key);
-    if (value is! Map || value.keys.any((key) => key is! String)) {
-      throw FormatException('Expected JSON object: $key.');
-    }
-    return Map<String, Object?>.unmodifiable(Map<String, Object?>.from(value));
+    return _objectValue(_required(key), error: 'Expected JSON object: $key.');
   }
 
   /// Reads a bounded list and validates each item with a feature-owned parser.
@@ -88,6 +84,35 @@ final class JsonReader {
       throw FormatException('Expected unique list items: $key.');
     }
     return result;
+  }
+
+  /// Reads a bounded list whose entries must be JSON objects.
+  List<T> objectList<T>(
+    String key, {
+    required T Function(Map<String, Object?> json) parseItem,
+    int? minLength,
+    int? maxLength,
+    bool unique = false,
+  }) {
+    return list<T>(
+      key,
+      minLength: minLength,
+      maxLength: maxLength,
+      unique: unique,
+      parseItem: (value) => parseItem(
+        _objectValue(value, error: 'Expected JSON object items: $key.'),
+      ),
+    );
+  }
+
+  static Map<String, Object?> _objectValue(
+    Object? value, {
+    required String error,
+  }) {
+    if (value is! Map || value.keys.any((key) => key is! String)) {
+      throw FormatException(error);
+    }
+    return Map<String, Object?>.unmodifiable(Map<String, Object?>.from(value));
   }
 
   /// Reads an absolute URI and optionally restricts its allowed schemes.

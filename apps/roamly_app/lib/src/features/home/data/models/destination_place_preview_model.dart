@@ -65,10 +65,5 @@ final class DestinationPlacePreviewModel {
     );
   }
 
-  factory DestinationPlacePreviewModel.fromValue(Object? value) {
-    final reader = JsonReader(<String, Object?>{'place': value});
-    return DestinationPlacePreviewModel.fromJson(reader.object('place'));
-  }
-
   DestinationPlacePreview toDomain() => _place;
 }

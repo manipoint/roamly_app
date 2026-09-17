@@ -120,6 +120,63 @@ void main() {
     );
   });
 
+  test('objectList validates object items and returns immutable data', () {
+    final source = <String, Object?>{'name': 'Lahore'};
+    final reader = JsonReader({
+      'items': <Object?>[source],
+      'bad_item': <Object?>['not-an-object'],
+      'bad_key': <Object?>[
+        <Object?, Object?>{1: 'value'},
+      ],
+    });
+
+    final items = reader.objectList<String>(
+      'items',
+      parseItem: (json) {
+        expect(() => json.clear(), throwsUnsupportedError);
+        return JsonReader(json).string('name');
+      },
+    );
+
+    source['name'] = 'Changed';
+    expect(items, const <String>['Lahore']);
+    expect(() => items.clear(), throwsUnsupportedError);
+    expect(
+      () => reader.objectList('bad_item', parseItem: (_) => true),
+      throwsFormatException,
+    );
+    expect(
+      () => reader.objectList('bad_key', parseItem: (_) => true),
+      throwsFormatException,
+    );
+  });
+
+  test('objectList applies bounds and parsed-value uniqueness', () {
+    final reader = JsonReader({
+      'items': <Object?>[
+        <String, Object?>{'id': 1},
+        <String, Object?>{'id': 1},
+      ],
+    });
+
+    expect(
+      () => reader.objectList<int>(
+        'items',
+        maxLength: 1,
+        parseItem: (_) => fail('Must not parse an out-of-bounds list.'),
+      ),
+      throwsFormatException,
+    );
+    expect(
+      () => reader.objectList<int>(
+        'items',
+        unique: true,
+        parseItem: (json) => JsonReader(json).integer('id'),
+      ),
+      throwsFormatException,
+    );
+  });
+
   test('uri validates schemes, authority, and length', () {
     final reader = JsonReader({
       'image': ' https://images.example.test/lahore.webp ',

@@ -13,10 +13,10 @@ final class DestinationPageModel {
   factory DestinationPageModel.fromJson(Map<String, Object?> json) {
     final reader = JsonReader(json);
 
-    final items = reader.list<Destination>(
+    final items = reader.objectList<Destination>(
       'items',
       maxLength: 50,
-      parseItem: (value) => DestinationModel.fromValue(value).toDomain(),
+      parseItem: (json) => DestinationModel.fromJson(json).toDomain(),
     );
 
     final ids = <String>{};

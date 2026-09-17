@@ -21,12 +21,12 @@ final class DestinationCollectionModel {
         kind: HomeDiscoveryEnumMapper.collectionKindFromJson(
           reader.string('kind'),
         ),
-        items: reader.list<Destination>(
+        items: reader.objectList<Destination>(
           'items',
           maxLength: HomeDiscoveryPolicy.maximumSectionLimit,
           unique: true,
-          parseItem: (value) {
-            return DestinationModel.fromValue(value).toDomain();
+          parseItem: (json) {
+            return DestinationModel.fromJson(json).toDomain();
           },
         ),
       ),

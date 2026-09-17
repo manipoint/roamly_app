@@ -27,11 +27,11 @@ final class DestinationPlaceDetailModel {
       throw const FormatException('Invalid destination slug in place detail.');
     }
 
-    final gallery = reader.list<MediaAsset>(
+    final gallery = reader.objectList<MediaAsset>(
       'gallery',
       maxLength: _maximumGallerySize,
-      parseItem: (value) {
-        return MediaAssetModel.fromValue(value).toDomain();
+      parseItem: (json) {
+        return MediaAssetModel.fromJson(json).toDomain();
       },
     );
 
@@ -49,16 +49,6 @@ final class DestinationPlaceDetailModel {
         ),
         gallery: gallery,
       ),
-    );
-  }
-
-  factory DestinationPlaceDetailModel.fromValue(Object? value) {
-    final reader = JsonReader(<String, Object?>{
-      'destination_place_detail': value,
-    });
-
-    return DestinationPlaceDetailModel.fromJson(
-      reader.object('destination_place_detail'),
     );
   }
 

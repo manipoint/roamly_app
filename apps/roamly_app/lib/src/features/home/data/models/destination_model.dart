@@ -114,11 +114,5 @@ final class DestinationModel {
       ),
     );
   }
-  factory DestinationModel.fromValue(Object? value) {
-    final reader = JsonReader(<String, Object?>{'destination': value});
-
-    return DestinationModel.fromJson(reader.object('destination'));
-  }
-
   Destination toDomain() => _destination;
 }
