@@ -1,6 +1,6 @@
 import 'package:roamly_networking/roamly_networking.dart';
 
-import '../../../../app/validator/roamly_value_validators.dart';
+import 'package:roamly_core/roamly_core.dart';
 
 enum AirportLocationType { airport, city }
 

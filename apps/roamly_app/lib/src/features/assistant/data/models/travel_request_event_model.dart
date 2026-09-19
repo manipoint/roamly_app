@@ -1,4 +1,6 @@
-import 'package:roamly_app/src/app/validator/roamly_value_validators.dart';
+import 'package:roamly_core/roamly_core.dart';
+
+import '../../domain/policies/assistant_request_policy.dart';
 
 final class TravelRequestEventModel {
   const TravelRequestEventModel._({
@@ -25,39 +27,28 @@ final class TravelRequestEventModel {
     String? conversationId,
     String? tripId,
   }) {
-    _validateUuid(clientMessageId, 'client_message_id');
-
-    if (conversationId != null) {
-      _validateUuid(conversationId, 'conversation_id');
-    }
-
-    if (tripId != null) {
-      _validateUuid(tripId, 'trip_id');
-    }
-
-    final normalizedMessage = message.trim();
-    final messageLength = normalizedMessage.runes.length;
-
-    if (messageLength < 1 || messageLength > 2000) {
-      throw ArgumentError(
-        'Message must contain between 1 and 2000 characters.',
-      );
-    }
-
-    final normalizedLocale = locale.trim();
-    final localeLength = normalizedLocale.runes.length;
-
-    if (localeLength < 2 || localeLength > 35) {
-      throw ArgumentError('Locale must contain between 2 and 35 characters.');
-    }
+    final validatedClientMessageId = RoamlyValueGuards.requireUuid(
+      clientMessageId,
+      field: 'client_message_id',
+    );
+    final validatedConversationId = RoamlyValueGuards.requireOptionalUuid(
+      conversationId,
+      field: 'conversation_id',
+    );
+    final validatedTripId = RoamlyValueGuards.requireOptionalUuid(
+      tripId,
+      field: 'trip_id',
+    );
+    final normalizedMessage = AssistantRequestPolicy.normalizeMessage(message);
+    final normalizedLocale = AssistantRequestPolicy.normalizeLocale(locale);
 
     return TravelRequestEventModel._(
-      clientMessageId: clientMessageId,
-      conversationId: conversationId,
-      tripId: tripId,
+      clientMessageId: validatedClientMessageId,
+      conversationId: validatedConversationId,
+      tripId: validatedTripId,
       message: normalizedMessage,
       locale: normalizedLocale,
-      sentAt: sentAt.toUtc(),
+      sentAt: RoamlyValueNormalizers.utc(sentAt),
     );
   }
 
@@ -74,11 +65,5 @@ final class TravelRequestEventModel {
         'locale': locale,
       },
     };
-  }
-
-  static void _validateUuid(String value, String field) {
-    if (!RoamlyValueValidators.isValidUuid(value)) {
-      throw ArgumentError('Invalid UUID field: $field.');
-    }
   }
 }

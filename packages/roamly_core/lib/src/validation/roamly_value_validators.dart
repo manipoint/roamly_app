@@ -1,6 +1,6 @@
-/// Pure validation rules shared by transport models and domain boundaries.
+/// Pure, framework-independent validation rules shared across Roamly.
 ///
-/// These methods do not normalize input or return localized presentation text.
+/// These methods never normalize values or throw for invalid user data.
 abstract final class RoamlyValueValidators {
   static const int uuidLength = 36;
   static const int minimumSlugLength = 2;
@@ -32,4 +32,20 @@ abstract final class RoamlyValueValidators {
 
   static bool isValidIataCode(String value) =>
       value.length == iataCodeLength && _iataCodePattern.hasMatch(value);
+
+  static bool isNonBlank(String value) => value.trim().isNotEmpty;
+
+  static bool hasRuneLength(
+    String value, {
+    required int minimum,
+    required int maximum,
+  }) {
+    if (minimum < 0 || maximum < minimum) return false;
+
+    final length = value.runes.length;
+    return length >= minimum && length <= maximum;
+  }
+
+  static bool isNotBefore(DateTime value, DateTime minimum) =>
+      !value.isBefore(minimum);
 }

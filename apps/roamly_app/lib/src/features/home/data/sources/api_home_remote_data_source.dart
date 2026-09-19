@@ -8,7 +8,7 @@ import 'package:roamly_app/src/features/home/domain/entities/destination_collect
 import 'package:roamly_app/src/features/preferences/data/mappers/preference_enum_mapper.dart';
 import 'package:roamly_networking/roamly_networking.dart';
 
-import '../../../../app/validator/roamly_value_validators.dart';
+import 'package:roamly_core/roamly_core.dart';
 import '../../domain/policies/home_discovery_policy.dart';
 
 final class ApiHomeRemoteDataSource implements HomeRemoteDataSource {

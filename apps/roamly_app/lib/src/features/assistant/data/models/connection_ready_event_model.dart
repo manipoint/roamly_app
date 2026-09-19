@@ -1,5 +1,4 @@
-import 'package:roamly_app/src/features/assistant/data/policies/assistant_socket_policy.dart';
-
+import '../policies/assistant_data_policy.dart';
 import '../serialization/assistant_event_reader.dart';
 import 'assistant_incoming_event_model.dart';
 
@@ -28,11 +27,11 @@ final class ConnectionReadyEventModel implements AssistantIncomingEventModel {
     final connectionId = event.uuid('connection_id');
     final heartbeatIntervalSeconds = payload.number(
       'heartbeat_interval_seconds',
-      max: AssistantSocketPolicy.maximumHeartbeatIntervalSeconds,
+      max: AssistantDataPolicy.maximumHeartbeatIntervalSeconds,
     );
     final idleTimeoutSeconds = payload.number(
       'idle_timeout_seconds',
-      max: AssistantSocketPolicy.maximumIdleTimeoutSeconds,
+      max: AssistantDataPolicy.maximumIdleTimeoutSeconds,
     );
     if (heartbeatIntervalSeconds <= 0 ||
         idleTimeoutSeconds <= 0 ||
@@ -42,7 +41,7 @@ final class ConnectionReadyEventModel implements AssistantIncomingEventModel {
     final maxMessageBytes = payload.integer(
       'max_message_bytes',
       min: 1,
-      max: AssistantSocketPolicy.maximumNegotiatedOutgoingMessageBytes,
+      max: AssistantDataPolicy.maximumNegotiatedOutgoingMessageBytes,
     );
     return ConnectionReadyEventModel._(
       sentAt: event.sentAt,

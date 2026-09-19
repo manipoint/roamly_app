@@ -1,4 +1,4 @@
-import 'package:roamly_app/src/app/validator/roamly_value_validators.dart';
+import 'package:roamly_core/roamly_core.dart';
 import 'package:roamly_networking/roamly_networking.dart';
 
 import '../../domain/entities/destination_place_detail.dart';

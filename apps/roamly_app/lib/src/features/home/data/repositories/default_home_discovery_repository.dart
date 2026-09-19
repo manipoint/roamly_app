@@ -6,7 +6,6 @@ import 'package:roamly_app/src/features/home/domain/failures/destination_place_d
 import 'package:roamly_core/roamly_core.dart';
 import 'package:roamly_networking/roamly_networking.dart';
 
-import '../../../../app/validator/roamly_value_validators.dart';
 import '../../domain/entities/home_discovery.dart';
 import '../../domain/failures/destination_catalogue_failure.dart';
 import '../../domain/failures/destination_detail_failure.dart';

@@ -9,7 +9,7 @@ import 'package:roamly_app/src/features/assistant/data/serialization/assistant_e
 import 'package:roamly_app/src/features/assistant/data/sources/assistant_socket_data_source.dart';
 import 'package:roamly_networking/roamly_networking.dart';
 
-import '../policies/assistant_socket_policy.dart';
+import '../policies/assistant_data_policy.dart';
 
 /// Assistant protocol adapter for one exclusively owned WebSocket manager.
 ///
@@ -40,9 +40,9 @@ final class DefaultAssistantSocketDataSource
   DefaultAssistantSocketDataSource({
     required WebsocketManager manager,
     AssistantEventDecoder decoder = const AssistantEventDecoder(),
-    this.readyTimeout = AssistantSocketPolicy.defaultReadyTimeout,
+    this.readyTimeout = AssistantDataPolicy.defaultReadyTimeout,
     this.maximumIncomingMessageBytes =
-        AssistantSocketPolicy.defaultMaximumIncomingMessageBytes,
+        AssistantDataPolicy.defaultMaximumIncomingMessageBytes,
   }) : _manager = manager,
        _decoder = decoder {
     if (readyTimeout <= Duration.zero) {
@@ -54,7 +54,7 @@ final class DefaultAssistantSocketDataSource
     }
     if (maximumIncomingMessageBytes <= 0 ||
         maximumIncomingMessageBytes >
-            AssistantSocketPolicy.maximumConfigurableIncomingMessageBytes) {
+            AssistantDataPolicy.maximumConfigurableIncomingMessageBytes) {
       throw ArgumentError.value(
         maximumIncomingMessageBytes,
         'maximumIncomingMessageBytes',
