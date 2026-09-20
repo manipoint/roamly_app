@@ -67,9 +67,9 @@ final class ApiDebugLoggingInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioException error, ErrorInterceptorHandler handler) {
-    final options = error.requestOptions;
-    final response = error.response;
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    final options = err.requestOptions;
+    final response = err.response;
 
     // Do not pass the DioException or its message to the logger. They may
     // contain headers, query parameters, request bodies, or provider details.
@@ -81,13 +81,13 @@ final class ApiDebugLoggingInterceptor extends Interceptor {
         'endpoint': _safeEndpoint(options),
         'status_code': response?.statusCode,
         'duration_ms': _finishStopwatch(options),
-        'dio_exception_type': error.type.name,
+        'dio_exception_type': err.type.name,
         'server_request_id': response?.headers.value('x-request-id'),
         'response_body': _preview(response?.data),
       },
     );
 
-    handler.next(error);
+    handler.next(err);
   }
 
   String _nextRequestId() {

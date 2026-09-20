@@ -1,6 +1,6 @@
 import 'package:roamly_core/roamly_core.dart';
 
-import '../../domain/policies/assistant_request_policy.dart';
+import '../../domain/policies/assistant_policy.dart';
 
 final class TravelRequestEventModel {
   const TravelRequestEventModel._({
@@ -39,8 +39,8 @@ final class TravelRequestEventModel {
       tripId,
       field: 'trip_id',
     );
-    final normalizedMessage = AssistantRequestPolicy.normalizeMessage(message);
-    final normalizedLocale = AssistantRequestPolicy.normalizeLocale(locale);
+    final normalizedMessage = AssistantPolicy.normalizeMessage(message);
+    final normalizedLocale = AssistantPolicy.normalizeLocale(locale);
 
     return TravelRequestEventModel._(
       clientMessageId: validatedClientMessageId,

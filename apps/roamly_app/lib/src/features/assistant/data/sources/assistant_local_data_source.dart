@@ -1,29 +1,32 @@
-import 'package:roamly_app/src/features/assistant/data/policies/assistant_data_policy.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_conversation.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message_delivery_state.dart';
+import 'package:roamly_app/src/features/assistant/domain/policies/assistant_policy.dart';
 
 /// Local persistence contract for assistant conversation history.
 ///
-/// This abstraction does not expose Drift, tables, or generated
-/// database records to the repository or presentation layers.
+/// This abstraction does not expose Drift tables, SQLite details, or generated
+/// database records to the repository and presentation layers.
 abstract interface class AssistantLocalDataSource {
   /// Watches the most recently updated conversations.
   ///
   /// Results are ordered from newest to oldest.
   Stream<List<AssistantConversation>> watchConversations({
-    int limit = AssistantDataPolicy.defaultConversationsLimit,
+    int limit = AssistantPolicy.defaultConversationsLimit,
   });
 
   /// Watches the latest messages of a conversation.
   ///
-  /// Although the database fetches the newest [limit] messages, the returned
-  /// list is ordered chronologically from oldest to newest for the UI.
+  /// The returned list is ordered chronologically from oldest to newest.
   Stream<List<AssistantMessage>> watchMessages({
     required String conversationLocalId,
-    int limit = AssistantDataPolicy.defaultMessagesLimit,
+    int limit = AssistantPolicy.defaultMessagesLimit,
   });
 
+  Future<AssistantConversation?> getConversation({required String localId});
+  Future<AssistantMessage?> getUserMessageByClientMessageId({
+    required String clientMessageId,
+  });
   Future<AssistantConversation?> getConversationByRemoteId({
     required String remoteId,
   });
@@ -36,20 +39,29 @@ abstract interface class AssistantLocalDataSource {
     required String conversationLocalId,
     required DateTime beforeCreatedAt,
     required String beforeId,
-    int limit = AssistantDataPolicy.defaultConversationsLimit,
+    int limit = AssistantPolicy.defaultMessagesLimit,
   });
+
   Future<void> upsertConversation(AssistantConversation conversation);
+
   Future<void> upsertMessage(AssistantMessage message);
 
   /// Stores a conversation and its messages atomically.
   ///
   /// If any write fails, the complete transaction is rolled back.
- Future<void> upsertConversationWithMessages({
+  Future<void> upsertConversationWithMessages({
     required AssistantConversation conversation,
     required Iterable<AssistantMessage> messages,
   });
+
+  Future<void> updateMessageDeliveryState({
+    required String messageId,
+    required AssistantMessageDeliveryState deliveryState,
+    required DateTime updatedAt,
+  });
+
   Future<void> deleteConversation({required String localId});
 
-  /// Removes assistant history belonging to the active user.
+  /// Removes all locally stored assistant history for the active user.
   Future<void> clear();
 }

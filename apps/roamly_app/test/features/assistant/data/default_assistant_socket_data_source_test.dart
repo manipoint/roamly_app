@@ -6,7 +6,7 @@ import 'package:roamly_app/src/features/assistant/data/models/assistant_incoming
 import 'package:roamly_app/src/features/assistant/data/models/connection_ready_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_request_accepted_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_request_event_model.dart';
-import 'package:roamly_app/src/features/assistant/data/policies/assistant_data_policy.dart';
+import 'package:roamly_app/src/features/assistant/domain/policies/assistant_policy.dart';
 import 'package:roamly_app/src/features/assistant/data/sources/default_assistant_socket_data_source.dart';
 import 'package:roamly_networking/roamly_networking.dart';
 
@@ -108,9 +108,9 @@ void main() {
   late List<bool> readiness;
 
   void createDataSource({
-    Duration readyTimeout = AssistantDataPolicy.defaultReadyTimeout,
+    Duration readyTimeout = AssistantPolicy.defaultReadyTimeout,
     int maximumIncomingMessageBytes =
-        AssistantDataPolicy.maximumNegotiatedOutgoingMessageBytes,
+        AssistantPolicy.maximumNegotiatedOutgoingMessageBytes,
     int reconnectAttempts = 0,
   }) {
     transport = _FakeTransport();

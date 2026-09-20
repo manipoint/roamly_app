@@ -1,16 +1,21 @@
 import 'package:roamly_core/roamly_core.dart';
 
-import '../policies/assistant_request_policy.dart';
+import '../policies/assistant_policy.dart';
 
 final class AssistantRequest {
   AssistantRequest({
+    required String conversationLocalId,
     required String clientMessageId,
     required String message,
     required DateTime createdAt,
     String locale = 'en',
     String? conversationId,
     String? tripId,
-  }) : clientMessageId = RoamlyValueGuards.requireUuid(
+  }) : conversationLocalId = RoamlyValueGuards.requireUuid(
+         conversationLocalId,
+         field: 'conversationLocalId',
+       ),
+       clientMessageId = RoamlyValueGuards.requireUuid(
          clientMessageId,
          field: 'clientMessageId',
        ),
@@ -19,10 +24,11 @@ final class AssistantRequest {
          field: 'conversationId',
        ),
        tripId = RoamlyValueGuards.requireOptionalUuid(tripId, field: 'tripId'),
-       message = AssistantRequestPolicy.normalizeMessage(message),
-       locale = AssistantRequestPolicy.normalizeLocale(locale),
+       message = AssistantPolicy.normalizeMessage(message),
+       locale = AssistantPolicy.normalizeLocale(locale),
        createdAt = RoamlyValueNormalizers.utc(createdAt);
 
+  final String conversationLocalId;
   final String clientMessageId;
   final String? conversationId;
   final String? tripId;
@@ -34,6 +40,7 @@ final class AssistantRequest {
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is AssistantRequest &&
+            conversationLocalId == other.conversationLocalId &&
             clientMessageId == other.clientMessageId &&
             conversationId == other.conversationId &&
             tripId == other.tripId &&
@@ -44,6 +51,7 @@ final class AssistantRequest {
 
   @override
   int get hashCode => Object.hash(
+    conversationLocalId,
     clientMessageId,
     conversationId,
     tripId,

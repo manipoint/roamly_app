@@ -1,4 +1,4 @@
-import '../policies/assistant_data_policy.dart';
+import '../../domain/policies/assistant_policy.dart';
 import '../serialization/assistant_event_reader.dart';
 import 'assistant_incoming_event_model.dart';
 
@@ -27,11 +27,11 @@ final class ConnectionReadyEventModel implements AssistantIncomingEventModel {
     final connectionId = event.uuid('connection_id');
     final heartbeatIntervalSeconds = payload.number(
       'heartbeat_interval_seconds',
-      max: AssistantDataPolicy.maximumHeartbeatIntervalSeconds,
+      max: AssistantPolicy.maximumHeartbeatIntervalSeconds,
     );
     final idleTimeoutSeconds = payload.number(
       'idle_timeout_seconds',
-      max: AssistantDataPolicy.maximumIdleTimeoutSeconds,
+      max: AssistantPolicy.maximumIdleTimeoutSeconds,
     );
     if (heartbeatIntervalSeconds <= 0 ||
         idleTimeoutSeconds <= 0 ||
@@ -41,7 +41,7 @@ final class ConnectionReadyEventModel implements AssistantIncomingEventModel {
     final maxMessageBytes = payload.integer(
       'max_message_bytes',
       min: 1,
-      max: AssistantDataPolicy.maximumNegotiatedOutgoingMessageBytes,
+      max: AssistantPolicy.maximumNegotiatedOutgoingMessageBytes,
     );
     return ConnectionReadyEventModel._(
       sentAt: event.sentAt,
