@@ -65,4 +65,31 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test('compares persisted idempotency payload at millisecond precision', () {
+    final first = AssistantRequest(
+      conversationLocalId: localConversationId,
+      clientMessageId: clientMessageId,
+      message: 'Plan Lahore',
+      locale: 'en-PK',
+      createdAt: DateTime.utc(2026, 9, 18, 8, 0, 0, 0, 1),
+    );
+    final samePersistedPayload = AssistantRequest(
+      conversationLocalId: localConversationId,
+      clientMessageId: clientMessageId,
+      message: 'Plan Lahore',
+      locale: 'en-PK',
+      createdAt: DateTime.utc(2026, 9, 18, 8, 0, 0, 0, 999),
+    );
+    final differentPayload = AssistantRequest(
+      conversationLocalId: localConversationId,
+      clientMessageId: clientMessageId,
+      message: 'Plan Karachi',
+      locale: 'en-PK',
+      createdAt: first.createdAt,
+    );
+
+    expect(first.hasSameIdempotencyPayloadAs(samePersistedPayload), isTrue);
+    expect(first.hasSameIdempotencyPayloadAs(differentPayload), isFalse);
+  });
 }

@@ -18,11 +18,13 @@ final class AuthDependencies {
   final AuthRepository authRepository;
   final DeviceIdentityProvider deviceIdentity;
   final ApiClient authenticatedApiClient;
+  final AccessTokenProvider accessTokenProvider;
 
   const AuthDependencies({
     required this.authRepository,
     required this.deviceIdentity,
     required this.authenticatedApiClient,
+    required this.accessTokenProvider,
   });
 }
 
@@ -80,6 +82,7 @@ abstract final class AuthModule {
       authRepository: authRepository,
       deviceIdentity: deviceIdentityProvider,
       authenticatedApiClient: authenticatedApiClient,
+      accessTokenProvider: tokenStore,
     );
   }
 }

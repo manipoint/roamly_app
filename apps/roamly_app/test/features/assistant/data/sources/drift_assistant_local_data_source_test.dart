@@ -5,6 +5,7 @@ import 'package:roamly_app/src/features/assistant/data/sources/drift_assistant_l
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_conversation.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message_delivery_state.dart';
+import 'package:roamly_app/src/features/assistant/domain/entities/assistant_request.dart';
 
 void main() {
   late AssistantDatabase database;
@@ -68,6 +69,116 @@ void main() {
 
       expect(storedMessage, message);
     });
+
+    test('atomically stores and removes a durable pending request', () async {
+      final conversation = _conversation();
+      final createdAt = _time(1).add(const Duration(microseconds: 456));
+      final request = AssistantRequest(
+        conversationLocalId: conversation.localId,
+        clientMessageId: _clientMessageId1,
+        conversationId: conversation.remoteId,
+        tripId: _tripId,
+        message: 'Create a travel plan',
+        locale: 'en-PK',
+        createdAt: createdAt,
+      );
+      final message = _userMessage(
+        id: request.clientMessageId,
+        clientMessageId: request.clientMessageId,
+        conversationLocalId: conversation.localId,
+        createdAt: createdAt,
+      );
+
+      await dataSource.cachePendingRequest(
+        conversation: conversation,
+        message: message,
+        request: request,
+      );
+
+      final pendingRequests = await dataSource.getPendingRequests();
+      expect(pendingRequests, hasLength(1));
+      expect(pendingRequests.single.clientMessageId, request.clientMessageId);
+      expect(pendingRequests.single.conversationId, request.conversationId);
+      expect(pendingRequests.single.tripId, request.tripId);
+      expect(pendingRequests.single.message, request.message);
+      expect(pendingRequests.single.locale, request.locale);
+      expect(
+        pendingRequests.single.createdAt.millisecondsSinceEpoch,
+        request.createdAt.millisecondsSinceEpoch,
+      );
+
+      await dataSource.deletePendingRequest(
+        clientMessageId: request.clientMessageId,
+      );
+
+      expect(await dataSource.getPendingRequests(), isEmpty);
+      expect(
+        await dataSource.getUserMessageByClientMessageId(
+          clientMessageId: request.clientMessageId,
+        ),
+        isNotNull,
+      );
+    });
+
+    test(
+      'paginates pending requests with a stable keyset after deletion',
+      () async {
+        final conversation = _conversation();
+        final createdAt = _time(1);
+        final requests = [
+          _pendingRequest(
+            conversation: conversation,
+            clientMessageId: _clientMessageId3,
+            createdAt: createdAt,
+          ),
+          _pendingRequest(
+            conversation: conversation,
+            clientMessageId: _clientMessageId1,
+            createdAt: createdAt,
+          ),
+          _pendingRequest(
+            conversation: conversation,
+            clientMessageId: _clientMessageId2,
+            createdAt: createdAt,
+          ),
+        ];
+
+        for (final request in requests) {
+          await dataSource.cachePendingRequest(
+            conversation: conversation,
+            message: _userMessage(
+              id: request.clientMessageId,
+              clientMessageId: request.clientMessageId,
+              conversationLocalId: conversation.localId,
+              createdAt: request.createdAt,
+            ),
+            request: request,
+          );
+        }
+
+        final firstPage = await dataSource.getPendingRequests(limit: 2);
+
+        expect(firstPage.map((request) => request.clientMessageId), [
+          _clientMessageId1,
+          _clientMessageId2,
+        ]);
+
+        final cursor = firstPage.last;
+        await dataSource.deletePendingRequest(
+          clientMessageId: cursor.clientMessageId,
+        );
+
+        final secondPage = await dataSource.getPendingRequests(
+          limit: 2,
+          afterCreatedAt: cursor.createdAt,
+          afterClientMessageId: cursor.clientMessageId,
+        );
+
+        expect(secondPage.map((request) => request.clientMessageId), [
+          _clientMessageId3,
+        ]);
+      },
+    );
 
     test('does not expose another user message by client message ID', () async {
       final userBDataSource = DriftAssistantLocalDataSource(
@@ -373,6 +484,20 @@ AssistantMessage _userMessage({
   );
 }
 
+AssistantRequest _pendingRequest({
+  required AssistantConversation conversation,
+  required String clientMessageId,
+  required DateTime createdAt,
+}) {
+  return AssistantRequest(
+    conversationLocalId: conversation.localId,
+    clientMessageId: clientMessageId,
+    conversationId: conversation.remoteId,
+    message: 'Create a travel plan',
+    createdAt: createdAt,
+  );
+}
+
 DateTime _time(int minute) {
   return DateTime.utc(2026, 1, 1, 12, minute);
 }
@@ -390,3 +515,4 @@ const _messageId3 = '30000000-0000-4000-8000-000000000003';
 const _clientMessageId1 = '40000000-0000-4000-8000-000000000001';
 const _clientMessageId2 = '40000000-0000-4000-8000-000000000002';
 const _clientMessageId3 = '40000000-0000-4000-8000-000000000003';
+const _tripId = '50000000-0000-4000-8000-000000000001';

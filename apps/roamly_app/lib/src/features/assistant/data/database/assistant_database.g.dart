@@ -1171,6 +1171,562 @@ class AssistantMessagesCompanion
   }
 }
 
+class $AssistantPendingRequestsTable extends AssistantPendingRequests
+    with
+        TableInfo<
+          $AssistantPendingRequestsTable,
+          AssistantPendingRequestRecord
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AssistantPendingRequestsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerIdMeta = const VerificationMeta(
+    'ownerId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+    'owner_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _clientMessageIdMeta = const VerificationMeta(
+    'clientMessageId',
+  );
+  @override
+  late final GeneratedColumn<String> clientMessageId = GeneratedColumn<String>(
+    'client_message_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _conversationLocalIdMeta =
+      const VerificationMeta('conversationLocalId');
+  @override
+  late final GeneratedColumn<String> conversationLocalId =
+      GeneratedColumn<String>(
+        'conversation_local_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES assistant_conversations (local_id) ON DELETE CASCADE',
+        ),
+      );
+  static const VerificationMeta _conversationIdMeta = const VerificationMeta(
+    'conversationId',
+  );
+  @override
+  late final GeneratedColumn<String> conversationId = GeneratedColumn<String>(
+    'conversation_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tripIdMeta = const VerificationMeta('tripId');
+  @override
+  late final GeneratedColumn<String> tripId = GeneratedColumn<String>(
+    'trip_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _messageMeta = const VerificationMeta(
+    'message',
+  );
+  @override
+  late final GeneratedColumn<String> message = GeneratedColumn<String>(
+    'message',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _localeMeta = const VerificationMeta('locale');
+  @override
+  late final GeneratedColumn<String> locale = GeneratedColumn<String>(
+    'locale',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtEpochMsMeta = const VerificationMeta(
+    'createdAtEpochMs',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtEpochMs = GeneratedColumn<int>(
+    'created_at_epoch_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerId,
+    clientMessageId,
+    conversationLocalId,
+    conversationId,
+    tripId,
+    message,
+    locale,
+    createdAtEpochMs,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'assistant_pending_requests';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AssistantPendingRequestRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_id')) {
+      context.handle(
+        _ownerIdMeta,
+        ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerIdMeta);
+    }
+    if (data.containsKey('client_message_id')) {
+      context.handle(
+        _clientMessageIdMeta,
+        clientMessageId.isAcceptableOrUnknown(
+          data['client_message_id']!,
+          _clientMessageIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_clientMessageIdMeta);
+    }
+    if (data.containsKey('conversation_local_id')) {
+      context.handle(
+        _conversationLocalIdMeta,
+        conversationLocalId.isAcceptableOrUnknown(
+          data['conversation_local_id']!,
+          _conversationLocalIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_conversationLocalIdMeta);
+    }
+    if (data.containsKey('conversation_id')) {
+      context.handle(
+        _conversationIdMeta,
+        conversationId.isAcceptableOrUnknown(
+          data['conversation_id']!,
+          _conversationIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('trip_id')) {
+      context.handle(
+        _tripIdMeta,
+        tripId.isAcceptableOrUnknown(data['trip_id']!, _tripIdMeta),
+      );
+    }
+    if (data.containsKey('message')) {
+      context.handle(
+        _messageMeta,
+        message.isAcceptableOrUnknown(data['message']!, _messageMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_messageMeta);
+    }
+    if (data.containsKey('locale')) {
+      context.handle(
+        _localeMeta,
+        locale.isAcceptableOrUnknown(data['locale']!, _localeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_localeMeta);
+    }
+    if (data.containsKey('created_at_epoch_ms')) {
+      context.handle(
+        _createdAtEpochMsMeta,
+        createdAtEpochMs.isAcceptableOrUnknown(
+          data['created_at_epoch_ms']!,
+          _createdAtEpochMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtEpochMsMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {ownerId, clientMessageId};
+  @override
+  AssistantPendingRequestRecord map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AssistantPendingRequestRecord(
+      ownerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_id'],
+      )!,
+      clientMessageId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}client_message_id'],
+      )!,
+      conversationLocalId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}conversation_local_id'],
+      )!,
+      conversationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}conversation_id'],
+      ),
+      tripId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}trip_id'],
+      ),
+      message: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}message'],
+      )!,
+      locale: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}locale'],
+      )!,
+      createdAtEpochMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_epoch_ms'],
+      )!,
+    );
+  }
+
+  @override
+  $AssistantPendingRequestsTable createAlias(String alias) {
+    return $AssistantPendingRequestsTable(attachedDatabase, alias);
+  }
+}
+
+class AssistantPendingRequestRecord extends DataClass
+    implements Insertable<AssistantPendingRequestRecord> {
+  final String ownerId;
+  final String clientMessageId;
+  final String conversationLocalId;
+  final String? conversationId;
+  final String? tripId;
+  final String message;
+  final String locale;
+  final int createdAtEpochMs;
+  const AssistantPendingRequestRecord({
+    required this.ownerId,
+    required this.clientMessageId,
+    required this.conversationLocalId,
+    this.conversationId,
+    this.tripId,
+    required this.message,
+    required this.locale,
+    required this.createdAtEpochMs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_id'] = Variable<String>(ownerId);
+    map['client_message_id'] = Variable<String>(clientMessageId);
+    map['conversation_local_id'] = Variable<String>(conversationLocalId);
+    if (!nullToAbsent || conversationId != null) {
+      map['conversation_id'] = Variable<String>(conversationId);
+    }
+    if (!nullToAbsent || tripId != null) {
+      map['trip_id'] = Variable<String>(tripId);
+    }
+    map['message'] = Variable<String>(message);
+    map['locale'] = Variable<String>(locale);
+    map['created_at_epoch_ms'] = Variable<int>(createdAtEpochMs);
+    return map;
+  }
+
+  AssistantPendingRequestsCompanion toCompanion(bool nullToAbsent) {
+    return AssistantPendingRequestsCompanion(
+      ownerId: Value(ownerId),
+      clientMessageId: Value(clientMessageId),
+      conversationLocalId: Value(conversationLocalId),
+      conversationId: conversationId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(conversationId),
+      tripId: tripId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tripId),
+      message: Value(message),
+      locale: Value(locale),
+      createdAtEpochMs: Value(createdAtEpochMs),
+    );
+  }
+
+  factory AssistantPendingRequestRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AssistantPendingRequestRecord(
+      ownerId: serializer.fromJson<String>(json['ownerId']),
+      clientMessageId: serializer.fromJson<String>(json['clientMessageId']),
+      conversationLocalId: serializer.fromJson<String>(
+        json['conversationLocalId'],
+      ),
+      conversationId: serializer.fromJson<String?>(json['conversationId']),
+      tripId: serializer.fromJson<String?>(json['tripId']),
+      message: serializer.fromJson<String>(json['message']),
+      locale: serializer.fromJson<String>(json['locale']),
+      createdAtEpochMs: serializer.fromJson<int>(json['createdAtEpochMs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerId': serializer.toJson<String>(ownerId),
+      'clientMessageId': serializer.toJson<String>(clientMessageId),
+      'conversationLocalId': serializer.toJson<String>(conversationLocalId),
+      'conversationId': serializer.toJson<String?>(conversationId),
+      'tripId': serializer.toJson<String?>(tripId),
+      'message': serializer.toJson<String>(message),
+      'locale': serializer.toJson<String>(locale),
+      'createdAtEpochMs': serializer.toJson<int>(createdAtEpochMs),
+    };
+  }
+
+  AssistantPendingRequestRecord copyWith({
+    String? ownerId,
+    String? clientMessageId,
+    String? conversationLocalId,
+    Value<String?> conversationId = const Value.absent(),
+    Value<String?> tripId = const Value.absent(),
+    String? message,
+    String? locale,
+    int? createdAtEpochMs,
+  }) => AssistantPendingRequestRecord(
+    ownerId: ownerId ?? this.ownerId,
+    clientMessageId: clientMessageId ?? this.clientMessageId,
+    conversationLocalId: conversationLocalId ?? this.conversationLocalId,
+    conversationId: conversationId.present
+        ? conversationId.value
+        : this.conversationId,
+    tripId: tripId.present ? tripId.value : this.tripId,
+    message: message ?? this.message,
+    locale: locale ?? this.locale,
+    createdAtEpochMs: createdAtEpochMs ?? this.createdAtEpochMs,
+  );
+  AssistantPendingRequestRecord copyWithCompanion(
+    AssistantPendingRequestsCompanion data,
+  ) {
+    return AssistantPendingRequestRecord(
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      clientMessageId: data.clientMessageId.present
+          ? data.clientMessageId.value
+          : this.clientMessageId,
+      conversationLocalId: data.conversationLocalId.present
+          ? data.conversationLocalId.value
+          : this.conversationLocalId,
+      conversationId: data.conversationId.present
+          ? data.conversationId.value
+          : this.conversationId,
+      tripId: data.tripId.present ? data.tripId.value : this.tripId,
+      message: data.message.present ? data.message.value : this.message,
+      locale: data.locale.present ? data.locale.value : this.locale,
+      createdAtEpochMs: data.createdAtEpochMs.present
+          ? data.createdAtEpochMs.value
+          : this.createdAtEpochMs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AssistantPendingRequestRecord(')
+          ..write('ownerId: $ownerId, ')
+          ..write('clientMessageId: $clientMessageId, ')
+          ..write('conversationLocalId: $conversationLocalId, ')
+          ..write('conversationId: $conversationId, ')
+          ..write('tripId: $tripId, ')
+          ..write('message: $message, ')
+          ..write('locale: $locale, ')
+          ..write('createdAtEpochMs: $createdAtEpochMs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerId,
+    clientMessageId,
+    conversationLocalId,
+    conversationId,
+    tripId,
+    message,
+    locale,
+    createdAtEpochMs,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AssistantPendingRequestRecord &&
+          other.ownerId == this.ownerId &&
+          other.clientMessageId == this.clientMessageId &&
+          other.conversationLocalId == this.conversationLocalId &&
+          other.conversationId == this.conversationId &&
+          other.tripId == this.tripId &&
+          other.message == this.message &&
+          other.locale == this.locale &&
+          other.createdAtEpochMs == this.createdAtEpochMs);
+}
+
+class AssistantPendingRequestsCompanion
+    extends UpdateCompanion<AssistantPendingRequestRecord> {
+  final Value<String> ownerId;
+  final Value<String> clientMessageId;
+  final Value<String> conversationLocalId;
+  final Value<String?> conversationId;
+  final Value<String?> tripId;
+  final Value<String> message;
+  final Value<String> locale;
+  final Value<int> createdAtEpochMs;
+  final Value<int> rowid;
+  const AssistantPendingRequestsCompanion({
+    this.ownerId = const Value.absent(),
+    this.clientMessageId = const Value.absent(),
+    this.conversationLocalId = const Value.absent(),
+    this.conversationId = const Value.absent(),
+    this.tripId = const Value.absent(),
+    this.message = const Value.absent(),
+    this.locale = const Value.absent(),
+    this.createdAtEpochMs = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AssistantPendingRequestsCompanion.insert({
+    required String ownerId,
+    required String clientMessageId,
+    required String conversationLocalId,
+    this.conversationId = const Value.absent(),
+    this.tripId = const Value.absent(),
+    required String message,
+    required String locale,
+    required int createdAtEpochMs,
+    this.rowid = const Value.absent(),
+  }) : ownerId = Value(ownerId),
+       clientMessageId = Value(clientMessageId),
+       conversationLocalId = Value(conversationLocalId),
+       message = Value(message),
+       locale = Value(locale),
+       createdAtEpochMs = Value(createdAtEpochMs);
+  static Insertable<AssistantPendingRequestRecord> custom({
+    Expression<String>? ownerId,
+    Expression<String>? clientMessageId,
+    Expression<String>? conversationLocalId,
+    Expression<String>? conversationId,
+    Expression<String>? tripId,
+    Expression<String>? message,
+    Expression<String>? locale,
+    Expression<int>? createdAtEpochMs,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerId != null) 'owner_id': ownerId,
+      if (clientMessageId != null) 'client_message_id': clientMessageId,
+      if (conversationLocalId != null)
+        'conversation_local_id': conversationLocalId,
+      if (conversationId != null) 'conversation_id': conversationId,
+      if (tripId != null) 'trip_id': tripId,
+      if (message != null) 'message': message,
+      if (locale != null) 'locale': locale,
+      if (createdAtEpochMs != null) 'created_at_epoch_ms': createdAtEpochMs,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AssistantPendingRequestsCompanion copyWith({
+    Value<String>? ownerId,
+    Value<String>? clientMessageId,
+    Value<String>? conversationLocalId,
+    Value<String?>? conversationId,
+    Value<String?>? tripId,
+    Value<String>? message,
+    Value<String>? locale,
+    Value<int>? createdAtEpochMs,
+    Value<int>? rowid,
+  }) {
+    return AssistantPendingRequestsCompanion(
+      ownerId: ownerId ?? this.ownerId,
+      clientMessageId: clientMessageId ?? this.clientMessageId,
+      conversationLocalId: conversationLocalId ?? this.conversationLocalId,
+      conversationId: conversationId ?? this.conversationId,
+      tripId: tripId ?? this.tripId,
+      message: message ?? this.message,
+      locale: locale ?? this.locale,
+      createdAtEpochMs: createdAtEpochMs ?? this.createdAtEpochMs,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
+    }
+    if (clientMessageId.present) {
+      map['client_message_id'] = Variable<String>(clientMessageId.value);
+    }
+    if (conversationLocalId.present) {
+      map['conversation_local_id'] = Variable<String>(
+        conversationLocalId.value,
+      );
+    }
+    if (conversationId.present) {
+      map['conversation_id'] = Variable<String>(conversationId.value);
+    }
+    if (tripId.present) {
+      map['trip_id'] = Variable<String>(tripId.value);
+    }
+    if (message.present) {
+      map['message'] = Variable<String>(message.value);
+    }
+    if (locale.present) {
+      map['locale'] = Variable<String>(locale.value);
+    }
+    if (createdAtEpochMs.present) {
+      map['created_at_epoch_ms'] = Variable<int>(createdAtEpochMs.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AssistantPendingRequestsCompanion(')
+          ..write('ownerId: $ownerId, ')
+          ..write('clientMessageId: $clientMessageId, ')
+          ..write('conversationLocalId: $conversationLocalId, ')
+          ..write('conversationId: $conversationId, ')
+          ..write('tripId: $tripId, ')
+          ..write('message: $message, ')
+          ..write('locale: $locale, ')
+          ..write('createdAtEpochMs: $createdAtEpochMs, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AssistantDatabase extends GeneratedDatabase {
   _$AssistantDatabase(QueryExecutor e) : super(e);
   $AssistantDatabaseManager get managers => $AssistantDatabaseManager(this);
@@ -1178,6 +1734,8 @@ abstract class _$AssistantDatabase extends GeneratedDatabase {
       $AssistantConversationsTable(this);
   late final $AssistantMessagesTable assistantMessages =
       $AssistantMessagesTable(this);
+  late final $AssistantPendingRequestsTable assistantPendingRequests =
+      $AssistantPendingRequestsTable(this);
   late final Index assistantConversationsOwnerUpdatedAt = Index(
     'assistant_conversations_owner_updated_at',
     'CREATE INDEX assistant_conversations_owner_updated_at ON assistant_conversations (owner_id, updated_at_epoch_ms)',
@@ -1198,6 +1756,10 @@ abstract class _$AssistantDatabase extends GeneratedDatabase {
     'assistant_messages_owner_assistant_message_id',
     'CREATE UNIQUE INDEX assistant_messages_owner_assistant_message_id ON assistant_messages (owner_id, assistant_message_id)',
   );
+  late final Index assistantPendingRequestsOwnerCreatedAt = Index(
+    'assistant_pending_requests_owner_created_at',
+    'CREATE INDEX assistant_pending_requests_owner_created_at ON assistant_pending_requests (owner_id, created_at_epoch_ms, client_message_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1205,11 +1767,13 @@ abstract class _$AssistantDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     assistantConversations,
     assistantMessages,
+    assistantPendingRequests,
     assistantConversationsOwnerUpdatedAt,
     assistantConversationsOwnerRemoteId,
     assistantMessagesOwnerConversationCreatedAt,
     assistantMessagesOwnerClientMessageId,
     assistantMessagesOwnerAssistantMessageId,
+    assistantPendingRequestsOwnerCreatedAt,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -1219,6 +1783,15 @@ abstract class _$AssistantDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('assistant_messages', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'assistant_conversations',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('assistant_pending_requests', kind: UpdateKind.delete),
+      ],
     ),
   ]);
 }
@@ -1287,6 +1860,38 @@ final class $$AssistantConversationsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<
+    $AssistantPendingRequestsTable,
+    List<AssistantPendingRequestRecord>
+  >
+  _assistantPendingRequestsRefsTable(
+    _$AssistantDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.assistantPendingRequests,
+    aliasName:
+        'assistant_conversations__local_id__assistant_pending_requests__conversation_local_id',
+  );
+
+  $$AssistantPendingRequestsTableProcessedTableManager
+  get assistantPendingRequestsRefs {
+    final manager =
+        $$AssistantPendingRequestsTableTableManager(
+          $_db,
+          $_db.assistantPendingRequests,
+        ).filter(
+          (f) => f.conversationLocalId.localId.sqlEquals(
+            $_itemColumn<String>('local_id')!,
+          ),
+        );
+
+    final cache = $_typedResult.readTableOrNull(
+      _assistantPendingRequestsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$AssistantConversationsTableFilterComposer
@@ -1350,6 +1955,33 @@ class $$AssistantConversationsTableFilterComposer
                 $removeJoinBuilderFromRootComposer,
           ),
     );
+    return f(composer);
+  }
+
+  Expression<bool> assistantPendingRequestsRefs(
+    Expression<bool> Function($$AssistantPendingRequestsTableFilterComposer f)
+    f,
+  ) {
+    final $$AssistantPendingRequestsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.localId,
+          referencedTable: $db.assistantPendingRequests,
+          getReferencedColumn: (t) => t.conversationLocalId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$AssistantPendingRequestsTableFilterComposer(
+                $db: $db,
+                $table: $db.assistantPendingRequests,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
     return f(composer);
   }
 }
@@ -1450,6 +2082,33 @@ class $$AssistantConversationsTableAnnotationComposer
         );
     return f(composer);
   }
+
+  Expression<T> assistantPendingRequestsRefs<T extends Object>(
+    Expression<T> Function($$AssistantPendingRequestsTableAnnotationComposer a)
+    f,
+  ) {
+    final $$AssistantPendingRequestsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.localId,
+          referencedTable: $db.assistantPendingRequests,
+          getReferencedColumn: (t) => t.conversationLocalId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$AssistantPendingRequestsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.assistantPendingRequests,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$AssistantConversationsTableTableManager
@@ -1468,7 +2127,10 @@ class $$AssistantConversationsTableTableManager
             $$AssistantConversationsTableReferences,
           ),
           AssistantConversationRecord,
-          PrefetchHooks Function({bool assistantMessagesRefs})
+          PrefetchHooks Function({
+            bool assistantMessagesRefs,
+            bool assistantPendingRequestsRefs,
+          })
         > {
   $$AssistantConversationsTableTableManager(
     _$AssistantDatabase db,
@@ -1536,40 +2198,69 @@ class $$AssistantConversationsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({assistantMessagesRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (assistantMessagesRefs) db.assistantMessages,
-              ],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (assistantMessagesRefs)
-                    await $_getPrefetchedData<
-                      AssistantConversationRecord,
-                      $AssistantConversationsTable,
-                      AssistantMessageRecord
-                    >(
-                      currentTable: table,
-                      referencedTable: $$AssistantConversationsTableReferences
-                          ._assistantMessagesRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$AssistantConversationsTableReferences(
-                            db,
-                            table,
-                            p0,
-                          ).assistantMessagesRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where(
-                            (e) => e.conversationLocalId == item.localId,
-                          ),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({
+                assistantMessagesRefs = false,
+                assistantPendingRequestsRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (assistantMessagesRefs) db.assistantMessages,
+                    if (assistantPendingRequestsRefs)
+                      db.assistantPendingRequests,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (assistantMessagesRefs)
+                        await $_getPrefetchedData<
+                          AssistantConversationRecord,
+                          $AssistantConversationsTable,
+                          AssistantMessageRecord
+                        >(
+                          currentTable: table,
+                          referencedTable:
+                              $$AssistantConversationsTableReferences
+                                  ._assistantMessagesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AssistantConversationsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).assistantMessagesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.conversationLocalId == item.localId,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (assistantPendingRequestsRefs)
+                        await $_getPrefetchedData<
+                          AssistantConversationRecord,
+                          $AssistantConversationsTable,
+                          AssistantPendingRequestRecord
+                        >(
+                          currentTable: table,
+                          referencedTable:
+                              $$AssistantConversationsTableReferences
+                                  ._assistantPendingRequestsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AssistantConversationsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).assistantPendingRequestsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.conversationLocalId == item.localId,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -1586,7 +2277,10 @@ typedef $$AssistantConversationsTableProcessedTableManager =
       $$AssistantConversationsTableUpdateCompanionBuilder,
       (AssistantConversationRecord, $$AssistantConversationsTableReferences),
       AssistantConversationRecord,
-      PrefetchHooks Function({bool assistantMessagesRefs})
+      PrefetchHooks Function({
+        bool assistantMessagesRefs,
+        bool assistantPendingRequestsRefs,
+      })
     >;
 typedef $$AssistantMessagesTableCreateCompanionBuilder =
     AssistantMessagesCompanion Function({
@@ -2065,6 +2759,420 @@ typedef $$AssistantMessagesTableProcessedTableManager =
       AssistantMessageRecord,
       PrefetchHooks Function({bool conversationLocalId})
     >;
+typedef $$AssistantPendingRequestsTableCreateCompanionBuilder =
+    AssistantPendingRequestsCompanion Function({
+      required String ownerId,
+      required String clientMessageId,
+      required String conversationLocalId,
+      Value<String?> conversationId,
+      Value<String?> tripId,
+      required String message,
+      required String locale,
+      required int createdAtEpochMs,
+      Value<int> rowid,
+    });
+typedef $$AssistantPendingRequestsTableUpdateCompanionBuilder =
+    AssistantPendingRequestsCompanion Function({
+      Value<String> ownerId,
+      Value<String> clientMessageId,
+      Value<String> conversationLocalId,
+      Value<String?> conversationId,
+      Value<String?> tripId,
+      Value<String> message,
+      Value<String> locale,
+      Value<int> createdAtEpochMs,
+      Value<int> rowid,
+    });
+
+final class $$AssistantPendingRequestsTableReferences
+    extends
+        BaseReferences<
+          _$AssistantDatabase,
+          $AssistantPendingRequestsTable,
+          AssistantPendingRequestRecord
+        > {
+  $$AssistantPendingRequestsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $AssistantConversationsTable _conversationLocalIdTable(
+    _$AssistantDatabase db,
+  ) => db.assistantConversations.createAlias(
+    'assistant_pending_requests__conversation_local_id__assistant_conversations__local_id',
+  );
+
+  $$AssistantConversationsTableProcessedTableManager get conversationLocalId {
+    final $_column = $_itemColumn<String>('conversation_local_id')!;
+
+    final manager = $$AssistantConversationsTableTableManager(
+      $_db,
+      $_db.assistantConversations,
+    ).filter((f) => f.localId.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_conversationLocalIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$AssistantPendingRequestsTableFilterComposer
+    extends Composer<_$AssistantDatabase, $AssistantPendingRequestsTable> {
+  $$AssistantPendingRequestsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get clientMessageId => $composableBuilder(
+    column: $table.clientMessageId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get conversationId => $composableBuilder(
+    column: $table.conversationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tripId => $composableBuilder(
+    column: $table.tripId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get message => $composableBuilder(
+    column: $table.message,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get locale => $composableBuilder(
+    column: $table.locale,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtEpochMs => $composableBuilder(
+    column: $table.createdAtEpochMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$AssistantConversationsTableFilterComposer get conversationLocalId {
+    final $$AssistantConversationsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.conversationLocalId,
+          referencedTable: $db.assistantConversations,
+          getReferencedColumn: (t) => t.localId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$AssistantConversationsTableFilterComposer(
+                $db: $db,
+                $table: $db.assistantConversations,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$AssistantPendingRequestsTableOrderingComposer
+    extends Composer<_$AssistantDatabase, $AssistantPendingRequestsTable> {
+  $$AssistantPendingRequestsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get clientMessageId => $composableBuilder(
+    column: $table.clientMessageId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get conversationId => $composableBuilder(
+    column: $table.conversationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tripId => $composableBuilder(
+    column: $table.tripId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get message => $composableBuilder(
+    column: $table.message,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get locale => $composableBuilder(
+    column: $table.locale,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtEpochMs => $composableBuilder(
+    column: $table.createdAtEpochMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$AssistantConversationsTableOrderingComposer get conversationLocalId {
+    final $$AssistantConversationsTableOrderingComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.conversationLocalId,
+          referencedTable: $db.assistantConversations,
+          getReferencedColumn: (t) => t.localId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$AssistantConversationsTableOrderingComposer(
+                $db: $db,
+                $table: $db.assistantConversations,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$AssistantPendingRequestsTableAnnotationComposer
+    extends Composer<_$AssistantDatabase, $AssistantPendingRequestsTable> {
+  $$AssistantPendingRequestsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
+
+  GeneratedColumn<String> get clientMessageId => $composableBuilder(
+    column: $table.clientMessageId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get conversationId => $composableBuilder(
+    column: $table.conversationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get tripId =>
+      $composableBuilder(column: $table.tripId, builder: (column) => column);
+
+  GeneratedColumn<String> get message =>
+      $composableBuilder(column: $table.message, builder: (column) => column);
+
+  GeneratedColumn<String> get locale =>
+      $composableBuilder(column: $table.locale, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAtEpochMs => $composableBuilder(
+    column: $table.createdAtEpochMs,
+    builder: (column) => column,
+  );
+
+  $$AssistantConversationsTableAnnotationComposer get conversationLocalId {
+    final $$AssistantConversationsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.conversationLocalId,
+          referencedTable: $db.assistantConversations,
+          getReferencedColumn: (t) => t.localId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$AssistantConversationsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.assistantConversations,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$AssistantPendingRequestsTableTableManager
+    extends
+        RootTableManager<
+          _$AssistantDatabase,
+          $AssistantPendingRequestsTable,
+          AssistantPendingRequestRecord,
+          $$AssistantPendingRequestsTableFilterComposer,
+          $$AssistantPendingRequestsTableOrderingComposer,
+          $$AssistantPendingRequestsTableAnnotationComposer,
+          $$AssistantPendingRequestsTableCreateCompanionBuilder,
+          $$AssistantPendingRequestsTableUpdateCompanionBuilder,
+          (
+            AssistantPendingRequestRecord,
+            $$AssistantPendingRequestsTableReferences,
+          ),
+          AssistantPendingRequestRecord,
+          PrefetchHooks Function({bool conversationLocalId})
+        > {
+  $$AssistantPendingRequestsTableTableManager(
+    _$AssistantDatabase db,
+    $AssistantPendingRequestsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AssistantPendingRequestsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$AssistantPendingRequestsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$AssistantPendingRequestsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerId = const Value.absent(),
+                Value<String> clientMessageId = const Value.absent(),
+                Value<String> conversationLocalId = const Value.absent(),
+                Value<String?> conversationId = const Value.absent(),
+                Value<String?> tripId = const Value.absent(),
+                Value<String> message = const Value.absent(),
+                Value<String> locale = const Value.absent(),
+                Value<int> createdAtEpochMs = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AssistantPendingRequestsCompanion(
+                ownerId: ownerId,
+                clientMessageId: clientMessageId,
+                conversationLocalId: conversationLocalId,
+                conversationId: conversationId,
+                tripId: tripId,
+                message: message,
+                locale: locale,
+                createdAtEpochMs: createdAtEpochMs,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerId,
+                required String clientMessageId,
+                required String conversationLocalId,
+                Value<String?> conversationId = const Value.absent(),
+                Value<String?> tripId = const Value.absent(),
+                required String message,
+                required String locale,
+                required int createdAtEpochMs,
+                Value<int> rowid = const Value.absent(),
+              }) => AssistantPendingRequestsCompanion.insert(
+                ownerId: ownerId,
+                clientMessageId: clientMessageId,
+                conversationLocalId: conversationLocalId,
+                conversationId: conversationId,
+                tripId: tripId,
+                message: message,
+                locale: locale,
+                createdAtEpochMs: createdAtEpochMs,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$AssistantPendingRequestsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({conversationLocalId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (conversationLocalId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.conversationLocalId,
+                                referencedTable:
+                                    $$AssistantPendingRequestsTableReferences
+                                        ._conversationLocalIdTable(db),
+                                referencedColumn:
+                                    $$AssistantPendingRequestsTableReferences
+                                        ._conversationLocalIdTable(db)
+                                        .localId,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$AssistantPendingRequestsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AssistantDatabase,
+      $AssistantPendingRequestsTable,
+      AssistantPendingRequestRecord,
+      $$AssistantPendingRequestsTableFilterComposer,
+      $$AssistantPendingRequestsTableOrderingComposer,
+      $$AssistantPendingRequestsTableAnnotationComposer,
+      $$AssistantPendingRequestsTableCreateCompanionBuilder,
+      $$AssistantPendingRequestsTableUpdateCompanionBuilder,
+      (
+        AssistantPendingRequestRecord,
+        $$AssistantPendingRequestsTableReferences,
+      ),
+      AssistantPendingRequestRecord,
+      PrefetchHooks Function({bool conversationLocalId})
+    >;
 
 class $AssistantDatabaseManager {
   final _$AssistantDatabase _db;
@@ -2076,4 +3184,9 @@ class $AssistantDatabaseManager {
       );
   $$AssistantMessagesTableTableManager get assistantMessages =>
       $$AssistantMessagesTableTableManager(_db, _db.assistantMessages);
+  $$AssistantPendingRequestsTableTableManager get assistantPendingRequests =>
+      $$AssistantPendingRequestsTableTableManager(
+        _db,
+        _db.assistantPendingRequests,
+      );
 }

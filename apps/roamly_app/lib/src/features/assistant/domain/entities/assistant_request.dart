@@ -36,6 +36,21 @@ final class AssistantRequest {
   final String locale;
   final DateTime createdAt;
 
+  /// Whether two requests represent the same backend idempotency payload.
+  ///
+  /// Local persistence stores timestamps at millisecond precision, so
+  /// sub-millisecond differences must not turn a valid replay into a conflict.
+  bool hasSameIdempotencyPayloadAs(AssistantRequest other) {
+    return conversationLocalId == other.conversationLocalId &&
+        clientMessageId == other.clientMessageId &&
+        conversationId == other.conversationId &&
+        tripId == other.tripId &&
+        message == other.message &&
+        locale == other.locale &&
+        createdAt.millisecondsSinceEpoch ==
+            other.createdAt.millisecondsSinceEpoch;
+  }
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||

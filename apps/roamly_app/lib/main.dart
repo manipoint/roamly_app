@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:roamly_app/src/app/roamly_app.dart';
 import 'package:roamly_app/src/config/app_config.dart';
+import 'package:roamly_app/src/features/assistant/composition/assistant_module.dart';
+import 'package:roamly_app/src/features/assistant/presentation/providers/assistant_dependency_providers.dart';
 import 'package:roamly_app/src/features/home/composition/home_module.dart';
 import 'package:roamly_app/src/features/home/presentation/providers/home_dependency_providers.dart';
 import 'package:roamly_app/src/features/preferences/composition/preference_module.dart';
@@ -44,7 +48,7 @@ void main() {
     logger: authLogger,
     enableHttpDebugLogging: kDebugMode,
   );
- ApiRequestExecutor requestExecutorFor(String feature) {
+  ApiRequestExecutor requestExecutorFor(String feature) {
     return DefaultApiRequestExecutor(
       failureMapper: DefaultDioFailureMapper(),
       logger: logger.child('$feature.network'),
@@ -77,7 +81,6 @@ void main() {
             authenticatedClient: authDependencies.authenticatedApiClient,
             requestExecutor: requestExecutorFor('location'),
           );
-          
         }),
         homeDiscoveryRepositoryProvider.overrideWith(
           (ref) => HomeModule.create(
@@ -85,6 +88,36 @@ void main() {
             requestExecutor: requestExecutorFor('home'),
           ),
         ),
+        assistantRepositoryProvider.overrideWith((ref) {
+          final ownerId = ref.watch(
+            authControllerProvider.select(
+              (authentication) => authentication.value?.id,
+            ),
+          );
+          if (ownerId == null) {
+            throw StateError(
+              'Assistant repository requires an authenticated user.',
+            );
+          }
+          final dependencies = AssistantModule.create(
+            websocketUri: appConfig.assistantWebSocketUri,
+            accessTokenProvider: authDependencies.accessTokenProvider,
+            ownerId: ownerId,
+            logger: logger,
+          );
+          ref.onDispose(() {
+            unawaited(
+              dependencies.dispose().onError((error, stackTrace) {
+                logger.error(
+                  'Assistant dependencies disposal failed',
+                  fields: {'error_type': error.runtimeType.toString()},
+                  stackTrace: stackTrace,
+                );
+              }),
+            );
+          });
+          return dependencies.repository;
+        }),
       ],
       child: const RoamlyApp(),
     ),

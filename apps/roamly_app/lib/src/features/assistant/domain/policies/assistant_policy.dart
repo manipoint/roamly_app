@@ -24,6 +24,10 @@ abstract final class AssistantPolicy {
   static const int defaultMessagesLimit = 100;
   static const int maximumMessagesLimit = 200;
 
+  // Durable request replay.
+  static const int pendingReplayBatchSize = 50;
+  static const int maximumPendingReplayBatchSize = 100;
+
   static String normalizeMessage(String value) {
     final normalized = RoamlyValueNormalizers.trimmed(value);
     return RoamlyValueGuards.requireRuneLength(

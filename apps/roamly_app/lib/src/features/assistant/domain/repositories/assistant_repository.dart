@@ -29,7 +29,7 @@ abstract interface class AssistantRepository {
 
   void connect();
   Future<void> disconnect();
-  Future<void> sendRequest(AssistantRequest request);
+  Future<void> sendRequest( AssistantRequest request);
   Future<void> deleteConversation({required String localId});
   Future<void> clearLocalHistory();
   Future<void> dispose();

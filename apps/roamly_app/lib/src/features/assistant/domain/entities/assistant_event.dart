@@ -5,6 +5,7 @@ sealed class AssistantEvent {
     : occurredAt = RoamlyValueNormalizers.utc(occurredAt);
 
   final DateTime occurredAt;
+  String get clientMessageId;
 }
 
 enum AssistantRequestRejectionReason {
@@ -34,6 +35,7 @@ final class AssistantRequestAccepted extends AssistantEvent {
          conversationId,
          field: 'conversationId',
        );
+  @override
   final String clientMessageId;
   final String conversationId;
   @override
@@ -58,6 +60,7 @@ final class AssistantRequestRejected extends AssistantEvent {
          clientMessageId,
          field: 'clientMessageId',
        );
+  @override
   final String clientMessageId;
   final AssistantRequestRejectionReason reason;
 
@@ -87,6 +90,7 @@ final class AssistantResponseProcessing extends AssistantEvent {
          conversationId,
          field: 'conversationId',
        );
+  @override
   final String clientMessageId;
   final String conversationId;
 
@@ -129,6 +133,7 @@ final class AssistantResponseCompleted extends AssistantEvent {
          itineraryId,
          field: 'itineraryId',
        );
+  @override
   final String clientMessageId;
   final String conversationId;
   final String assistantMessageId;
@@ -174,6 +179,7 @@ final class AssistantResponseFailed extends AssistantEvent {
          conversationId,
          field: 'conversationId',
        );
+  @override
   final String clientMessageId;
   final String conversationId;
   final AssistantResponseFailureReason reason;

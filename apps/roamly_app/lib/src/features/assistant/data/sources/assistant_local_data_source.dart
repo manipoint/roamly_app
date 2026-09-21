@@ -1,6 +1,7 @@
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_conversation.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message_delivery_state.dart';
+import 'package:roamly_app/src/features/assistant/domain/entities/assistant_request.dart';
 import 'package:roamly_app/src/features/assistant/domain/policies/assistant_policy.dart';
 
 /// Local persistence contract for assistant conversation history.
@@ -53,6 +54,25 @@ abstract interface class AssistantLocalDataSource {
     required AssistantConversation conversation,
     required Iterable<AssistantMessage> messages,
   });
+
+  /// Atomically stores a new user message and its durable outbound request.
+  Future<void> cachePendingRequest({
+    required AssistantConversation conversation,
+    required AssistantMessage message,
+    required AssistantRequest request,
+  });
+
+  /// Returns pending requests in stable creation order for reconnect replay.
+  Future<List<AssistantRequest>> getPendingRequests({
+    int limit = AssistantPolicy.pendingReplayBatchSize,
+    DateTime? afterCreatedAt,
+    String? afterClientMessageId,
+  });
+
+  Future<AssistantRequest?> getPendingRequest({
+    required String clientMessageId,
+  });
+  Future<void> deletePendingRequest({required String clientMessageId});
 
   Future<void> updateMessageDeliveryState({
     required String messageId,

@@ -4,6 +4,7 @@ import 'package:roamly_app/src/features/assistant/data/sources/assistant_local_d
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_conversation.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message_delivery_state.dart';
+import 'package:roamly_app/src/features/assistant/domain/entities/assistant_request.dart';
 import 'package:roamly_app/src/features/assistant/domain/policies/assistant_policy.dart';
 import 'package:roamly_core/roamly_core.dart';
 
@@ -189,6 +190,112 @@ final class DriftAssistantLocalDataSource implements AssistantLocalDataSource {
   }
 
   @override
+  Future<void> cachePendingRequest({
+    required AssistantConversation conversation,
+    required AssistantMessage message,
+    required AssistantRequest request,
+  }) {
+    if (message.author != AssistantMessageAuthor.user ||
+        message.deliveryState != AssistantMessageDeliveryState.pending ||
+        message.id != request.clientMessageId ||
+        message.clientMessageId != request.clientMessageId ||
+        message.conversationLocalId != conversation.localId ||
+        request.conversationLocalId != conversation.localId ||
+        message.content != request.message ||
+        message.createdAt.millisecondsSinceEpoch !=
+            request.createdAt.millisecondsSinceEpoch) {
+      throw ArgumentError(
+        'The pending message, request, and conversation do not match.',
+      );
+    }
+
+    return _database.transaction(() async {
+      await _upsertConversationRecord(conversation);
+      await _upsertMessageRecord(message);
+      await _upsertPendingRequestRecord(request);
+    });
+  }
+
+  @override
+  Future<List<AssistantRequest>> getPendingRequests({
+    int limit = AssistantPolicy.pendingReplayBatchSize,
+    DateTime? afterCreatedAt,
+    String? afterClientMessageId,
+  }) async {
+    final hasCreatedAtCursor = afterCreatedAt != null;
+    final hasClientMessageIdCursor = afterClientMessageId != null;
+    if (hasCreatedAtCursor != hasClientMessageIdCursor) {
+      throw ArgumentError(
+        'afterCreatedAt and afterClientMessageId must be supplied together.',
+      );
+    }
+    _validateLimit(
+      limit,
+      maximum: AssistantPolicy.maximumPendingReplayBatchSize,
+    );
+    final cursorCreatedAtEpochMs = afterCreatedAt
+        ?.toUtc()
+        .millisecondsSinceEpoch;
+    final cursorClientMessageId = afterClientMessageId == null
+        ? null
+        : RoamlyValueGuards.requireUuid(
+            afterClientMessageId,
+            field: 'afterClientMessageId',
+          );
+    final query = _database.select(_database.assistantPendingRequests)
+      ..where((row) {
+        final ownerPredicate = row.ownerId.equals(_ownerId);
+        if (cursorCreatedAtEpochMs == null || cursorClientMessageId == null) {
+          return ownerPredicate;
+        }
+        final afterCursor =
+            row.createdAtEpochMs.isBiggerThanValue(cursorCreatedAtEpochMs) |
+            (row.createdAtEpochMs.equals(cursorCreatedAtEpochMs) &
+                row.clientMessageId.isBiggerThanValue(cursorClientMessageId));
+        return ownerPredicate & afterCursor;
+      })
+      ..orderBy([
+        (row) => OrderingTerm.asc(row.createdAtEpochMs),
+        (row) => OrderingTerm.asc(row.clientMessageId),
+      ])..limit(limit);
+
+    final records = await query.get();
+    return records.map(_requestFromRecord).toList(growable: false);
+  }
+
+  @override
+  Future<AssistantRequest?> getPendingRequest({
+    required String clientMessageId,
+  }) async {
+    final validatedClientMessageId = RoamlyValueGuards.requireUuid(
+      clientMessageId,
+      field: 'clientMessageId',
+    );
+    final query = _database.select(_database.assistantPendingRequests)
+      ..where(
+        (row) =>
+            row.ownerId.equals(_ownerId) &
+            row.clientMessageId.equals(validatedClientMessageId),
+      );
+    final record = await query.getSingleOrNull();
+    return record == null ? null : _requestFromRecord(record);
+  }
+
+  @override
+  Future<void> deletePendingRequest({required String clientMessageId}) async {
+    final validatedClientMessageId = RoamlyValueGuards.requireUuid(
+      clientMessageId,
+      field: 'clientMessageId',
+    );
+    await (_database.delete(_database.assistantPendingRequests)..where(
+          (row) =>
+              row.ownerId.equals(_ownerId) &
+              row.clientMessageId.equals(validatedClientMessageId),
+        ))
+        .go();
+  }
+
+  @override
   Future<void> updateMessageDeliveryState({
     required String messageId,
     required AssistantMessageDeliveryState deliveryState,
@@ -262,6 +369,10 @@ final class DriftAssistantLocalDataSource implements AssistantLocalDataSource {
       // Explicit deletion protects cleanup if an old database was opened
       // before foreign-key enforcement was enabled.
       await (_database.delete(
+        _database.assistantPendingRequests,
+      )..where((row) => row.ownerId.equals(_ownerId))).go();
+
+      await (_database.delete(
         _database.assistantMessages,
       )..where((row) => row.ownerId.equals(_ownerId))).go();
 
@@ -308,6 +419,23 @@ final class DriftAssistantLocalDataSource implements AssistantLocalDataSource {
             deliveryState: message.deliveryState,
             createdAtEpochMs: message.createdAt.millisecondsSinceEpoch,
             updatedAtEpochMs: message.updatedAt.millisecondsSinceEpoch,
+          ),
+        );
+  }
+
+  Future<void> _upsertPendingRequestRecord(AssistantRequest request) async {
+    await _database
+        .into(_database.assistantPendingRequests)
+        .insertOnConflictUpdate(
+          AssistantPendingRequestsCompanion.insert(
+            ownerId: _ownerId,
+            clientMessageId: request.clientMessageId,
+            conversationLocalId: request.conversationLocalId,
+            conversationId: Value(request.conversationId),
+            tripId: Value(request.tripId),
+            message: request.message,
+            locale: request.locale,
+            createdAtEpochMs: request.createdAt.millisecondsSinceEpoch,
           ),
         );
   }
@@ -392,6 +520,23 @@ final class DriftAssistantLocalDataSource implements AssistantLocalDataSource {
       ),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(
         record.updatedAtEpochMs,
+        isUtc: true,
+      ),
+    );
+  }
+
+  static AssistantRequest _requestFromRecord(
+    AssistantPendingRequestRecord record,
+  ) {
+    return AssistantRequest(
+      conversationLocalId: record.conversationLocalId,
+      clientMessageId: record.clientMessageId,
+      conversationId: record.conversationId,
+      tripId: record.tripId,
+      message: record.message,
+      locale: record.locale,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        record.createdAtEpochMs,
         isUtc: true,
       ),
     );
