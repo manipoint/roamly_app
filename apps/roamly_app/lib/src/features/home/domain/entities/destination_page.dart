@@ -1,6 +1,7 @@
 import 'package:roamly_core/roamly_core.dart';
 
 import 'destination.dart';
+
 final class DestinationPage {
   DestinationPage({
     required Iterable<Destination> items,

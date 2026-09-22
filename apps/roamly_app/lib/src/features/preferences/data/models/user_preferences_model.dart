@@ -24,7 +24,7 @@ final class UserPreferencesModel {
       'travel_styles',
       parseItem: PreferenceEnumMapper.travelStyleFromJson,
       maxLength: 3,
-      unique: true
+      unique: true,
     );
 
     final budgetTier = reader.nullable(

@@ -257,7 +257,8 @@ final class DriftAssistantLocalDataSource implements AssistantLocalDataSource {
       ..orderBy([
         (row) => OrderingTerm.asc(row.createdAtEpochMs),
         (row) => OrderingTerm.asc(row.clientMessageId),
-      ])..limit(limit);
+      ])
+      ..limit(limit);
 
     final records = await query.get();
     return records.map(_requestFromRecord).toList(growable: false);

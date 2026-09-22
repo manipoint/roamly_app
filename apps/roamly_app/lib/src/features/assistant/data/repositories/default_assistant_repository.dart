@@ -93,7 +93,7 @@ final class DefaultAssistantRepository implements AssistantRepository {
   @override
   Future<void> sendRequest(
     AssistantRequest request, {
-     bool requirePendingRecord = false,
+    bool requirePendingRecord = false,
   }) {
     _ensureActive();
     final existingOperation = _sendOperations[request.clientMessageId];
@@ -113,7 +113,7 @@ final class DefaultAssistantRepository implements AssistantRepository {
       request: request,
       completer: completer,
     );
-   unawaited(
+    unawaited(
       (() async {
         try {
           final model = await _localSync.prepareRequest(
@@ -141,6 +141,7 @@ final class DefaultAssistantRepository implements AssistantRepository {
 
     return completer.future;
   }
+
   @override
   Future<void> clearLocalHistory() {
     _ensureActive();

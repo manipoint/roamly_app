@@ -13,22 +13,22 @@ abstract interface class HomeDiscoveryRepository {
   /// Implementations must preserve server ordering and must not perform
   /// additional LLM, MCP, or provider requests.
   Future<Result<HomeDiscovery>> getHome({required int limit});
-   /// Omit cursor for the first page.
+
+  /// Omit cursor for the first page.
   /// Forward nextCursor unchanged while retaining the same query.
   Future<Result<DestinationPage>> getDestinations({
     required DestinationCollectionQuery query,
     int limit = 20,
     String? cursor,
   });
+
   /// Returns complete destination editorial content using its stable slug.
   Future<Result<DestinationDetail>> getDestinationDetail({
     required String slug,
   });
 
-   Future<Result<DestinationPlaceDetail>> getDestinationPlaceDetail({
+  Future<Result<DestinationPlaceDetail>> getDestinationPlaceDetail({
     required String destinationSlug,
     required String placeSlug,
-
-
   });
 }
