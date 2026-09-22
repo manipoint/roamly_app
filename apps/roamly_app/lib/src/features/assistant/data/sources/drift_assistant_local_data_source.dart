@@ -297,6 +297,27 @@ final class DriftAssistantLocalDataSource implements AssistantLocalDataSource {
   }
 
   @override
+  Future<void> failPendingRequest({required String clientMessageId}) {
+    return _database.transaction(() async {
+      final message = await getUserMessageByClientMessageId(
+        clientMessageId: clientMessageId,
+      );
+      if (message == null) return;
+      // A failed replay must never overwrite a server-confirmed outcome.
+      if (message.deliveryState != AssistantMessageDeliveryState.pending) {
+        return;
+      }
+      final now = DateTime.now().toUtc();
+      await updateMessageDeliveryState(
+        messageId: message.id,
+        deliveryState: AssistantMessageDeliveryState.failed,
+        updatedAt: now.isAfter(message.updatedAt) ? now : message.updatedAt,
+      );
+      await deletePendingRequest(clientMessageId: clientMessageId);
+    });
+  }
+
+  @override
   Future<void> updateMessageDeliveryState({
     required String messageId,
     required AssistantMessageDeliveryState deliveryState,

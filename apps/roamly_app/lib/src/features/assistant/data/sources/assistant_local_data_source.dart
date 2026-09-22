@@ -72,6 +72,11 @@ abstract interface class AssistantLocalDataSource {
   Future<AssistantRequest?> getPendingRequest({
     required String clientMessageId,
   });
+
+  /// Atomically fails an unsent user message and removes its outbox record.
+  /// Already accepted or completed messages are preserved.
+  Future<void> failPendingRequest({required String clientMessageId});
+
   Future<void> deletePendingRequest({required String clientMessageId});
 
   Future<void> updateMessageDeliveryState({

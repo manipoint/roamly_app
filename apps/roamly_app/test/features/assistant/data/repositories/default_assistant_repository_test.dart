@@ -22,6 +22,7 @@ import 'package:roamly_app/src/features/assistant/domain/entities/assistant_mess
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_request.dart';
 import 'package:roamly_app/src/features/assistant/domain/policies/assistant_policy.dart';
 import 'package:roamly_logging/roamly_logging.dart';
+import 'package:roamly_networking/roamly_networking.dart';
 
 const _clientMessageId = '00000000-0000-4000-8000-000000000001';
 const _conversationId = '00000000-0000-4000-8000-000000000002';
@@ -168,6 +169,10 @@ final class _RecordingLogSink implements LogSink {
 final class _CountingAssistantLocalDataSource
     implements AssistantLocalDataSource {
   _CountingAssistantLocalDataSource(this.delegate);
+
+  @override
+  Future<void> failPendingRequest({required String clientMessageId}) =>
+      delegate.failPendingRequest(clientMessageId: clientMessageId);
 
   final AssistantLocalDataSource delegate;
   int conversationWithMessagesWrites = 0;
@@ -335,11 +340,190 @@ void main() {
       localDataSource: countingLocalDataSource,
       logger: RoamlyLogger(name: 'test.assistant', sink: const NoopLogSink()),
     );
+    session.isReady = true;
   });
 
   tearDown(() async {
     await session.closeControllers();
     await database.close();
+  });
+
+  test('queues offline without invoking transport', () async {
+    session.isReady = false;
+    final request = _request(
+      clientMessageId: _clientMessageId2,
+      createdAt: _historyTime(1),
+    );
+    await repository.sendRequest(request);
+    expect(session.sentRequests, isEmpty);
+    expect(
+      await localDataSource.getPendingRequest(
+        clientMessageId: request.clientMessageId,
+      ),
+      isNotNull,
+    );
+  });
+
+  test(
+    'retains transient failures for replay without failing submission',
+    () async {
+      session.sendError = WebSocketFailure(
+        kind: WebSocketFailureKind.connection,
+      );
+      final request = _request(
+        clientMessageId: _clientMessageId2,
+        createdAt: _historyTime(1),
+      );
+      await repository.sendRequest(request);
+      expect(
+        await localDataSource.getPendingRequest(
+          clientMessageId: request.clientMessageId,
+        ),
+        isNotNull,
+      );
+      expect(
+        (await localDataSource.getUserMessageByClientMessageId(
+          clientMessageId: request.clientMessageId,
+        ))!.deliveryState,
+        AssistantMessageDeliveryState.pending,
+      );
+    },
+  );
+
+  test('oversized request fails locally and cannot replay', () async {
+    final failure = WebSocketFailure(
+      kind: WebSocketFailureKind.messageTooLarge,
+    );
+    session.sendError = failure;
+    final request = _request(
+      clientMessageId: _clientMessageId2,
+      createdAt: _historyTime(1),
+    );
+    await expectLater(repository.sendRequest(request), throwsA(same(failure)));
+    expect(
+      await localDataSource.getPendingRequest(
+        clientMessageId: request.clientMessageId,
+      ),
+      isNull,
+    );
+    expect(
+      (await localDataSource.getUserMessageByClientMessageId(
+        clientMessageId: request.clientMessageId,
+      ))!.deliveryState,
+      AssistantMessageDeliveryState.failed,
+    );
+  });
+
+  test(
+    'authentication failure surfaces without deleting queued request',
+    () async {
+      final failure = WebSocketFailure(kind: WebSocketFailureKind.unauthorized);
+      session.sendError = failure;
+      final request = _request(
+        clientMessageId: _clientMessageId2,
+        createdAt: _historyTime(1),
+      );
+      await expectLater(
+        repository.sendRequest(request),
+        throwsA(same(failure)),
+      );
+      expect(
+        await localDataSource.getPendingRequest(
+          clientMessageId: request.clientMessageId,
+        ),
+        isNotNull,
+      );
+    },
+  );
+
+  test('ready notification during replay triggers another pass', () async {
+    final snapshotRead = Completer<void>();
+    countingLocalDataSource.pendingRequestsReadObserver = () {
+      countingLocalDataSource.pendingRequestsReadObserver = null;
+      session.readinessController.add(true);
+      snapshotRead.complete();
+    };
+    session.readinessController.add(true);
+    await snapshotRead.future;
+    // The second ready notification arrives while the first pass is active.
+    final deadline = DateTime.now().add(const Duration(seconds: 2));
+    while (countingLocalDataSource.pendingRequestsReadCount < 2) {
+      if (DateTime.now().isAfter(deadline)) fail('Replay wake-up was lost');
+      await Future<void>.delayed(Duration.zero);
+    }
+    expect(countingLocalDataSource.pendingRequestsReadCount, 2);
+  });
+
+  test('terminal failure rolls back if outbox deletion fails', () async {
+    session.isReady = false;
+    final request = _request(
+      clientMessageId: _clientMessageId2,
+      createdAt: _historyTime(1),
+    );
+    await repository.sendRequest(request);
+    await database.customStatement(
+      "CREATE TRIGGER reject_outbox_delete BEFORE DELETE ON assistant_pending_requests BEGIN SELECT RAISE(ABORT, 'simulated storage failure'); END",
+    );
+    await expectLater(
+      localDataSource.failPendingRequest(
+        clientMessageId: request.clientMessageId,
+      ),
+      throwsA(isA<Exception>()),
+    );
+    expect(
+      (await localDataSource.getUserMessageByClientMessageId(
+        clientMessageId: request.clientMessageId,
+      ))!.deliveryState,
+      AssistantMessageDeliveryState.pending,
+    );
+    expect(
+      await localDataSource.getPendingRequest(
+        clientMessageId: request.clientMessageId,
+      ),
+      isNotNull,
+    );
+  });
+
+  test('local failure preserves accepted messages and other owners', () async {
+    session.isReady = false;
+    final request = _request(
+      clientMessageId: _clientMessageId2,
+      createdAt: _historyTime(1),
+    );
+    await repository.sendRequest(request);
+    final otherOwner = DriftAssistantLocalDataSource(
+      database: database,
+      ownerId: 'other-user',
+    );
+    await otherOwner.failPendingRequest(
+      clientMessageId: request.clientMessageId,
+    );
+    expect(
+      (await localDataSource.getUserMessageByClientMessageId(
+        clientMessageId: request.clientMessageId,
+      ))!.deliveryState,
+      AssistantMessageDeliveryState.pending,
+    );
+    await localDataSource.updateMessageDeliveryState(
+      messageId: request.clientMessageId,
+      deliveryState: AssistantMessageDeliveryState.sent,
+      updatedAt: request.createdAt,
+    );
+    await localDataSource.failPendingRequest(
+      clientMessageId: request.clientMessageId,
+    );
+    expect(
+      (await localDataSource.getUserMessageByClientMessageId(
+        clientMessageId: request.clientMessageId,
+      ))!.deliveryState,
+      AssistantMessageDeliveryState.sent,
+    );
+    expect(
+      await localDataSource.getPendingRequest(
+        clientMessageId: request.clientMessageId,
+      ),
+      isNotNull,
+    );
   });
 
   test(
@@ -421,7 +605,7 @@ void main() {
     expect(model.sentAt, request.createdAt);
   });
 
-  test('preserves transport send failures', () async {
+  test('preserves unexpected transport send failures', () async {
     final failure = StateError('socket is not ready');
     session.sendError = failure;
     final request = AssistantRequest(

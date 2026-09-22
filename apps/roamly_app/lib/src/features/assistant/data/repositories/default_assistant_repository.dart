@@ -8,6 +8,7 @@ import 'package:roamly_app/src/features/assistant/domain/entities/assistant_mess
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_request.dart';
 import 'package:roamly_app/src/features/assistant/domain/policies/assistant_policy.dart';
 import 'package:roamly_logging/roamly_logging.dart';
+import 'package:roamly_networking/roamly_networking.dart';
 
 import '../../domain/repositories/assistant_repository.dart';
 import '../services/assistant_realtime_session.dart';
@@ -57,6 +58,7 @@ final class DefaultAssistantRepository implements AssistantRepository {
   Future<void>? _replayFuture;
   Future<void>? _disposeFuture;
   bool _disposed = false;
+  bool _replayRequested = false;
 
   @override
   Stream<AssistantEvent> get events => _events;
@@ -121,8 +123,27 @@ final class DefaultAssistantRepository implements AssistantRepository {
             requirePendingRecord: requirePendingRecord,
           );
 
-          if (model != null) {
+          if (model == null || _disposed || !_realtimeSession.isReady) {
+            completer.complete();
+            return;
+          }
+          try {
             await _realtimeSession.sendTravelRequest(model);
+          } catch (error, stackTrace) {
+            if (error is WebSocketFailure &&
+                error.kind == WebSocketFailureKind.messageTooLarge) {
+              await _localSync.failPendingRequest(
+                clientMessageId: request.clientMessageId,
+              );
+            }
+            // Only known transient transport failures mean "queued".
+            // Session/authentication and unexpected failures must reach callers.
+            if (error is! WebSocketFailure || !error.isRetryable) rethrow;
+            _logger.warning(
+              'Assistant request dispatch failed and remains queued.',
+              fields: {'errorType': error.runtimeType.toString()},
+              stackTrace: stackTrace,
+            );
           }
 
           completer.complete();
@@ -195,10 +216,18 @@ final class DefaultAssistantRepository implements AssistantRepository {
   }
 
   void _schedulePendingReplay() {
-    if (_disposed || _replayFuture != null) return;
-    final replay = _replayPendingRequests();
-    _replayFuture = replay;
-    unawaited(replay);
+    if (_disposed) return;
+    _replayRequested = true;
+    if (_replayFuture != null) return;
+
+    _replayRequested = false;
+    _replayFuture = _replayPendingRequests().whenComplete(() {
+      _replayFuture = null;
+      if (!_disposed && _realtimeSession.isReady && _replayRequested) {
+        _schedulePendingReplay();
+      }
+    });
+    unawaited(_replayFuture);
   }
 
   Future<void> _replayPendingRequests() async {
@@ -251,8 +280,6 @@ final class DefaultAssistantRepository implements AssistantRepository {
         fields: {'errorType': error.runtimeType.toString()},
         stackTrace: stackTrace,
       );
-    } finally {
-      _replayFuture = null;
     }
   }
 

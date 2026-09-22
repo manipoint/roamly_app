@@ -93,6 +93,13 @@ final class AssistantLocalSyncCoordinator {
     );
   }
 
+  Future<void> failPendingRequest({required String clientMessageId}) {
+    return _synchronize(
+      () =>
+          _localDataSource.failPendingRequest(clientMessageId: clientMessageId),
+    );
+  }
+
   Future<void> drain() => _operationTail;
 
   Future<T> _synchronize<T>(Future<T> Function() operation) async {
