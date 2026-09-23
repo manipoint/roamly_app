@@ -6,10 +6,13 @@ import 'package:roamly_app/src/features/assistant/application/factories/assistan
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_conversation.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_event.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_request.dart';
+import 'package:roamly_app/src/features/assistant/domain/policies/assistant_policy.dart';
 import 'package:roamly_app/src/features/assistant/domain/repositories/assistant_repository.dart';
+import 'package:roamly_app/src/features/assistant/presentation/controllers/assistant_active_conversation_controller.dart';
 import 'package:roamly_app/src/features/assistant/presentation/controllers/assistant_send_controller.dart';
 import 'package:roamly_app/src/features/assistant/presentation/providers/assistant_dependency_providers.dart';
 import 'package:roamly_app/src/features/assistant/presentation/providers/assistant_request_factory_provider.dart';
+import 'package:roamly_app/src/features/assistant/presentation/states/assistant_send_satate.dart';
 
 final class _FakeAssistantRepository implements AssistantRepository {
   final requests = <AssistantRequest>[];
@@ -24,6 +27,13 @@ final class _FakeAssistantRepository implements AssistantRepository {
 
   @override
   Stream<bool> get readinessChanges => const Stream<bool>.empty();
+
+  @override
+  Stream<List<AssistantConversation>> watchConversations({
+    int limit = AssistantPolicy.defaultConversationsLimit,
+  }) {
+    return const Stream<List<AssistantConversation>>.empty();
+  }
 
   @override
   Future<void> sendRequest(AssistantRequest request) async {
@@ -42,15 +52,21 @@ void main() {
   const clientMessageId = '00000000-0000-4000-8000-000000000002';
   const remoteConversationId = '00000000-0000-4000-8000-000000000003';
   const tripId = '00000000-0000-4000-8000-000000000004';
+  const secondClientMessageId = '00000000-0000-4000-8000-000000000005';
   final timestamp = DateTime.parse('2026-09-22T13:00:00+05:00');
 
   late _FakeAssistantRepository repository;
   late ProviderContainer container;
   late ProviderSubscription<AssistantSendState> subscription;
+  late ProviderSubscription<AssistantConversation?> activeSubscription;
 
   setUp(() {
     repository = _FakeAssistantRepository();
-    final ids = <String>[conversationLocalId, clientMessageId];
+    final ids = <String>[
+      conversationLocalId,
+      clientMessageId,
+      secondClientMessageId,
+    ];
     var idIndex = 0;
     container = ProviderContainer(
       overrides: [
@@ -68,8 +84,14 @@ void main() {
       (_, _) {},
       fireImmediately: true,
     );
+    activeSubscription = container.listen(
+      assistantActiveConversationProvider,
+      (_, _) {},
+      fireImmediately: true,
+    );
     addTearDown(() {
       subscription.close();
+      activeSubscription.close();
       container.dispose();
     });
   });
@@ -102,9 +124,26 @@ void main() {
     expect(request.tripId, tripId);
     expect(request.createdAt, DateTime.utc(2026, 9, 22, 8));
     expect(
+      container.read(assistantActiveConversationProvider)?.localId,
+      conversationLocalId,
+    );
+    expect(
       container.read(assistantSendControllerProvider).status,
       AssistantSendStatus.idle,
     );
+  });
+
+  test('reuses the active conversation for the next request', () async {
+    final controller = container.read(assistantSendControllerProvider.notifier);
+
+    final first = await controller.sendMessage(message: 'Plan Lahore');
+    final second = await controller.sendMessage(message: 'Add food places');
+
+    expect(first, isNotNull);
+    expect(second, isNotNull);
+    expect(second!.conversationLocalId, first!.conversationLocalId);
+    expect(second.clientMessageId, secondClientMessageId);
+    expect(repository.requests, [first, second]);
   });
 
   test('uses both identifiers from an existing conversation', () async {
@@ -153,6 +192,7 @@ void main() {
     expect(repository.requests, isEmpty);
     expect(state.status, AssistantSendStatus.failed);
     expect(state.failure, isA<ArgumentError>());
+    expect(container.read(assistantActiveConversationProvider), isNull);
   });
 
   test('exposes repository failure and can clear it', () async {
@@ -168,6 +208,7 @@ void main() {
       container.read(assistantSendControllerProvider).failure,
       same(failure),
     );
+    expect(container.read(assistantActiveConversationProvider), isNull);
 
     container.read(assistantSendControllerProvider.notifier).clearFailure();
 

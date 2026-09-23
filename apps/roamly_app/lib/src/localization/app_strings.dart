@@ -200,6 +200,16 @@ abstract final class AppStrings {
   static const String chooseMapApp = 'Open with';
   static const String noMapAppAvailable =
       'Install Apple Maps, Google Maps or Waze to open directions.';
+  static const String assistantMessageHint =
+      'Ask Roamly to plan your next trip';
+  static const String assistantSendMessage = 'Send message';
+  static const String assistantYourMessage = 'Your message';
+  static const String assistantResponse = 'Roamly response';
+  static const String assistantMessagePending = 'Waiting to send';
+  static const String assistantMessageSent = 'Sent';
+  static const String assistantMessageProcessing = 'Roamly is responding';
+  static const String assistantMessageCompleted = 'Delivered';
+  static const String assistantMessageFailed = 'Message failed';
   static String mediaPosition(int current, int total) => '$current / $total';
   static String mapMarkerFor(String name) => 'Map marker for $name';
   static String preferenceProgress(int currentStep, int stepCount) {

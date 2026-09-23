@@ -1,28 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_conversation.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_request.dart';
+import 'package:roamly_app/src/features/assistant/presentation/controllers/assistant_active_conversation_controller.dart';
 import 'package:roamly_app/src/features/assistant/presentation/providers/assistant_dependency_providers.dart';
 import 'package:roamly_app/src/features/assistant/presentation/providers/assistant_request_factory_provider.dart';
+import 'package:roamly_app/src/features/assistant/presentation/states/assistant_send_satate.dart';
 
 final assistantSendControllerProvider =
     NotifierProvider.autoDispose<AssistantSendController, AssistantSendState>(
       AssistantSendController.new,
     );
-
-enum AssistantSendStatus { idle, sending, failed }
-
-final class AssistantSendState {
-  final AssistantSendStatus status;
-  final Object? failure;
-  bool get isSending => status == AssistantSendStatus.sending;
-  bool get hasFailure => status == AssistantSendStatus.failed;
-  const AssistantSendState._({required this.status, this.failure});
-  const AssistantSendState.idle() : this._(status: AssistantSendStatus.idle);
-  const AssistantSendState.sending()
-    : this._(status: AssistantSendStatus.sending);
-  const AssistantSendState.failed(Object failure)
-    : this._(status: AssistantSendStatus.failed, failure: failure);
-}
 
 final class AssistantSendController extends Notifier<AssistantSendState> {
   @override
@@ -50,17 +37,22 @@ final class AssistantSendController extends Notifier<AssistantSendState> {
     }
     state = const AssistantSendState.sending();
     try {
+      final activeConversation =
+          conversation ?? ref.read(assistantActiveConversationProvider);
       final request = ref
           .read(assistantRequestFactoryProvider)
           .create(
-            conversationLocalId: conversation?.localId,
-            conversationId: conversation?.remoteId,
+            conversationLocalId: activeConversation?.localId,
+            conversationId: activeConversation?.remoteId,
             locale: locale,
             tripId: tripId,
             message: message,
           );
       await ref.read(assistantRepositoryProvider).sendRequest(request);
       if (ref.mounted) {
+        ref
+            .read(assistantActiveConversationProvider.notifier)
+            .activateRequest(request);
         state = const AssistantSendState.idle();
       }
       return request;
