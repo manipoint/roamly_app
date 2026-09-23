@@ -7,9 +7,10 @@ hotel search, places, weather, currency conversion, and itinerary generation.
 ## Project status
 
 The backend is deployed to Google Cloud Run. Flutter has email/password
-authentication, session restoration, a welcome screen, shared UI components,
-and an authenticated navigation shell. Home is currently a placeholder.
-Preference onboarding and Home discovery integration are in progress.
+authentication, session restoration, preference onboarding, backend-backed
+Home discovery, shared UI components, an authenticated navigation shell, and
+an AI Assistant with authenticated WebSocket messaging, local history, and
+offline request replay.
 
 The first mobile release will use email and password authentication. Social
 login and email verification are intentionally deferred.
@@ -43,6 +44,9 @@ rules.
 
 See [Preference onboarding](docs/preference-onboarding.md) for the implementation
 sequence, API mapping, routing rules, and Home integration.
+
+See [AI Assistant](docs/assistant.md) for realtime architecture, local history,
+event handling, delivery states, validation, and remaining work.
 
 ## Development
 

@@ -1,5 +1,7 @@
 import 'package:roamly_core/roamly_core.dart';
 
+import 'assistant_clarification.dart';
+
 sealed class AssistantEvent {
   AssistantEvent({required DateTime occurredAt})
     : occurredAt = RoamlyValueNormalizers.utc(occurredAt);
@@ -107,7 +109,17 @@ final class AssistantResponseProcessing extends AssistantEvent {
   int get hashCode => Object.hash(occurredAt, clientMessageId, conversationId);
 }
 
-final class AssistantResponseCompleted extends AssistantEvent {
+sealed class AssistantResponseWithMessage extends AssistantEvent {
+  AssistantResponseWithMessage({required super.occurredAt});
+
+  String get conversationId;
+  String get assistantMessageId;
+  String get content;
+  bool get isDuplicate;
+  String? get itineraryId;
+}
+
+final class AssistantResponseCompleted extends AssistantResponseWithMessage {
   AssistantResponseCompleted({
     required super.occurredAt,
     required String clientMessageId,
@@ -135,10 +147,15 @@ final class AssistantResponseCompleted extends AssistantEvent {
        );
   @override
   final String clientMessageId;
+  @override
   final String conversationId;
+  @override
   final String assistantMessageId;
+  @override
   final String content;
+  @override
   final bool isDuplicate;
+  @override
   final String? itineraryId;
   @override
   bool operator ==(Object other) {
@@ -163,6 +180,45 @@ final class AssistantResponseCompleted extends AssistantEvent {
     isDuplicate,
     itineraryId,
   );
+}
+
+final class AssistantInputRequired extends AssistantResponseWithMessage {
+  AssistantInputRequired({
+    required super.occurredAt,
+    required String clientMessageId,
+    required String conversationId,
+    required String assistantMessageId,
+    required String content,
+    required this.isDuplicate,
+    required this.clarification,
+  }) : clientMessageId = RoamlyValueGuards.requireUuid(
+         clientMessageId,
+         field: 'clientMessageId',
+       ),
+       conversationId = RoamlyValueGuards.requireUuid(
+         conversationId,
+         field: 'conversationId',
+       ),
+       assistantMessageId = RoamlyValueGuards.requireUuid(
+         assistantMessageId,
+         field: 'assistantMessageId',
+       ),
+       content = RoamlyValueGuards.requireNonBlank(content, field: 'content');
+
+  @override
+  final String clientMessageId;
+  @override
+  final String conversationId;
+  @override
+  final String assistantMessageId;
+  @override
+  final String content;
+  @override
+  final bool isDuplicate;
+  final AssistantClarification clarification;
+
+  @override
+  String? get itineraryId => null;
 }
 
 final class AssistantResponseFailed extends AssistantEvent {

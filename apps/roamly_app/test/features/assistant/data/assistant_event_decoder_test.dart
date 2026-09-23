@@ -5,6 +5,7 @@ import 'package:roamly_app/src/features/assistant/data/models/connection_pong_ev
 import 'package:roamly_app/src/features/assistant/data/models/connection_ready_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_request_accepted_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_request_rejected_event_model.dart';
+import 'package:roamly_app/src/features/assistant/data/models/travel_input_required_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_response_completed_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_response_failed_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_response_processing_event_model.dart';
@@ -25,6 +26,7 @@ Map<String, Object?> _event(String type) => <String, Object?>{
     },
     if (type.startsWith('travel.')) 'client_message_id': _id,
     if (type == 'travel.request.accepted' ||
+        type == 'travel.input.required' ||
         type.startsWith('travel.response.'))
       'conversation_id': _id,
     if (type == 'travel.request.rejected') 'code': 'trip_not_found',
@@ -32,6 +34,23 @@ Map<String, Object?> _event(String type) => <String, Object?>{
       'assistant_message_id': _id,
       'content': 'Travel plan',
       'is_duplicate': false,
+    },
+    if (type == 'travel.input.required') ...{
+      'assistant_message_id': _id,
+      'content': 'Select a Tokyo airport.',
+      'is_duplicate': false,
+      'clarification': <String, Object?>{
+        'type': 'airport_selection',
+        'requests': <Object?>[
+          <String, Object?>{
+            'field': 'destination_airport',
+            'query': 'Tokyo',
+            'status': 'not_found',
+            'question': 'Enter a city and country.',
+            'options': <Object?>[],
+          },
+        ],
+      },
     },
     if (type == 'travel.response.failed') 'code': 'provider_error',
   },
@@ -45,6 +64,7 @@ void main() {
     'connection.pong': ConnectionPongEventModel,
     'travel.request.accepted': TravelRequestAcceptedEventModel,
     'travel.request.rejected': TravelRequestRejectedEventModel,
+    'travel.input.required': TravelInputRequiredEventModel,
     'travel.response.processing': TravelResponseProcessingEventModel,
     'travel.response.completed': TravelResponseCompletedEventModel,
     'travel.response.failed': TravelResponseFailedEventModel,

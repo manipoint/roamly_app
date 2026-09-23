@@ -5,10 +5,12 @@ import 'package:roamly_app/src/features/assistant/data/models/connection_pong_ev
 import 'package:roamly_app/src/features/assistant/data/models/connection_ready_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_request_accepted_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_request_rejected_event_model.dart';
+import 'package:roamly_app/src/features/assistant/data/models/travel_input_required_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_response_completed_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_response_failed_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_response_processing_event_model.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_event.dart';
+import 'package:roamly_app/src/features/assistant/domain/entities/assistant_clarification.dart';
 
 const _clientMessageId = '00000000-0000-4000-8000-000000000001';
 const _conversationId = '00000000-0000-4000-8000-000000000002';
@@ -166,6 +168,47 @@ void main() {
         isDuplicate: true,
         itineraryId: _itineraryId,
       ),
+    );
+  });
+
+  test('maps an input-required response and preserves clarification', () {
+    final model = TravelInputRequiredEventModel.fromJson(
+      _event(
+        type: 'travel.input.required',
+        payload: <String, Object?>{
+          'client_message_id': _clientMessageId,
+          'conversation_id': _conversationId,
+          'assistant_message_id': _assistantMessageId,
+          'content': 'Select a London airport.',
+          'is_duplicate': false,
+          'clarification': <String, Object?>{
+            'type': 'airport_selection',
+            'requests': <Object?>[
+              <String, Object?>{
+                'field': 'origin_airport',
+                'query': 'London',
+                'status': 'not_found',
+                'question': 'Enter a city and country.',
+                'options': <Object?>[],
+              },
+            ],
+          },
+        },
+      ),
+    );
+
+    final event = mapper.mapOrNull(model);
+
+    expect(event, isA<AssistantInputRequired>());
+    final inputRequired = event! as AssistantInputRequired;
+    expect(inputRequired.content, 'Select a London airport.');
+    expect(
+      inputRequired.clarification.type,
+      AssistantClarificationType.airportSelection,
+    );
+    expect(
+      inputRequired.clarification.requests.single.field,
+      AssistantAirportInputField.originAirport,
     );
   });
 

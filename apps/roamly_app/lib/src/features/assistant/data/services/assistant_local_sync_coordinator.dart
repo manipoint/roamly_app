@@ -280,14 +280,14 @@ final class AssistantLocalSyncCoordinator {
     );
     if (userMessage == null) return;
 
-    if (event is AssistantResponseCompleted) {
+    if (event is AssistantResponseWithMessage) {
       final conversation = await _getEventConversation(
         event: event,
         userMessage: userMessage,
       );
       if (conversation == null) return;
 
-      await _persistCompletedResponse(
+      await _persistResponseMessage(
         conversation: conversation,
         userMessage: userMessage,
         event: event,
@@ -349,6 +349,9 @@ final class AssistantLocalSyncCoordinator {
       ),
       AssistantResponseCompleted() => throw StateError(
         'Completed responses require specialized persistence.',
+      ),
+      AssistantInputRequired() => throw StateError(
+        'Input-required responses require specialized persistence.',
       ),
     };
   }
@@ -454,10 +457,10 @@ final class AssistantLocalSyncCoordinator {
     );
   }
 
-  Future<void> _persistCompletedResponse({
+  Future<void> _persistResponseMessage({
     required AssistantConversation conversation,
     required AssistantMessage userMessage,
-    required AssistantResponseCompleted event,
+    required AssistantResponseWithMessage event,
   }) async {
     if (!_shouldApplyState(
       message: userMessage,

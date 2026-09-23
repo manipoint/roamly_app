@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roamly_app/src/features/assistant/data/models/connection_pong_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_request_accepted_event_model.dart';
+import 'package:roamly_app/src/features/assistant/data/models/travel_input_required_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_response_completed_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_response_failed_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_response_processing_event_model.dart';
@@ -25,6 +26,42 @@ Map<String, Object?> _event(String type) => {
       'is_duplicate': true,
       'itinerary_id': _itineraryId,
     },
+    if (type == 'travel.input.required') ...{
+      'assistant_message_id': _assistantId,
+      'content': 'Select a London airport.',
+      'is_duplicate': false,
+      'clarification': <String, Object?>{
+        'type': 'airport_selection',
+        'requests': <Object?>[
+          <String, Object?>{
+            'field': 'origin_airport',
+            'query': 'London',
+            'status': 'selection_required',
+            'question': 'Select an airport.',
+            'options': <Object?>[
+              <String, Object?>{
+                'provider_location_id': 'london-city',
+                'iata_code': 'LON',
+                'location_type': 'city',
+                'name': 'London',
+                'city_name': 'London',
+                'country_name': 'United Kingdom',
+                'country_code': 'GB',
+              },
+              <String, Object?>{
+                'provider_location_id': 'heathrow',
+                'iata_code': 'LHR',
+                'location_type': 'airport',
+                'name': 'London Heathrow Airport',
+                'city_name': 'London',
+                'country_name': 'United Kingdom',
+                'country_code': 'GB',
+              },
+            ],
+          },
+        ],
+      },
+    },
     if (type == 'travel.response.failed') 'code': 'provider_error',
   },
 };
@@ -36,6 +73,7 @@ void main() {
   final parsers = <String, Object Function(Map<String, Object?>)>{
     'connection.pong': ConnectionPongEventModel.fromJson,
     'travel.request.accepted': TravelRequestAcceptedEventModel.fromJson,
+    'travel.input.required': TravelInputRequiredEventModel.fromJson,
     'travel.response.processing': TravelResponseProcessingEventModel.fromJson,
     'travel.response.completed': TravelResponseCompletedEventModel.fromJson,
     'travel.response.failed': TravelResponseFailedEventModel.fromJson,
@@ -49,6 +87,11 @@ void main() {
       final (sentAt, clientId, conversationId) = switch (model) {
         ConnectionPongEventModel() => (model.sentAt, null, null),
         TravelRequestAcceptedEventModel() => (
+          model.sentAt,
+          model.clientMessageId,
+          model.conversationId,
+        ),
+        TravelInputRequiredEventModel() => (
           model.sentAt,
           model.clientMessageId,
           model.conversationId,
@@ -96,7 +139,9 @@ void main() {
         for (final field in [
           'client_message_id',
           'conversation_id',
-          if (type == 'travel.response.completed') 'assistant_message_id',
+          if (type == 'travel.response.completed' ||
+              type == 'travel.input.required')
+            'assistant_message_id',
         ]) {
           final json = _event(type);
           _payload(json)[field] = 'invalid';
@@ -116,6 +161,17 @@ void main() {
     expect(model.isDuplicate, isTrue);
     expect(model.assistantMessageId, _assistantId);
     expect(model.itineraryId, _itineraryId);
+  });
+
+  test('input-required preserves text and typed airport choices', () {
+    final model = TravelInputRequiredEventModel.fromJson(
+      _event('travel.input.required'),
+    );
+
+    expect(model.content, 'Select a London airport.');
+    expect(model.isDuplicate, isFalse);
+    expect(model.assistantMessageId, _assistantId);
+    expect(model.clarification.requests.single.options.first.iataCode, 'LON');
   });
 
   test(

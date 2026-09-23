@@ -11,16 +11,18 @@ final assistantActiveConversationProvider =
 
 final class AssistantActiveConversationController
     extends Notifier<AssistantConversation?> {
+  bool _hasResolvedInitialSelection = false;
   @override
   AssistantConversation? build() {
     ref.listen(
       assistantConversationsProvider,
-      (_, next) => next.whenData(_refreshSelectedConversation),
+      (_, next) => next.whenData(_handleConversations),
     );
     return null;
   }
 
   void select(AssistantConversation conversation) {
+    _hasResolvedInitialSelection = true;
     if (state == conversation) {
       return;
     }
@@ -28,6 +30,7 @@ final class AssistantActiveConversationController
   }
 
   void startNewConversation() {
+    _hasResolvedInitialSelection = true;
     if (state == null) return;
 
     state = null;
@@ -38,6 +41,7 @@ final class AssistantActiveConversationController
   /// The conversations stream will later replace this optimistic value with
   /// the persisted conversation containing its title and remote ID.
   void activateRequest(AssistantRequest request) {
+    _hasResolvedInitialSelection = true;
     if (state?.localId == request.conversationLocalId) {
       return;
     }
@@ -49,18 +53,27 @@ final class AssistantActiveConversationController
     );
   }
 
-  void _refreshSelectedConversation(List<AssistantConversation> value) {
+  void _handleConversations(List<AssistantConversation> value) {
+    if (!_hasResolvedInitialSelection) {
+      _hasResolvedInitialSelection = true;
+
+      if (value.isNotEmpty) {
+        state = value.first;
+      }
+      return;
+    }
     final selectedConversation = state;
     if (selectedConversation == null) {
       return;
     }
     for (final conversation in value) {
-      if (conversation.localId == selectedConversation.localId) {
-        if (conversation != selectedConversation) {
-          state = conversation;
-        }
-        return;
+      if (conversation.localId != selectedConversation.localId) {
+        continue;
       }
+      if (conversation != selectedConversation) {
+        state = conversation;
+      }
+      return;
     }
   }
 }

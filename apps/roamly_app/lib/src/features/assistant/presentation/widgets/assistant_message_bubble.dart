@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message_delivery_state.dart';
+import 'package:roamly_app/src/features/assistant/presentation/widgets/assistant_message_content.dart';
 import 'package:roamly_app/src/localization/app_strings.dart';
 import 'package:roamly_ui/roamly_ui.dart';
 
@@ -63,11 +64,10 @@ final class AssistantMessageBubble extends StatelessWidget {
                 children: [
                   Align(
                     alignment: AlignmentDirectional.centerStart,
-                    child: SelectableText(
-                      message.content,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: foregroundColor,
-                      ),
+                    child: AssistantMessageContent(
+                      content: message.content,
+                      foregroundColor: foregroundColor,
+                      renderMarkdown: !_isUser,
                     ),
                   ),
                   if (_isUser) ...[
@@ -119,11 +119,7 @@ final class _AssistantDeliveryIndicator extends StatelessWidget {
 
     return Tooltip(
       message: presentation.label,
-      child: Icon(
-        presentation.icon,
-        size: 16,
-        color: color,
-      ),
+      child: Icon(presentation.icon, size: 16, color: color),
     );
   }
 

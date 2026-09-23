@@ -217,6 +217,10 @@ abstract final class AppStrings {
       'Could not load older messages.';
   static const String assistantNoMessages =
       'Start a conversation about your next trip.';
+  static const String assistantSendFailed =
+      'Could not save your message. Please try again.';
+      static const String assistantExternalImageBlocked =
+      'External images are not displayed';
   static String mediaPosition(int current, int total) => '$current / $total';
   static String mapMarkerFor(String name) => 'Map marker for $name';
   static String preferenceProgress(int currentStep, int stepCount) {

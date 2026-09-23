@@ -30,14 +30,16 @@ roamly/
     ├── roamly_ui/
     ├── roamly_networking/
     ├── roamly_auth/
-    ├── roamly_travel_assistant/
+    ├── roamly_travel_assistant/  # planned extraction if reuse justifies it
     └── roamly_trips/
 ```
 
 `roamly_app`, `roamly_core`, `roamly_logging`, `roamly_ui`,
-`roamly_networking`, and `roamly_auth` currently exist. The travel-assistant
-and trips packages in this tree are planned. Additional packages are added
-when their first real responsibility is implemented.
+`roamly_networking`, and `roamly_auth` currently exist. The Assistant feature
+currently lives under `apps/roamly_app/lib/src/features/assistant`; a dedicated
+package is deferred until another application needs to reuse it. The trips
+package in this tree is planned. Additional packages are added when a concrete
+reuse or ownership boundary justifies them.
 
 ## Package responsibilities
 
@@ -87,8 +89,12 @@ are outside the first release.
 
 ### `roamly_travel_assistant`
 
-Will own WebSocket chat, travel events, structured clarification, reconnect
-behavior, and assistant conversation presentation.
+This remains a possible future extraction boundary. The implemented Assistant
+feature currently owns authenticated WebSocket chat, versioned travel events,
+structured airport clarification, reconnect and heartbeat behavior, durable
+local history and outbox replay, and conversation presentation inside
+`roamly_app`. See [AI Assistant](assistant.md) for its current design and
+remaining work.
 
 ### `roamly_trips`
 
@@ -183,6 +189,11 @@ Additional rules:
   logged in production.
 - The WebSocket connection uses a dedicated transport adapter rather than
   being forced through Dio.
+- Transport connection and feature-protocol readiness are modeled separately;
+  a connected Assistant socket cannot send requests until `connection.ready`
+  has been validated.
+- Pending Assistant requests are persisted before transport dispatch and are
+  replayed in bounded batches after readiness.
 
 The authentication request dependency chain is:
 

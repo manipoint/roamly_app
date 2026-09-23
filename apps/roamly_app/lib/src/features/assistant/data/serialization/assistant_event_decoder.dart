@@ -7,6 +7,7 @@ import '../models/connection_pong_event_model.dart';
 import '../models/connection_ready_event_model.dart';
 import '../models/travel_request_accepted_event_model.dart';
 import '../models/travel_request_rejected_event_model.dart';
+import '../models/travel_input_required_event_model.dart';
 import '../models/travel_response_completed_event_model.dart';
 import '../models/travel_response_failed_event_model.dart';
 import '../models/travel_response_processing_event_model.dart';
@@ -37,6 +38,7 @@ final class AssistantEventDecoder {
       'travel.request.rejected' => TravelRequestRejectedEventModel.fromJson(
         json,
       ),
+      'travel.input.required' => TravelInputRequiredEventModel.fromJson(json),
       'travel.response.processing' =>
         TravelResponseProcessingEventModel.fromJson(json),
       'travel.response.completed' => TravelResponseCompletedEventModel.fromJson(

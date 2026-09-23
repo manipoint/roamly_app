@@ -47,7 +47,7 @@ final class AirportOptionModel {
     );
     final locationType = switch (rawLocationType) {
       'airport' => AirportLocationType.airport,
-      'cite' => AirportLocationType.city,
+      'city' => AirportLocationType.city,
       _ => throw const FormatException('Invalid airport location type.'),
     };
     final name = reader.string(

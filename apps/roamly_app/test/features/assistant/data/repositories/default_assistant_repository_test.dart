@@ -8,6 +8,7 @@ import 'package:roamly_app/src/features/assistant/data/models/connection_pong_ev
 import 'package:roamly_app/src/features/assistant/data/models/travel_request_accepted_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_request_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_request_rejected_event_model.dart';
+import 'package:roamly_app/src/features/assistant/data/models/travel_input_required_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_response_completed_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_response_failed_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/travel_response_processing_event_model.dart';
@@ -1278,6 +1279,58 @@ void main() {
     expect(messages.last.assistantMessageId, _assistantMessageId);
     expect(messages.last.itineraryId, _itineraryId);
     expect(messages.last.content, 'Your Lahore itinerary is ready.');
+    expect(await localDataSource.getPendingRequests(), isEmpty);
+  });
+
+  test('persists an input-required response as assistant history', () async {
+    await repository.sendRequest(
+      _request(
+        clientMessageId: _clientMessageId,
+        conversationId: _conversationId,
+        createdAt: _historyTime(0),
+      ),
+    );
+    final nextEvent = repository.events.first;
+
+    session.eventController.add(
+      TravelInputRequiredEventModel.fromJson(
+        _event(
+          type: 'travel.input.required',
+          payload: <String, Object?>{
+            'client_message_id': _clientMessageId,
+            'conversation_id': _conversationId,
+            'assistant_message_id': _assistantMessageId,
+            'content': 'Select a Tokyo airport.',
+            'is_duplicate': false,
+            'clarification': <String, Object?>{
+              'type': 'airport_selection',
+              'requests': <Object?>[
+                <String, Object?>{
+                  'field': 'destination_airport',
+                  'query': 'Tokyo',
+                  'status': 'not_found',
+                  'question': 'Enter a city and country.',
+                  'options': <Object?>[],
+                },
+              ],
+            },
+          },
+        ),
+      ),
+    );
+    await nextEvent;
+
+    final messages = await localDataSource
+        .watchMessages(conversationLocalId: _localConversationId)
+        .first;
+    expect(messages, hasLength(2));
+    expect(
+      messages.first.deliveryState,
+      AssistantMessageDeliveryState.completed,
+    );
+    expect(messages.last.author, AssistantMessageAuthor.assistant);
+    expect(messages.last.assistantMessageId, _assistantMessageId);
+    expect(messages.last.content, 'Select a Tokyo airport.');
     expect(await localDataSource.getPendingRequests(), isEmpty);
   });
 
