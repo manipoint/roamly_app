@@ -210,6 +210,13 @@ abstract final class AppStrings {
   static const String assistantMessageProcessing = 'Roamly is responding';
   static const String assistantMessageCompleted = 'Delivered';
   static const String assistantMessageFailed = 'Message failed';
+  static const String assistantHistoryLoading = 'Loading conversation';
+  static const String assistantHistoryLoadFailed =
+      'Could not load this conversation.';
+  static const String assistantOlderMessagesLoadFailed =
+      'Could not load older messages.';
+  static const String assistantNoMessages =
+      'Start a conversation about your next trip.';
   static String mediaPosition(int current, int total) => '$current / $total';
   static String mapMarkerFor(String name) => 'Map marker for $name';
   static String preferenceProgress(int currentStep, int stepCount) {
