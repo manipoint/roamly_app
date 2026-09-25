@@ -1,3 +1,6 @@
+import 'package:roamly_app/src/features/assistant/data/models/assistant_rich_content_model.dart';
+
+import 'package:roamly_networking/roamly_networking.dart';
 import '../serialization/assistant_event_reader.dart';
 import 'assistant_incoming_event_model.dart';
 
@@ -11,6 +14,8 @@ final class TravelResponseCompletedEventModel
   final String content;
   final bool isDuplicate;
   final String? itineraryId;
+  final AssistantRichContentModel? richContent;
+  final bool hasInvalidRichContent;
 
   const TravelResponseCompletedEventModel._({
     required this.sentAt,
@@ -20,6 +25,8 @@ final class TravelResponseCompletedEventModel
     required this.content,
     required this.isDuplicate,
     required this.itineraryId,
+    required this.richContent,
+    required this.hasInvalidRichContent,
   });
   factory TravelResponseCompletedEventModel.fromJson(
     Map<String, Object?> json,
@@ -44,6 +51,7 @@ final class TravelResponseCompletedEventModel
       () => event.uuid('itinerary_id'),
       allowMissing: true,
     );
+    final parsedRichContent = _readRichContent(payload);
     return TravelResponseCompletedEventModel._(
       sentAt: event.sentAt,
       clientMessageId: clientMessageId,
@@ -52,6 +60,24 @@ final class TravelResponseCompletedEventModel
       content: content,
       isDuplicate: isDuplicate,
       itineraryId: itineraryId,
+      richContent: parsedRichContent.content,
+      hasInvalidRichContent: parsedRichContent.isInvalid,
     );
+  }
+
+  static ({AssistantRichContentModel? content, bool isInvalid})
+  _readRichContent(JsonReader payload) {
+    try {
+      final content = payload.nullable(
+        'structured_content',
+        () => AssistantRichContentModel.tryFromJson(
+          payload.object('structured_content'),
+        ),
+        allowMissing: true,
+      );
+      return (content: content, isInvalid: false);
+    } on FormatException {
+      return (content: null, isInvalid: true);
+    }
   }
 }

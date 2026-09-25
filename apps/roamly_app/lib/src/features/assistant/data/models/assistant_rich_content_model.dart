@@ -1,9 +1,6 @@
+import 'package:roamly_app/src/features/assistant/domain/entities/assistant_content_types.dart';
 import 'package:roamly_core/roamly_core.dart';
 import 'package:roamly_networking/roamly_networking.dart';
-
-enum AssistantMoneyQualifier { total, perNight, from }
-
-enum AssistantItineraryPace { relaxed, balanced, packed }
 
 final class AssistantMediaModel {
   final Uri uri;

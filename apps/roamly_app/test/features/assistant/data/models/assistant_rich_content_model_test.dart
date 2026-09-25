@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roamly_app/src/features/assistant/data/models/assistant_rich_content_model.dart';
+import 'package:roamly_app/src/features/assistant/domain/entities/assistant_content_types.dart';
 
 const _itineraryId = '00000000-0000-4000-8000-000000000004';
 
