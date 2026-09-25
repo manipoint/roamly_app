@@ -221,6 +221,7 @@ abstract final class AppStrings {
       'Could not save your message. Please try again.';
       static const String assistantExternalImageBlocked =
       'External images are not displayed';
+      static const String assistantThinking = 'Roamly AI is preparing a response';
   static String mediaPosition(int current, int total) => '$current / $total';
   static String mapMarkerFor(String name) => 'Map marker for $name';
   static String preferenceProgress(int currentStep, int stepCount) {

@@ -56,6 +56,40 @@ final class JsonReader {
     return result;
   }
 
+  /// Reads a JSON number or decimal string as a finite double.
+  /// Suitable for approximate values such as review scores, not money.
+  double decimalNumber(String key, {double? min, double? max}) {
+    _bounds(min, max);
+
+    final value = _required(key);
+    final double? parsed;
+
+    if (value is num) {
+      parsed = value.toDouble();
+    } else if (value is String) {
+      final text = value.trim();
+
+      final validDecimal = RegExp(
+        r'^[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$',
+      ).hasMatch(text);
+
+      if (!validDecimal) {
+        throw FormatException('Expected decimal number: $key.');
+      }
+
+      parsed = double.tryParse(text);
+    } else {
+      throw FormatException('Expected decimal number: $key.');
+    }
+
+    if (parsed == null || !parsed.isFinite) {
+      throw FormatException('Expected finite decimal number: $key.');
+    }
+
+    _range(parsed, min, max, key);
+    return parsed;
+  }
+
   bool boolean(String key) {
     final value = _required(key);
     if (value is! bool) throw FormatException('Expected boolean: $key.');
@@ -213,5 +247,35 @@ final class JsonReader {
     if (parsed == null) throw invalid();
 
     return parsed.toUtc();
+  }
+
+  /// Reads YYYY-MM-DD and represents the calendar date at UTC midnight.
+  DateTime date(String key) {
+    final value = string(key);
+    final match = RegExp(
+      r'^([0-9]{4})-([0-9]{2})-([0-9]{2})$',
+    ).firstMatch(value);
+
+    FormatException invalid() =>
+        FormatException('Expected valid calendar date: $key.');
+
+    if (match == null) throw invalid();
+
+    final year = int.parse(match.group(1)!);
+    final month = int.parse(match.group(2)!);
+    final day = int.parse(match.group(3)!);
+
+    if (year < 1 || month < 1 || month > 12 || day < 1 || day > 31) {
+      throw invalid();
+    }
+
+    final result = DateTime.utc(year, month, day);
+
+    // DateTime normalizes invalid dates, so verify the original components.
+    if (result.year != year || result.month != month || result.day != day) {
+      throw invalid();
+    }
+
+    return result;
   }
 }

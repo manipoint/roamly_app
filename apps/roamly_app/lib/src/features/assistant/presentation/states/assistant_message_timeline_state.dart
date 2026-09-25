@@ -1,4 +1,5 @@
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message.dart';
+import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message_delivery_state.dart';
 
 enum AssistantTimelineFailureSource { recentMessages, pagination }
 
@@ -21,6 +22,25 @@ final class AssistantMessageTimelineState {
     this.failureStackTrace,
   }) : messages = List.unmodifiable(messages);
   bool get hasFailure => failure != null;
+  bool get isAwaitingAssistantResponse {
+    for (final message in messages.reversed) {
+      if (message.author != AssistantMessageAuthor.user) {
+        continue;
+      }
+      final isUnresolved = switch (message.deliveryState) {
+        AssistantMessageDeliveryState.pending ||
+        AssistantMessageDeliveryState.sent ||
+        AssistantMessageDeliveryState.processing => true,
+        AssistantMessageDeliveryState.completed ||
+        AssistantMessageDeliveryState.failed => false,
+      };
+      if (isUnresolved) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   AssistantMessageTimelineState copyWith({
     List<AssistantMessage>? messages,
     bool? isInitialLoading,

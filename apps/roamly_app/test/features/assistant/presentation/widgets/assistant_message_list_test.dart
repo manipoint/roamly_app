@@ -14,15 +14,23 @@ String _uuid(int value) {
   return '00000000-0000-4000-8000-${value.toString().padLeft(12, '0')}';
 }
 
-AssistantMessage _message(int value) {
+AssistantMessage _message(
+  int value, {
+  AssistantMessageAuthor author = AssistantMessageAuthor.user,
+  AssistantMessageDeliveryState deliveryState =
+      AssistantMessageDeliveryState.sent,
+}) {
   final timestamp = DateTime.utc(2026, 9, 23).add(Duration(minutes: value));
   return AssistantMessage(
     id: _uuid(value + 1000),
     conversationLocalId: _conversationLocalId,
     clientMessageId: _uuid(value + 2000),
-    author: AssistantMessageAuthor.user,
+    assistantMessageId: author == AssistantMessageAuthor.assistant
+        ? _uuid(value + 3000)
+        : null,
+    author: author,
     content: 'Message $value',
-    deliveryState: AssistantMessageDeliveryState.sent,
+    deliveryState: deliveryState,
     createdAt: timestamp,
     updatedAt: timestamp,
   );
@@ -125,6 +133,92 @@ void main() {
     expect(
       tester.getCenter(find.text(second.content)).dy,
       greaterThan(tester.getCenter(find.text(first.content)).dy),
+    );
+  });
+
+  for (final deliveryState in [
+    AssistantMessageDeliveryState.pending,
+    AssistantMessageDeliveryState.sent,
+    AssistantMessageDeliveryState.processing,
+  ]) {
+    testWidgets(
+      'shows an accessible thinking indicator for ${deliveryState.name}',
+      (tester) async {
+        await tester.pumpWidget(
+          _app(
+            state: AssistantMessageTimelineState(
+              messages: [_message(1, deliveryState: deliveryState)],
+              isInitialLoading: false,
+            ),
+            onLoadOlder: () async {},
+            onRetryRecentMessages: () async {},
+          ),
+        );
+
+        expect(
+          find.byKey(const ValueKey('assistant-thinking-indicator')),
+          findsOneWidget,
+        );
+        expect(
+          find.bySemanticsLabel(AppStrings.assistantThinking),
+          findsOneWidget,
+        );
+      },
+    );
+  }
+
+  for (final deliveryState in [
+    AssistantMessageDeliveryState.completed,
+    AssistantMessageDeliveryState.failed,
+  ]) {
+    testWidgets('hides the thinking indicator for ${deliveryState.name}', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _app(
+          state: AssistantMessageTimelineState(
+            messages: [_message(1, deliveryState: deliveryState)],
+            isInitialLoading: false,
+          ),
+          onLoadOlder: () async {},
+          onRetryRecentMessages: () async {},
+        ),
+      );
+
+      expect(
+        find.byKey(const ValueKey('assistant-thinking-indicator')),
+        findsNothing,
+      );
+    });
+  }
+
+  testWidgets('keeps thinking visible while any user request is unresolved', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        state: AssistantMessageTimelineState(
+          messages: [
+            _message(
+              1,
+              deliveryState: AssistantMessageDeliveryState.processing,
+            ),
+            _message(
+              2,
+              author: AssistantMessageAuthor.assistant,
+              deliveryState: AssistantMessageDeliveryState.completed,
+            ),
+          ],
+          isInitialLoading: false,
+        ),
+        onLoadOlder: () async {},
+        onRetryRecentMessages: () async {},
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey('assistant-thinking-indicator')),
+      findsOneWidget,
     );
   });
 

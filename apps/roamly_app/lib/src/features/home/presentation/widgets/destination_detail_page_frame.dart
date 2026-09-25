@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:roamly_ui/roamly_ui.dart';
 
-/// Edge-to-edge frame shared by destination and place detail pages.
 final class DestinationDetailPageFrame extends StatelessWidget {
   const DestinationDetailPageFrame({
     super.key,

@@ -54,7 +54,12 @@ final class _CoverImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final image = DestinationMediaImage(media: media, boxFit: BoxFit.cover);
+final image = DestinationMediaImage(
+      media: media,
+      boxFit: BoxFit.cover,
+      showBottomFade: true,
+      bottomFadeColor: Theme.of(context).scaffoldBackgroundColor,
+    );
     final onTap = this.onTap;
     if (media == null || onTap == null) return image;
 

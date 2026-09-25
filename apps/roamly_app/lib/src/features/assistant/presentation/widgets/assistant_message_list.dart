@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:roamly_app/src/features/assistant/presentation/states/assistant_message_timeline_state.dart';
 import 'package:roamly_app/src/features/assistant/presentation/widgets/assistant_inline_error_banner.dart';
 import 'package:roamly_app/src/features/assistant/presentation/widgets/assistant_message_bubble.dart';
+import 'package:roamly_app/src/features/assistant/presentation/widgets/assistant_thinking_indicator.dart';
 import 'package:roamly_app/src/features/assistant/presentation/widgets/assistant_timeline_status_view.dart';
 import 'package:roamly_app/src/localization/app_strings.dart';
 import 'package:roamly_ui/roamly_ui.dart';
@@ -117,6 +118,10 @@ final class _AssistantMessageListState extends State<AssistantMessageList> {
         message: AppStrings.assistantNoMessages,
       );
     }
+    final showThinkingIndicator = widget.state.isAwaitingAssistantResponse;
+
+    final thinkingItemCount = showThinkingIndicator ? 1 : 0;
+
     return Column(
       children: [
         if (_hasRecentMessagesFailure)
@@ -142,22 +147,34 @@ final class _AssistantMessageListState extends State<AssistantMessageList> {
               horizontal: RoamlySpacing.space16,
               vertical: RoamlySpacing.space12,
             ),
-            itemCount: widget.state.messages.length + 1,
+
+            // Messages + optional thinking item + pagination status item.
+            itemCount: widget.state.messages.length + thinkingItemCount + 1,
+
             itemBuilder: (context, index) {
-              if (index == widget.state.messages.length) {
+              // Because the list is reversed, index 0 appears at the bottom.
+              if (showThinkingIndicator && index == 0) {
+                return const Padding(
+                  key: ValueKey('assistant-thinking-indicator'),
+                  padding: EdgeInsets.only(bottom: RoamlySpacing.space12),
+                  child: AssistantThinkingIndicator(),
+                );
+              }
+
+              // Remove the optional thinking item from index calculations.
+              final adjustedIndex = index - thinkingItemCount;
+
+              // The final item represents pagination state at the visual top.
+              if (adjustedIndex == widget.state.messages.length) {
                 if (widget.state.isLoadingOlder) {
                   return const Padding(
-                    padding: EdgeInsets.all(RoamlySpacing.space16),
-                    child: Center(
-                      child: SizedBox.square(
-                        dimension: 24,
-                        child: CircularProgressIndicator.adaptive(
-                          strokeWidth: 2,
-                        ),
-                      ),
+                    padding: EdgeInsets.symmetric(
+                      vertical: RoamlySpacing.space12,
                     ),
+                    child: Center(child: CircularProgressIndicator.adaptive()),
                   );
                 }
+
                 if (_hasPaginationFailure) {
                   return Padding(
                     padding: const EdgeInsets.only(
@@ -169,10 +186,15 @@ final class _AssistantMessageListState extends State<AssistantMessageList> {
                     ),
                   );
                 }
+
                 return const SizedBox(height: RoamlySpacing.space8);
               }
-              final messageIndex = widget.state.messages.length - 1 - index;
+
+              final messageIndex =
+                  widget.state.messages.length - 1 - adjustedIndex;
+
               final message = widget.state.messages[messageIndex];
+
               return Padding(
                 key: ValueKey<String>('assistant-message-${message.id}'),
                 padding: const EdgeInsets.only(bottom: RoamlySpacing.space12),
