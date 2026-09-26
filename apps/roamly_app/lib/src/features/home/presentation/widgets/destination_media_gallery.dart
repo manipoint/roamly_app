@@ -31,7 +31,7 @@ final class DestinationMediaGallery extends StatelessWidget {
           header: true,
           child: Text(title, style: theme.textTheme.titleLarge),
         ),
-        const SizedBox(height: RoamlySpacing.space12),
+        RoamlyGap.h12,
         LayoutBuilder(
           builder: (context, constraints) {
             final imageWidth = (constraints.maxWidth * 0.82)
@@ -65,8 +65,7 @@ final class DestinationMediaGallery extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (index != media.length - 1)
-                      const SizedBox(width: RoamlySpacing.space12),
+                    if (index != media.length - 1) RoamlyGap.w12,
                   ],
                 ],
               ),

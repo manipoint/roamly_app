@@ -67,7 +67,7 @@ class _AssistantThinkingIndicatorState extends State<AssistantThinkingIndicator>
             mainAxisSize: MainAxisSize.min,
             children: [
               const RoamlyAppIcon(size: 32),
-              const SizedBox(width: RoamlySpacing.space8),
+              RoamlyGap.w8,
               AnimatedBuilder(
                 animation: _controller,
                 builder: (context, child) {

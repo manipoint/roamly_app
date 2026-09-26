@@ -55,6 +55,8 @@ class AssistantMessages extends Table {
   TextColumn get itineraryId => text().nullable()();
   TextColumn get author => textEnum<AssistantMessageAuthor>()();
   TextColumn get content => text()();
+  TextColumn get failureCode => text().nullable()();
+  TextColumn get richContentJson => text().nullable()();
   TextColumn get deliveryState => textEnum<AssistantMessageDeliveryState>()();
   IntColumn get createdAtEpochMs => integer()();
   IntColumn get updatedAtEpochMs => integer()();
@@ -94,7 +96,7 @@ final class AssistantDatabase extends _$AssistantDatabase {
     : super(executor ?? driftDatabase(name: 'roamly'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -106,6 +108,15 @@ final class AssistantDatabase extends _$AssistantDatabase {
         if (from < 2) {
           await m.createTable(assistantPendingRequests);
           await m.createIndex(assistantPendingRequestsOwnerCreatedAt);
+        }
+        if (from < 4) {
+          await m.addColumn(assistantMessages, assistantMessages.failureCode);
+        }
+        if (from < 3) {
+          await m.addColumn(
+            assistantMessages,
+            assistantMessages.richContentJson,
+          );
         }
       },
       beforeOpen: (details) async {

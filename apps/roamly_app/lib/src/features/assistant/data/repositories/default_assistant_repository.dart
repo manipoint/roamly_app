@@ -284,6 +284,25 @@ final class DefaultAssistantRepository implements AssistantRepository {
   }
 
   Future<AssistantEvent> _persistAndForwardEvent(AssistantEvent event) async {
+    final failureFields = switch (event) {
+      AssistantRequestRejected(:final reason) => <String, Object>{
+        'eventType': 'travel.request.rejected',
+        'reason': reason.name,
+      },
+      AssistantResponseFailed(:final reason, :final conversationId) =>
+        <String, Object>{
+          'eventType': 'travel.response.failed',
+          'reason': reason.name,
+          'conversationId': conversationId,
+        },
+      _ => null,
+    };
+    if (failureFields != null) {
+      _logger.warning(
+        'Assistant request failed.',
+        fields: {...failureFields, 'clientMessageId': event.clientMessageId},
+      );
+    }
     try {
       await _localSync.persistEvent(event);
     } catch (error, stackTrace) {

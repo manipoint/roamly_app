@@ -91,7 +91,7 @@ final class _HomePageState extends ConsumerState<HomePage> {
                     Row(
                       children: [
                         const RoamlyAppIcon(size: RoamlySpacing.space40),
-                        const SizedBox(width: RoamlySpacing.space8),
+                        RoamlyGap.w8,
                         Expanded(
                           child: Text.rich(
                             TextSpan(
@@ -115,7 +115,7 @@ final class _HomePageState extends ConsumerState<HomePage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: RoamlySpacing.space20),
+                    RoamlyGap.h20,
                     Semantics(
                       label: AppStrings.homeSearchScope,
                       child: RoamlyTextFormField(
@@ -186,9 +186,7 @@ final class _HomePageState extends ConsumerState<HomePage> {
                 ),
               ),
             ),
-            const SliverToBoxAdapter(
-              child: SizedBox(height: RoamlySpacing.space8),
-            ),
+            const SliverToBoxAdapter(child: RoamlyGap.h8),
             ...discovery.when<List<Widget>>(
               skipLoadingOnRefresh: true,
               skipLoadingOnReload: true,
@@ -202,9 +200,7 @@ final class _HomePageState extends ConsumerState<HomePage> {
               ],
               data: _sections,
             ),
-            const SliverToBoxAdapter(
-              child: SizedBox(height: RoamlySpacing.space24),
-            ),
+            const SliverToBoxAdapter(child: RoamlyGap.h24),
           ],
         ),
       ),
@@ -325,9 +321,9 @@ final class _HomePageState extends ConsumerState<HomePage> {
               size: RoamlySpacing.space40,
               color: Theme.of(context).colorScheme.primary,
             ),
-            const SizedBox(height: RoamlySpacing.space16),
+            RoamlyGap.h16,
             Text(text, textAlign: TextAlign.center),
-            const SizedBox(height: RoamlySpacing.space16),
+            RoamlyGap.h16,
             RoamlyButton.secondary(label: action, onPressed: onPressed),
           ],
         ),

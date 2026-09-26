@@ -119,6 +119,9 @@ final class _FailingAssistantLocalDataSource
   final AssistantMessage? message;
 
   @override
+  Future<void> upsertMessage(AssistantMessage message) => Future.error(failure);
+
+  @override
   Future<void> cachePendingRequest({
     required AssistantConversation conversation,
     required AssistantMessage message,
@@ -817,9 +820,14 @@ void main() {
     );
 
     expect(await nextEvent, isA<AssistantRequestRejected>());
-    expect(sink.records, hasLength(1));
-    expect(sink.records.single.fields['errorType'], 'StateError');
-    expect(sink.records.single.fields, isNot(contains('message')));
+    expect(sink.records, hasLength(2));
+    expect(sink.records.first.fields['reason'], 'conversationNotFound');
+    expect(sink.records.first.fields['clientMessageId'], _clientMessageId);
+    expect(sink.records.last.fields['errorType'], 'StateError');
+    for (final record in sink.records) {
+      expect(record.fields, isNot(contains('message')));
+      expect(record.fields, isNot(contains('content')));
+    }
 
     await failingRepository.dispose();
     await failingSession.closeControllers();
@@ -1175,6 +1183,7 @@ void main() {
       localId: _localConversationId,
     );
     expect(message?.deliveryState, AssistantMessageDeliveryState.failed);
+    expect(message?.failureCode, 'rejected.conversationNotFound');
     expect(conversation?.remoteId, isNull);
     expect(await localDataSource.getPendingRequests(), isEmpty);
   });
@@ -1237,6 +1246,7 @@ void main() {
       clientMessageId: _clientMessageId,
     );
     expect(message?.deliveryState, AssistantMessageDeliveryState.failed);
+    expect(message?.failureCode, 'response.providerError');
     expect(await localDataSource.getPendingRequests(), isEmpty);
   });
 

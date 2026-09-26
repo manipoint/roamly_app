@@ -85,7 +85,7 @@ final class HomeDiscoverySection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   for (var i = 0; i < destinations.length; i++) ...[
-                    if (i > 0) const SizedBox(width: RoamlySpacing.space8),
+                    if (i > 0) RoamlyGap.w8,
                     SizedBox(
                       width: cardWidth,
                       child: DestinationCard(
@@ -102,7 +102,7 @@ final class HomeDiscoverySection extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: RoamlySpacing.space16),
+        RoamlyGap.h16,
       ],
     );
   }

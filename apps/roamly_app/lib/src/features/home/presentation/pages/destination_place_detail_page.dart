@@ -102,7 +102,7 @@ final class _DestinationPlaceDetailView extends StatelessWidget {
               ),
             ),
             if (place.isFeatured) ...[
-              const SizedBox(width: RoamlySpacing.space12),
+              RoamlyGap.w12,
               Icon(
                 Icons.star_rounded,
                 color: theme.colorScheme.primary,
@@ -111,14 +111,14 @@ final class _DestinationPlaceDetailView extends StatelessWidget {
             ],
           ],
         ),
-        const SizedBox(height: RoamlySpacing.space4),
+        RoamlyGap.h4,
         Text(
           _formatPlaceType(place.placeType),
           style: theme.textTheme.labelLarge?.copyWith(
             color: theme.colorScheme.primary,
           ),
         ),
-        const SizedBox(height: RoamlySpacing.space8),
+        RoamlyGap.h8,
         DestinationLocationButton(
           label: address ?? place.name,
           onTap: () async {
@@ -129,15 +129,15 @@ final class _DestinationPlaceDetailView extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: RoamlySpacing.space24),
+        RoamlyGap.h24,
         Text(place.summary, style: theme.textTheme.titleMedium),
-        const SizedBox(height: RoamlySpacing.space24),
+        RoamlyGap.h24,
         DestinationAboutSection(
           title: AppStrings.destinationPlaceAbout,
           description: detail.fullDescription,
         ),
         if (gallery.isNotEmpty) ...[
-          const SizedBox(height: RoamlySpacing.space32),
+          RoamlyGap.h32,
           DestinationMediaGallery(
             title: AppStrings.destinationGallery,
             media: gallery,

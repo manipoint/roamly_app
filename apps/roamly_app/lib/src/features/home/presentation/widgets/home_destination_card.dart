@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:roamly_ui/roamly_ui.dart';
 
 import '../../domain/entities/destination.dart';
+import 'home_destination_image.dart';
+
+export 'home_destination_image.dart';
 
 /// A compact portrait card or a wide editorial recommendation.
 final class HomeDestinationCard extends StatelessWidget {
@@ -34,7 +37,7 @@ final class HomeDestinationCard extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: RoamlySpacing.space4),
+          RoamlyGap.h4,
           Text(
             destination.countryName,
             maxLines: 1,
@@ -43,7 +46,7 @@ final class HomeDestinationCard extends StatelessWidget {
               color: theme.colorScheme.primary,
             ),
           ),
-          const SizedBox(height: RoamlySpacing.space8),
+          RoamlyGap.h8,
           Text(
             destination.summary,
             maxLines: editorial ? 3 : 2,
@@ -88,35 +91,6 @@ final class HomeDestinationCard extends StatelessWidget {
                       Expanded(child: copy),
                     ],
                   ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-final class HomeDestinationImage extends StatelessWidget {
-  const HomeDestinationImage({super.key, required this.destination});
-  final Destination destination;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Image.network(
-      destination.imageUri.toString(),
-      fit: BoxFit.cover,
-      semanticLabel: destination.imageAlt,
-      frameBuilder: (context, child, frame, synchronous) =>
-          synchronous || frame != null
-          ? child
-          : ColoredBox(color: colors.surfaceContainerHighest),
-      errorBuilder: (_, _, _) => ColoredBox(
-        color: colors.surfaceContainerHighest,
-        child: Center(
-          child: Icon(
-            Icons.landscape_outlined,
-            size: RoamlySpacing.space32,
-            color: colors.onSurfaceVariant,
           ),
         ),
       ),

@@ -53,7 +53,7 @@ final class BudgetTierSelector extends StatelessWidget {
                 .toList(growable: false),
           ),
         ),
-        const SizedBox(height: RoamlySpacing.space8),
+        RoamlyGap.h8,
         Row(
           children: BudgetTier.values
               .map((tier) {

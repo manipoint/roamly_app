@@ -40,7 +40,7 @@ final class LocationOptionTile extends StatelessWidget {
             alignment: Alignment.center,
             child: Icon(Icons.location_on_outlined, color: colors.primary),
           ),
-          const SizedBox(width: RoamlySpacing.space12),
+          RoamlyGap.w12,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,7 +52,7 @@ final class LocationOptionTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
-                const SizedBox(height: RoamlySpacing.space4),
+                RoamlyGap.h4,
                 Text(
                   location.countryCode,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -62,7 +62,7 @@ final class LocationOptionTile extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: RoamlySpacing.space8),
+          RoamlyGap.w8,
           Icon(
             isSelected ? Icons.check_circle : Icons.arrow_forward_ios_rounded,
             size: isSelected ? 22 : 16,

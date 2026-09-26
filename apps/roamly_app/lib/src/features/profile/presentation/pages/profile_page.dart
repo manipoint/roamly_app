@@ -71,14 +71,14 @@ final class ProfilePage extends ConsumerWidget {
                   AppStrings.profile,
                   style: Theme.of(context).textTheme.headlineLarge,
                 ),
-                const SizedBox(height: RoamlySpacing.space24),
+                RoamlyGap.h24,
                 _ProfileIdentityCard(email: email, avatarLabel: avatarLabel),
-                const SizedBox(height: RoamlySpacing.space32),
+                RoamlyGap.h32,
                 Text(
                   AppStrings.account,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                const SizedBox(height: RoamlySpacing.space12),
+                RoamlyGap.h12,
                 RoamlyButton.destructive(
                   key: const ValueKey<String>('profile-logout-button'),
                   label: AppStrings.signOut,
@@ -125,7 +125,7 @@ final class _ProfileIdentityCard extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
             ),
-            const SizedBox(width: RoamlySpacing.space16),
+            RoamlyGap.w16,
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,7 +134,7 @@ final class _ProfileIdentityCard extends StatelessWidget {
                     AppStrings.signedInAs,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
-                  const SizedBox(height: RoamlySpacing.space4),
+                  RoamlyGap.h4,
                   SelectableText(
                     email,
                     key: const ValueKey<String>('profile-email'),

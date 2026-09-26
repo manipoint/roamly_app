@@ -9,29 +9,10 @@ class HomeDestinationImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Image.network(
-      destination.imageUri.toString(),
+    return RoamlyNetworkImage(
+      uri: destination.imageUri,
+      altText: destination.imageAlt,
       fit: BoxFit.cover,
-      semanticLabel: destination.imageAlt,
-      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-        if (wasSynchronouslyLoaded || frame != null) {
-          return child;
-        }
-        return ColoredBox(color: colors.surfaceContainerHighest);
-      },
-      errorBuilder: (context, error, stackTrace) {
-        return ColoredBox(
-          color: colors.surfaceContainerHighest,
-          child: Center(
-            child: Icon(
-              Icons.landscape_outlined,
-              size: RoamlySpacing.space32,
-              color: colors.onSurfaceVariant,
-            ),
-          ),
-        );
-      },
     );
   }
 }

@@ -28,10 +28,10 @@ final class DestinationDetailErrorView extends StatelessWidget {
               size: RoamlySpacing.space48,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: RoamlySpacing.space16),
+            RoamlyGap.h16,
             Text(message, textAlign: TextAlign.center),
             if (onRetry != null) ...[
-              const SizedBox(height: RoamlySpacing.space16),
+              RoamlyGap.h16,
               RoamlyButton.ghost(
                 label: AppStrings.tryAgain,
                 onPressed: onRetry!,

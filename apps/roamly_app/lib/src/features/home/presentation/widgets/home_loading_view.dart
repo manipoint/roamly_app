@@ -30,7 +30,7 @@ final class HomeLoadingView extends StatelessWidget {
               sliver: SliverToBoxAdapter(child: _HomeLoadingHeader()),
             ),
             SliverToBoxAdapter(child: _CategoryLoadingRow()),
-            SliverToBoxAdapter(child: SizedBox(height: RoamlySpacing.space16)),
+            SliverToBoxAdapter(child: RoamlyGap.h16),
             SliverToBoxAdapter(
               child: _HomeSectionLoading(
                 title: AppStrings.homePopular,
@@ -49,7 +49,7 @@ final class HomeLoadingView extends StatelessWidget {
                 variant: _LoadingCardVariant.compact,
               ),
             ),
-            SliverToBoxAdapter(child: SizedBox(height: RoamlySpacing.space24)),
+            SliverToBoxAdapter(child: RoamlyGap.h24),
           ],
         ),
       ),
@@ -72,7 +72,7 @@ final class _HomeLoadingHeader extends StatelessWidget {
         Row(
           children: [
             const RoamlyAppIcon(size: RoamlySpacing.space40),
-            const SizedBox(width: RoamlySpacing.space8),
+            RoamlyGap.w8,
             Expanded(
               child: Text.rich(
                 TextSpan(
@@ -99,7 +99,7 @@ final class _HomeLoadingHeader extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: RoamlySpacing.space20),
+        RoamlyGap.h20,
         RoamlySkeleton(
           width: double.infinity,
           height: _searchHeight,
@@ -176,7 +176,7 @@ final class _HomeSectionLoading extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: RoamlySpacing.space12),
+          RoamlyGap.h12,
           if (variant == _LoadingCardVariant.compact)
             const _CompactCardsLoading()
           else
@@ -203,7 +203,7 @@ final class _CompactCardsLoading extends StatelessWidget {
             index < HomeLayout.compactLoadingItemCount;
             index++
           ) ...[
-            if (index > 0) const SizedBox(width: RoamlySpacing.space8),
+            if (index > 0) RoamlyGap.w8,
             RoamlySkeleton(
               width: HomeLayout.compactPreferredWidth,
               height: HomeLayout.compactImageHeight + 86,

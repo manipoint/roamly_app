@@ -95,9 +95,7 @@ final class PreferenceStepScaffold extends StatelessWidget {
                       onSkip: onSkip,
                     ),
                   ),
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: RoamlySpacing.space24),
-                  ),
+                  const SliverToBoxAdapter(child: RoamlyGap.h24),
                   SliverToBoxAdapter(
                     child: DefaultTextStyle.merge(
                       style: Theme.of(context).textTheme.headlineSmall,
@@ -105,9 +103,7 @@ final class PreferenceStepScaffold extends StatelessWidget {
                       child: title,
                     ),
                   ),
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: RoamlySpacing.space8),
-                  ),
+                  const SliverToBoxAdapter(child: RoamlyGap.h8),
                   SliverToBoxAdapter(
                     child: Text(
                       description,
@@ -117,9 +113,7 @@ final class PreferenceStepScaffold extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: RoamlySpacing.space24),
-                  ),
+                  const SliverToBoxAdapter(child: RoamlyGap.h24),
                   SliverPadding(
                     padding: const EdgeInsets.only(
                       bottom: _bottomActionClearance,
@@ -165,11 +159,11 @@ final class _StepNavigation extends StatelessWidget {
                   icon: const Icon(Icons.arrow_back_ios_new),
                 ),
         ),
-        const SizedBox(width: RoamlySpacing.space8),
+        RoamlyGap.w8,
         Expanded(
           child: _StepProgress(currentStep: currentStep, stepCount: stepCount),
         ),
-        const SizedBox(width: RoamlySpacing.space8),
+        RoamlyGap.w8,
         SizedBox(
           width: 64,
           child: onSkip == null

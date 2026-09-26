@@ -28,7 +28,7 @@ final class AssistantInlineErrorBanner extends StatelessWidget {
         child: Row(
           children: [
             Icon(Icons.error_outline_rounded, color: colors.onErrorContainer),
-            const SizedBox(width: RoamlySpacing.space8),
+            RoamlyGap.w8,
             Expanded(
               child: Text(
                 message,

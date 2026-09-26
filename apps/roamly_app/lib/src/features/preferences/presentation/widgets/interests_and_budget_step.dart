@@ -52,7 +52,7 @@ final class InterestsAndBudgetStep extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const PreferenceSectionTitle(title: AppStrings.interestsQuestion),
-              const SizedBox(height: RoamlySpacing.space12),
+              RoamlyGap.h12,
               TravelInterestSelector(
                 selected: draft.interests,
                 onSelected: (interest) {
@@ -68,22 +68,22 @@ final class InterestsAndBudgetStep extends ConsumerWidget {
                   }
                 },
               ),
-              const SizedBox(height: RoamlySpacing.space24),
+              RoamlyGap.h24,
               const PreferenceSectionTitle(
                 title: AppStrings.budgetPerPerson,
                 information: AppStrings.budgetInformation,
               ),
-              const SizedBox(height: RoamlySpacing.space8),
+              RoamlyGap.h8,
               BudgetTierSelector(
                 selected: draft.budgetTier,
                 onSelected: draftController.selectBudgetTier,
               ),
-              const SizedBox(height: RoamlySpacing.space24),
+              RoamlyGap.h24,
               const PreferenceSectionTitle(
                 title: AppStrings.tripPreference,
                 information: AppStrings.tripPreferenceInformation,
               ),
-              const SizedBox(height: RoamlySpacing.space8),
+              RoamlyGap.h8,
               TripPaceSelector(
                 selected: draft.tripPace,
                 onSelected: draftController.selectTripPace,

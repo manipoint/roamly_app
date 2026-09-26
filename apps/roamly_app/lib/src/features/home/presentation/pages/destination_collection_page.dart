@@ -89,7 +89,8 @@ class DestinationCollectionPage extends ConsumerWidget {
                                     column < columns;
                                     column++
                                   ) ...[
-                                    if (column > 0) const SizedBox(width: gap),
+                                    if (column > 0)
+                                      const RoamlyGap.horizontal(gap),
                                     Expanded(
                                       child: _cardAt(
                                         context,
@@ -131,7 +132,7 @@ class DestinationCollectionPage extends ConsumerWidget {
                   AppStrings.homeLoadFailed,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: RoamlySpacing.space16),
+                RoamlyGap.h16,
                 RoamlyButton.ghost(
                   label: AppStrings.tryAgain,
                   onPressed: reload,
@@ -197,7 +198,7 @@ class _PaginationFooter extends StatelessWidget {
               AppStrings.homeLoadMoreFailed,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: RoamlySpacing.space8),
+            RoamlyGap.h8,
             RoamlyButton.ghost(label: AppStrings.tryAgain, onPressed: onRetry),
           ] else
             RoamlyButton.ghost(

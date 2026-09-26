@@ -144,7 +144,7 @@ final class _DestinationMediaViewerPageState
                           ),
                         ),
                       ),
-                      const SizedBox(width: RoamlySpacing.space12),
+                      RoamlyGap.w12,
                       Expanded(
                         child: Text(
                           widget.title,

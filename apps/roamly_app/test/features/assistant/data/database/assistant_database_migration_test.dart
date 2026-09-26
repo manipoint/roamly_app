@@ -78,7 +78,7 @@ void main() {
         .map((row) => row.read<String>('name'))
         .getSingle();
 
-    expect(version, 2);
+    expect(version, 4);
     expect(existingHistory, 'Existing conversation');
     expect(pendingTable, 'assistant_pending_requests');
     expect(pendingIndex, 'assistant_pending_requests_owner_created_at');

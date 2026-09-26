@@ -1,3 +1,4 @@
+import 'package:roamly_app/src/features/assistant/data/mappers/assistant_rich_content_mapper.dart';
 import 'package:roamly_app/src/features/assistant/data/models/assistant_incoming_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/connection_pong_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/connection_ready_event_model.dart';
@@ -54,6 +55,10 @@ final class AssistantEventModelMapper {
         content: event.content,
         isDuplicate: event.isDuplicate,
         itineraryId: event.itineraryId,
+        richContent: switch(event.richContent){
+          null => null,
+          final content=>_richContentMapper.map(content),
+        }
       ),
       TravelResponseFailedEventModel event => AssistantResponseFailed(
         occurredAt: event.sentAt,
@@ -64,6 +69,7 @@ final class AssistantEventModelMapper {
       _ => throw StateError('Unsupported Assistant event model type.'),
     };
   }
+  static const _richContentMapper = AssistantRichContentMapper();
 
   static AssistantClarification _mapClarification(
     TravelClarificationModel clarification,

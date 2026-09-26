@@ -83,7 +83,7 @@ final class _DestinationDetailView extends StatelessWidget {
           header: true,
           child: Text(detail.name, style: theme.textTheme.headlineMedium),
         ),
-        const SizedBox(height: RoamlySpacing.space8),
+        RoamlyGap.h8,
         DestinationLocationButton(
           label: detail.countryName,
           onTap: () async {
@@ -94,15 +94,15 @@ final class _DestinationDetailView extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: RoamlySpacing.space16),
+        RoamlyGap.h16,
         Text(detail.summary, style: theme.textTheme.titleMedium),
-        const SizedBox(height: RoamlySpacing.space24),
+        RoamlyGap.h24,
         DestinationAboutSection(
           title: AppStrings.destinationAbout,
           description: detail.fullDescription,
         ),
         if (gallery.isNotEmpty) ...[
-          const SizedBox(height: RoamlySpacing.space32),
+          RoamlyGap.h32,
           DestinationMediaGallery(
             title: AppStrings.destinationGallery,
             media: gallery,
@@ -118,7 +118,7 @@ final class _DestinationDetailView extends StatelessWidget {
           ),
         ],
         if (detail.places.isNotEmpty) ...[
-          const SizedBox(height: RoamlySpacing.space32),
+          RoamlyGap.h32,
           Semantics(
             header: true,
             child: Text(
@@ -126,7 +126,7 @@ final class _DestinationDetailView extends StatelessWidget {
               style: theme.textTheme.titleLarge,
             ),
           ),
-          const SizedBox(height: RoamlySpacing.space12),
+          RoamlyGap.h12,
           LayoutBuilder(
             builder: (context, constraints) {
               final cardWidth = (constraints.maxWidth * 0.88)
@@ -156,8 +156,7 @@ final class _DestinationDetailView extends StatelessWidget {
                           },
                         ),
                       ),
-                      if (i != detail.places.length - 1)
-                        const SizedBox(width: RoamlySpacing.space12),
+                      if (i != detail.places.length - 1) RoamlyGap.w12,
                     ],
                   ],
                 ),

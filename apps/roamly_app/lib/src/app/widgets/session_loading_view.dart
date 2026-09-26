@@ -52,7 +52,7 @@ final class SessionLoadingView extends StatelessWidget {
                           fit: BoxFit.contain,
                           excludeFromSemantics: true,
                         ),
-                        const SizedBox(height: RoamlySpacing.space32),
+                        RoamlyGap.h32,
                         FractionallySizedBox(
                           widthFactor: 0.55,
                           child: RoamlySkeleton(

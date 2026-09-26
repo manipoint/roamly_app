@@ -218,7 +218,7 @@ final class _TravelStyleCard extends StatelessWidget {
                                 ? colors.primary
                                 : colors.onSurfaceVariant,
                           ),
-                          const SizedBox(width: RoamlySpacing.space8),
+                          RoamlyGap.w8,
                           Expanded(
                             child: Text(
                               label,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../layout/roamly_gap.dart';
+
 enum RoamlyButtonVariant { primary, secondary, ghost, destructive }
 
 final class RoamlyButton extends StatelessWidget {
@@ -155,7 +157,7 @@ final class _ButtonContent extends StatelessWidget {
           data: const IconThemeData(size: 20),
           child: leadingIcon!,
         ),
-        const SizedBox(width: 8),
+        RoamlyGap.w8,
         Flexible(child: Text(label, textAlign: TextAlign.center)),
       ],
     );

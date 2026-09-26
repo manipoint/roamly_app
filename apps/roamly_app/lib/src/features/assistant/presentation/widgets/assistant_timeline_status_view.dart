@@ -34,14 +34,14 @@ final class AssistantTimelineStatusView extends StatelessWidget {
               size: 40,
               color: iconColor ?? Theme.of(context).colorScheme.primary,
             ),
-            const SizedBox(height: RoamlySpacing.space12),
+            RoamlyGap.h12,
             Text(
               message,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             if (onAction case final action?) ...[
-              const SizedBox(height: RoamlySpacing.space16),
+              RoamlyGap.h16,
               RoamlyButton.secondary(label: actionLabel!, onPressed: action),
             ],
           ],

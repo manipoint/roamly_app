@@ -223,14 +223,14 @@ final class _DestinationCopy extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: defaultTitle.merge(titleStyle),
           ),
-          const SizedBox(height: RoamlySpacing.space4),
+          RoamlyGap.h4,
           Text(
             destination.countryName,
             maxLines: HomeLayout.countryLines,
             overflow: TextOverflow.ellipsis,
             style: defaultBody.merge(subtitleStyle),
           ),
-          const SizedBox(height: RoamlySpacing.space4),
+          RoamlyGap.h4,
           Text(
             destination.summary,
             maxLines: summaryLines,

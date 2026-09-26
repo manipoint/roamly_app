@@ -29,31 +29,12 @@ final class DestinationMediaImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final media = this.media;
-
-    final image = media == null
-        ? _placeholder(colors)
-        : Image.network(
-            media.uri.toString(),
-            fit: boxFit,
-            semanticLabel: media.altText,
-            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-              if (wasSynchronouslyLoaded || frame != null) {
-                return child;
-              }
-
-              return ColoredBox(
-                color: colors.surfaceContainerHighest,
-                child: const Center(
-                  child: CircularProgressIndicator.adaptive(),
-                ),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) {
-              return _placeholder(colors);
-            },
-          );
+    final image = RoamlyNetworkImage(
+      uri: media?.uri,
+      altText: media?.altText,
+      fit: boxFit,
+      placeholderIconSize: RoamlySpacing.space48,
+    );
 
     if (!showBottomFade) {
       return image;
@@ -94,19 +75,6 @@ final class DestinationMediaImage extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _placeholder(ColorScheme colors) {
-    return ColoredBox(
-      color: colors.surfaceContainerHighest,
-      child: Center(
-        child: Icon(
-          Icons.landscape_outlined,
-          size: RoamlySpacing.space48,
-          color: colors.onSurfaceVariant,
-        ),
-      ),
     );
   }
 }

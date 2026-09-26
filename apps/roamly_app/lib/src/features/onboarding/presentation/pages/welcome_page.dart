@@ -117,9 +117,9 @@ final class _WelcomeScrollableContent extends StatelessWidget {
                 key: ValueKey<String>('welcome-brand-lockup'),
                 iconSize: OnboardingLayoutMetrics.brandIconSize,
               ),
-              const SizedBox(height: RoamlySpacing.space24),
+              RoamlyGap.h24,
               const WelcomeHeadline(),
-              const SizedBox(height: RoamlySpacing.space16),
+              RoamlyGap.h16,
               Text(
                 AppStrings.welcomeDescription,
                 key: const ValueKey<String>('welcome-description'),

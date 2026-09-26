@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:roamly_ui/roamly_ui.dart';
 
 /// Consistent heading for one preference-selection group.
 final class PreferenceSectionTitle extends StatelessWidget {
@@ -27,7 +28,7 @@ final class PreferenceSectionTitle extends StatelessWidget {
           ),
         ),
         if (information case final message?) ...[
-          const SizedBox(width: 4),
+          RoamlyGap.w4,
           Tooltip(
             message: message,
             child: Icon(

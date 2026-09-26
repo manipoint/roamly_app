@@ -312,6 +312,11 @@ final class AssistantLocalSyncCoordinator {
       remoteConversationId: transition.remoteConversationId,
       deliveryState: transition.deliveryState,
       occurredAt: event.occurredAt,
+      failureCode: switch (event) {
+        AssistantRequestRejected(:final reason) => 'rejected.${reason.name}',
+        AssistantResponseFailed(:final reason) => 'response.${reason.name}',
+        _ => null,
+      },
     );
     if (transition.removesPendingRequest) {
       await _localDataSource.deletePendingRequest(
@@ -378,6 +383,7 @@ final class AssistantLocalSyncCoordinator {
     required String? remoteConversationId,
     required AssistantMessageDeliveryState deliveryState,
     required DateTime occurredAt,
+    String? failureCode,
   }) async {
     if (!_shouldApplyState(deliveryState: deliveryState, message: message)) {
       return;
@@ -386,10 +392,13 @@ final class AssistantLocalSyncCoordinator {
         ? occurredAt
         : message.updatedAt;
     if (remoteConversationId == null) {
-      await _localDataSource.updateMessageDeliveryState(
-        messageId: message.id,
-        deliveryState: deliveryState,
-        updatedAt: updatedAt,
+      await _localDataSource.upsertMessage(
+        _copyUserMessage(
+          message: message,
+          deliveryState: deliveryState,
+          updatedAt: updatedAt,
+          failureCode: failureCode,
+        ),
       );
       return;
     }
@@ -409,6 +418,7 @@ final class AssistantLocalSyncCoordinator {
       message: message,
       deliveryState: deliveryState,
       updatedAt: updatedAt,
+      failureCode: failureCode,
     );
     await _localDataSource.upsertConversationWithMessages(
       conversation: updatedConversation,
@@ -444,6 +454,7 @@ final class AssistantLocalSyncCoordinator {
     required AssistantMessage message,
     required AssistantMessageDeliveryState deliveryState,
     required DateTime updatedAt,
+    String? failureCode,
   }) {
     return AssistantMessage(
       id: message.id,
@@ -451,6 +462,7 @@ final class AssistantLocalSyncCoordinator {
       conversationLocalId: message.conversationLocalId,
       author: AssistantMessageAuthor.user,
       content: message.content,
+      failureCode: failureCode,
       deliveryState: deliveryState,
       createdAt: message.createdAt,
       updatedAt: updatedAt,
@@ -488,6 +500,10 @@ final class AssistantLocalSyncCoordinator {
       clientMessageId: event.clientMessageId,
       assistantMessageId: event.assistantMessageId,
       itineraryId: event.itineraryId,
+      richContent: switch (event) {
+        AssistantResponseCompleted completed => completed.richContent,
+        AssistantInputRequired() => null,
+      },
       author: AssistantMessageAuthor.assistant,
       content: event.content,
       deliveryState: AssistantMessageDeliveryState.completed,

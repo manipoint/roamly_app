@@ -113,7 +113,7 @@ final class _DiscoveryScopeStepState extends ConsumerState<DiscoveryScopeStep> {
               const PreferenceSectionTitle(
                 title: AppStrings.recommendationScopeQuestion,
               ),
-              const SizedBox(height: RoamlySpacing.space12),
+              RoamlyGap.h12,
               RecommendationScopeSelector(
                 selected: draft.recommendationScope,
                 onSelected: (scope) {
@@ -126,7 +126,7 @@ final class _DiscoveryScopeStepState extends ConsumerState<DiscoveryScopeStep> {
                 },
               ),
               if (draft.recommendationScope.requiresHomeLocation) ...[
-                const SizedBox(height: RoamlySpacing.space24),
+                RoamlyGap.h24,
                 LocationSearchField(
                   controller: _locationController,
                   focusNode: _locationFocusNode,
@@ -149,14 +149,14 @@ final class _DiscoveryScopeStepState extends ConsumerState<DiscoveryScopeStep> {
                     searchController.clear();
                   },
                 ),
-                const SizedBox(height: RoamlySpacing.space8),
+                RoamlyGap.h8,
                 Text(
                   AppStrings.homeCityExplanation,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: RoamlySpacing.space12),
+                RoamlyGap.h12,
                 _LocationSearchResults(
                   state: searchState,
                   selectedLocation: draft.homeLocation,
@@ -203,7 +203,7 @@ final class _LocationSearchResults extends StatelessWidget {
         key: const ValueKey<String>('location-search-results'),
         children: [
           for (var index = 0; index < state.options.length; index++) ...[
-            if (index > 0) const SizedBox(height: RoamlySpacing.space8),
+            if (index > 0) RoamlyGap.h8,
             LocationOptionTile(
               location: state.options[index],
               isSelected: selectedLocation == state.options[index],
@@ -225,7 +225,7 @@ final class _LocationSearchResults extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
-          const SizedBox(height: RoamlySpacing.space8),
+          RoamlyGap.h8,
           RoamlyButton.ghost(label: AppStrings.tryAgain, onPressed: onRetry),
         ],
       ),

@@ -37,7 +37,7 @@ final class DestinationLocationButton extends StatelessWidget {
                   size: RoamlySpacing.space20,
                   color: colors.primary,
                 ),
-                const SizedBox(width: RoamlySpacing.space8),
+                RoamlyGap.w8,
                 Expanded(
                   child: Text(
                     label,
@@ -46,14 +46,14 @@ final class DestinationLocationButton extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: RoamlySpacing.space8),
+                RoamlyGap.w8,
                 Text(
                   AppStrings.viewOnMap,
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: colors.primary,
                   ),
                 ),
-                const SizedBox(width: RoamlySpacing.space4),
+                RoamlyGap.w4,
                 Icon(
                   Icons.chevron_right_rounded,
                   size: RoamlySpacing.space20,

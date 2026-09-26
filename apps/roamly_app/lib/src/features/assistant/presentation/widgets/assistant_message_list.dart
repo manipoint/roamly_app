@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:roamly_app/src/features/assistant/presentation/states/assistant_message_timeline_state.dart';
 import 'package:roamly_app/src/features/assistant/presentation/widgets/assistant_inline_error_banner.dart';
-import 'package:roamly_app/src/features/assistant/presentation/widgets/assistant_message_bubble.dart';
+import 'package:roamly_app/src/features/assistant/presentation/widgets/assistant_message_tile.dart';
 import 'package:roamly_app/src/features/assistant/presentation/widgets/assistant_thinking_indicator.dart';
 import 'package:roamly_app/src/features/assistant/presentation/widgets/assistant_timeline_status_view.dart';
 import 'package:roamly_app/src/localization/app_strings.dart';
@@ -187,7 +187,7 @@ final class _AssistantMessageListState extends State<AssistantMessageList> {
                   );
                 }
 
-                return const SizedBox(height: RoamlySpacing.space8);
+                return RoamlyGap.h8;
               }
 
               final messageIndex =
@@ -198,7 +198,7 @@ final class _AssistantMessageListState extends State<AssistantMessageList> {
               return Padding(
                 key: ValueKey<String>('assistant-message-${message.id}'),
                 padding: const EdgeInsets.only(bottom: RoamlySpacing.space12),
-                child: AssistantMessageBubble(message: message),
+                child: AssistantMessageTile(message: message),
               );
             },
           ),

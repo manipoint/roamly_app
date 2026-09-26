@@ -28,7 +28,7 @@ final class RoamlyBrandLockup extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           RoamlyAppIcon(size: iconSize),
-          const SizedBox(height: RoamlySpacing.space8),
+          RoamlyGap.h8,
           ExcludeSemantics(
             child: Text.rich(
               TextSpan(
@@ -46,7 +46,7 @@ final class RoamlyBrandLockup extends StatelessWidget {
             ),
           ),
           if (showTagline) ...<Widget>[
-            const SizedBox(height: RoamlySpacing.space4),
+            RoamlyGap.h4,
             ExcludeSemantics(
               child: Text(
                 AppStrings.brandTagline,

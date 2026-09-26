@@ -52,13 +52,13 @@ class _PreferenceLoadFailure extends StatelessWidget {
               size: 48,
               color: Theme.of(context).colorScheme.error,
             ),
-            const SizedBox(height: RoamlySpacing.space16),
+            RoamlyGap.h16,
             Text(
               AppStrings.preferencesLoadFailed,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
-            const SizedBox(height: RoamlySpacing.space24),
+            RoamlyGap.h24,
             RoamlyButton.primary(
               label: AppStrings.tryAgain,
               onPressed: onRetry,

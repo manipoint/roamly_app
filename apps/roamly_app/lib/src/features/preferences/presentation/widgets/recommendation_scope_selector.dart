@@ -64,7 +64,7 @@ final class RecommendationScopeSelector extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (var index = 0; index < _options.length; index++) ...[
-                if (index > 0) const SizedBox(width: RoamlySpacing.space8),
+                if (index > 0) RoamlyGap.w8,
                 Expanded(
                   child: _ScopeCard(
                     option: _options[index],
@@ -110,13 +110,13 @@ final class _ScopeCard extends StatelessWidget {
             option.icon,
             color: isSelected ? colors.primary : colors.onSurfaceVariant,
           ),
-          const SizedBox(height: RoamlySpacing.space8),
+          RoamlyGap.h8,
           Text(
             option.label,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.labelLarge,
           ),
-          const SizedBox(height: RoamlySpacing.space4),
+          RoamlyGap.h4,
           Text(
             option.description,
             textAlign: TextAlign.center,

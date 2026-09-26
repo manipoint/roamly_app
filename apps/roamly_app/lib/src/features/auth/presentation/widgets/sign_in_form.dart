@@ -95,7 +95,7 @@ class _SignInFormState extends State<SignInForm> {
                 _passwordFocusNode.requestFocus();
               },
             ),
-            const SizedBox(height: RoamlySpacing.space20),
+            RoamlyGap.h20,
             RoamlyPasswordFormField(
               key: const ValueKey('sign-in-password-field'),
               controller: _passwordController,
@@ -131,14 +131,14 @@ class _SignInFormState extends State<SignInForm> {
                       ),
                     ),
             ),
-            const SizedBox(height: RoamlySpacing.space24),
+            RoamlyGap.h24,
             RoamlyButton.primary(
               label: AppStrings.signIn,
               onPressed: _submit,
               isLoading: widget.isLoading,
               expand: true,
             ),
-            const SizedBox(height: RoamlySpacing.space16),
+            RoamlyGap.h16,
             RoamlyInlineAction(
               prompt: AppStrings.noAccount,
               actionLabel: AppStrings.createAccount,

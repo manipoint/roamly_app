@@ -91,7 +91,7 @@ class _PlaceCopy extends StatelessWidget {
               ),
             ),
             if (place.isFeatured) ...[
-              const SizedBox(width: RoamlySpacing.space8),
+              RoamlyGap.w8,
               Icon(
                 Icons.star_rounded,
                 size: RoamlySpacing.space20,
@@ -101,7 +101,7 @@ class _PlaceCopy extends StatelessWidget {
             ],
           ],
         ),
-        const SizedBox(height: RoamlySpacing.space4),
+        RoamlyGap.h4,
         Text(
           _formatPlaceType(place.placeType),
           maxLines: 1,
@@ -109,7 +109,7 @@ class _PlaceCopy extends StatelessWidget {
           style: theme.textTheme.labelLarge?.copyWith(color: colors.primary),
         ),
         if (address != null) ...[
-          const SizedBox(height: RoamlySpacing.space8),
+          RoamlyGap.h8,
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -118,7 +118,7 @@ class _PlaceCopy extends StatelessWidget {
                 size: RoamlySpacing.space16,
                 color: colors.onSurfaceVariant,
               ),
-              const SizedBox(width: RoamlySpacing.space4),
+              RoamlyGap.w4,
               Expanded(
                 child: Text(
                   address,
@@ -132,7 +132,7 @@ class _PlaceCopy extends StatelessWidget {
             ],
           ),
         ],
-        const SizedBox(height: RoamlySpacing.space8),
+        RoamlyGap.h8,
         Text(
           place.summary,
           maxLines: 3,

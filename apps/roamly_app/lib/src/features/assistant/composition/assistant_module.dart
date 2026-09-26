@@ -55,6 +55,7 @@ abstract final class AssistantModule {
     final localDataSource = DriftAssistantLocalDataSource(
       database: database,
       ownerId: ownerId,
+      logger: featureLogger
     );
     final manager = WebsocketManager(
       transport: transport,

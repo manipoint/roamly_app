@@ -70,8 +70,17 @@ final class AssistantMessageBubble extends StatelessWidget {
                       renderMarkdown: !_isUser,
                     ),
                   ),
+                  if (_hasFailed) ...[
+                    RoamlyGap.h8,
+                    Text(
+                      AppStrings.assistantFailureReason(message.failureCode),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.error,
+                      ),
+                    ),
+                  ],
                   if (_isUser) ...[
-                    const SizedBox(height: RoamlySpacing.space4),
+                    RoamlyGap.h4,
                     _AssistantDeliveryIndicator(state: message.deliveryState),
                   ],
                 ],

@@ -101,7 +101,7 @@ final class _RegisterFormState extends State<RegisterForm> {
                 _passwordFocusNode.requestFocus();
               },
             ),
-            const SizedBox(height: RoamlySpacing.space20),
+            RoamlyGap.h20,
             RoamlyPasswordFormField(
               key: const ValueKey('register-password-field'),
               controller: _passwordController,
@@ -119,7 +119,7 @@ final class _RegisterFormState extends State<RegisterForm> {
                 _confirmPasswordFocusNode.requestFocus();
               },
             ),
-            const SizedBox(height: RoamlySpacing.space20),
+            RoamlyGap.h20,
             RoamlyPasswordFormField(
               key: const ValueKey('register-confirm-password-field'),
               controller: _confirmPasswordController,
@@ -160,14 +160,14 @@ final class _RegisterFormState extends State<RegisterForm> {
                       ),
                     ),
             ),
-            const SizedBox(height: RoamlySpacing.space24),
+            RoamlyGap.h24,
             RoamlyButton.primary(
               label: AppStrings.createAccount,
               onPressed: _submit,
               isLoading: widget.isLoading,
               expand: true,
             ),
-            const SizedBox(height: RoamlySpacing.space16),
+            RoamlyGap.h16,
             RoamlyInlineAction(
               prompt: AppStrings.haveAccount,
               actionLabel: AppStrings.signIn,

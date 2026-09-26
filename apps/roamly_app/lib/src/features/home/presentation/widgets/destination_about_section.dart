@@ -22,7 +22,7 @@ final class DestinationAboutSection extends StatelessWidget {
           header: true,
           child: Text(title, style: theme.textTheme.titleLarge),
         ),
-        const SizedBox(height: RoamlySpacing.space8),
+        RoamlyGap.h8,
         Text(
           description,
           style: theme.textTheme.bodyMedium?.copyWith(

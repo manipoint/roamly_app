@@ -537,6 +537,28 @@ class $AssistantMessagesTable extends AssistantMessages
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _failureCodeMeta = const VerificationMeta(
+    'failureCode',
+  );
+  @override
+  late final GeneratedColumn<String> failureCode = GeneratedColumn<String>(
+    'failure_code',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _richContentJsonMeta = const VerificationMeta(
+    'richContentJson',
+  );
+  @override
+  late final GeneratedColumn<String> richContentJson = GeneratedColumn<String>(
+    'rich_content_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   late final GeneratedColumnWithTypeConverter<
     AssistantMessageDeliveryState,
@@ -584,6 +606,8 @@ class $AssistantMessagesTable extends AssistantMessages
     itineraryId,
     author,
     content,
+    failureCode,
+    richContentJson,
     deliveryState,
     createdAtEpochMs,
     updatedAtEpochMs,
@@ -661,6 +685,24 @@ class $AssistantMessagesTable extends AssistantMessages
     } else if (isInserting) {
       context.missing(_contentMeta);
     }
+    if (data.containsKey('failure_code')) {
+      context.handle(
+        _failureCodeMeta,
+        failureCode.isAcceptableOrUnknown(
+          data['failure_code']!,
+          _failureCodeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rich_content_json')) {
+      context.handle(
+        _richContentJsonMeta,
+        richContentJson.isAcceptableOrUnknown(
+          data['rich_content_json']!,
+          _richContentJsonMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at_epoch_ms')) {
       context.handle(
         _createdAtEpochMsMeta,
@@ -726,6 +768,14 @@ class $AssistantMessagesTable extends AssistantMessages
         DriftSqlType.string,
         data['${effectivePrefix}content'],
       )!,
+      failureCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}failure_code'],
+      ),
+      richContentJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rich_content_json'],
+      ),
       deliveryState: $AssistantMessagesTable.$converterdeliveryState.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
@@ -769,6 +819,8 @@ class AssistantMessageRecord extends DataClass
   final String? itineraryId;
   final AssistantMessageAuthor author;
   final String content;
+  final String? failureCode;
+  final String? richContentJson;
   final AssistantMessageDeliveryState deliveryState;
   final int createdAtEpochMs;
   final int updatedAtEpochMs;
@@ -781,6 +833,8 @@ class AssistantMessageRecord extends DataClass
     this.itineraryId,
     required this.author,
     required this.content,
+    this.failureCode,
+    this.richContentJson,
     required this.deliveryState,
     required this.createdAtEpochMs,
     required this.updatedAtEpochMs,
@@ -804,6 +858,12 @@ class AssistantMessageRecord extends DataClass
       );
     }
     map['content'] = Variable<String>(content);
+    if (!nullToAbsent || failureCode != null) {
+      map['failure_code'] = Variable<String>(failureCode);
+    }
+    if (!nullToAbsent || richContentJson != null) {
+      map['rich_content_json'] = Variable<String>(richContentJson);
+    }
     {
       map['delivery_state'] = Variable<String>(
         $AssistantMessagesTable.$converterdeliveryState.toSql(deliveryState),
@@ -828,6 +888,12 @@ class AssistantMessageRecord extends DataClass
           : Value(itineraryId),
       author: Value(author),
       content: Value(content),
+      failureCode: failureCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(failureCode),
+      richContentJson: richContentJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(richContentJson),
       deliveryState: Value(deliveryState),
       createdAtEpochMs: Value(createdAtEpochMs),
       updatedAtEpochMs: Value(updatedAtEpochMs),
@@ -854,6 +920,8 @@ class AssistantMessageRecord extends DataClass
         serializer.fromJson<String>(json['author']),
       ),
       content: serializer.fromJson<String>(json['content']),
+      failureCode: serializer.fromJson<String?>(json['failureCode']),
+      richContentJson: serializer.fromJson<String?>(json['richContentJson']),
       deliveryState: $AssistantMessagesTable.$converterdeliveryState.fromJson(
         serializer.fromJson<String>(json['deliveryState']),
       ),
@@ -875,6 +943,8 @@ class AssistantMessageRecord extends DataClass
         $AssistantMessagesTable.$converterauthor.toJson(author),
       ),
       'content': serializer.toJson<String>(content),
+      'failureCode': serializer.toJson<String?>(failureCode),
+      'richContentJson': serializer.toJson<String?>(richContentJson),
       'deliveryState': serializer.toJson<String>(
         $AssistantMessagesTable.$converterdeliveryState.toJson(deliveryState),
       ),
@@ -892,6 +962,8 @@ class AssistantMessageRecord extends DataClass
     Value<String?> itineraryId = const Value.absent(),
     AssistantMessageAuthor? author,
     String? content,
+    Value<String?> failureCode = const Value.absent(),
+    Value<String?> richContentJson = const Value.absent(),
     AssistantMessageDeliveryState? deliveryState,
     int? createdAtEpochMs,
     int? updatedAtEpochMs,
@@ -906,6 +978,10 @@ class AssistantMessageRecord extends DataClass
     itineraryId: itineraryId.present ? itineraryId.value : this.itineraryId,
     author: author ?? this.author,
     content: content ?? this.content,
+    failureCode: failureCode.present ? failureCode.value : this.failureCode,
+    richContentJson: richContentJson.present
+        ? richContentJson.value
+        : this.richContentJson,
     deliveryState: deliveryState ?? this.deliveryState,
     createdAtEpochMs: createdAtEpochMs ?? this.createdAtEpochMs,
     updatedAtEpochMs: updatedAtEpochMs ?? this.updatedAtEpochMs,
@@ -928,6 +1004,12 @@ class AssistantMessageRecord extends DataClass
           : this.itineraryId,
       author: data.author.present ? data.author.value : this.author,
       content: data.content.present ? data.content.value : this.content,
+      failureCode: data.failureCode.present
+          ? data.failureCode.value
+          : this.failureCode,
+      richContentJson: data.richContentJson.present
+          ? data.richContentJson.value
+          : this.richContentJson,
       deliveryState: data.deliveryState.present
           ? data.deliveryState.value
           : this.deliveryState,
@@ -951,6 +1033,8 @@ class AssistantMessageRecord extends DataClass
           ..write('itineraryId: $itineraryId, ')
           ..write('author: $author, ')
           ..write('content: $content, ')
+          ..write('failureCode: $failureCode, ')
+          ..write('richContentJson: $richContentJson, ')
           ..write('deliveryState: $deliveryState, ')
           ..write('createdAtEpochMs: $createdAtEpochMs, ')
           ..write('updatedAtEpochMs: $updatedAtEpochMs')
@@ -968,6 +1052,8 @@ class AssistantMessageRecord extends DataClass
     itineraryId,
     author,
     content,
+    failureCode,
+    richContentJson,
     deliveryState,
     createdAtEpochMs,
     updatedAtEpochMs,
@@ -984,6 +1070,8 @@ class AssistantMessageRecord extends DataClass
           other.itineraryId == this.itineraryId &&
           other.author == this.author &&
           other.content == this.content &&
+          other.failureCode == this.failureCode &&
+          other.richContentJson == this.richContentJson &&
           other.deliveryState == this.deliveryState &&
           other.createdAtEpochMs == this.createdAtEpochMs &&
           other.updatedAtEpochMs == this.updatedAtEpochMs);
@@ -999,6 +1087,8 @@ class AssistantMessagesCompanion
   final Value<String?> itineraryId;
   final Value<AssistantMessageAuthor> author;
   final Value<String> content;
+  final Value<String?> failureCode;
+  final Value<String?> richContentJson;
   final Value<AssistantMessageDeliveryState> deliveryState;
   final Value<int> createdAtEpochMs;
   final Value<int> updatedAtEpochMs;
@@ -1012,6 +1102,8 @@ class AssistantMessagesCompanion
     this.itineraryId = const Value.absent(),
     this.author = const Value.absent(),
     this.content = const Value.absent(),
+    this.failureCode = const Value.absent(),
+    this.richContentJson = const Value.absent(),
     this.deliveryState = const Value.absent(),
     this.createdAtEpochMs = const Value.absent(),
     this.updatedAtEpochMs = const Value.absent(),
@@ -1026,6 +1118,8 @@ class AssistantMessagesCompanion
     this.itineraryId = const Value.absent(),
     required AssistantMessageAuthor author,
     required String content,
+    this.failureCode = const Value.absent(),
+    this.richContentJson = const Value.absent(),
     required AssistantMessageDeliveryState deliveryState,
     required int createdAtEpochMs,
     required int updatedAtEpochMs,
@@ -1048,6 +1142,8 @@ class AssistantMessagesCompanion
     Expression<String>? itineraryId,
     Expression<String>? author,
     Expression<String>? content,
+    Expression<String>? failureCode,
+    Expression<String>? richContentJson,
     Expression<String>? deliveryState,
     Expression<int>? createdAtEpochMs,
     Expression<int>? updatedAtEpochMs,
@@ -1064,6 +1160,8 @@ class AssistantMessagesCompanion
       if (itineraryId != null) 'itinerary_id': itineraryId,
       if (author != null) 'author': author,
       if (content != null) 'content': content,
+      if (failureCode != null) 'failure_code': failureCode,
+      if (richContentJson != null) 'rich_content_json': richContentJson,
       if (deliveryState != null) 'delivery_state': deliveryState,
       if (createdAtEpochMs != null) 'created_at_epoch_ms': createdAtEpochMs,
       if (updatedAtEpochMs != null) 'updated_at_epoch_ms': updatedAtEpochMs,
@@ -1080,6 +1178,8 @@ class AssistantMessagesCompanion
     Value<String?>? itineraryId,
     Value<AssistantMessageAuthor>? author,
     Value<String>? content,
+    Value<String?>? failureCode,
+    Value<String?>? richContentJson,
     Value<AssistantMessageDeliveryState>? deliveryState,
     Value<int>? createdAtEpochMs,
     Value<int>? updatedAtEpochMs,
@@ -1094,6 +1194,8 @@ class AssistantMessagesCompanion
       itineraryId: itineraryId ?? this.itineraryId,
       author: author ?? this.author,
       content: content ?? this.content,
+      failureCode: failureCode ?? this.failureCode,
+      richContentJson: richContentJson ?? this.richContentJson,
       deliveryState: deliveryState ?? this.deliveryState,
       createdAtEpochMs: createdAtEpochMs ?? this.createdAtEpochMs,
       updatedAtEpochMs: updatedAtEpochMs ?? this.updatedAtEpochMs,
@@ -1132,6 +1234,12 @@ class AssistantMessagesCompanion
     if (content.present) {
       map['content'] = Variable<String>(content.value);
     }
+    if (failureCode.present) {
+      map['failure_code'] = Variable<String>(failureCode.value);
+    }
+    if (richContentJson.present) {
+      map['rich_content_json'] = Variable<String>(richContentJson.value);
+    }
     if (deliveryState.present) {
       map['delivery_state'] = Variable<String>(
         $AssistantMessagesTable.$converterdeliveryState.toSql(
@@ -1162,6 +1270,8 @@ class AssistantMessagesCompanion
           ..write('itineraryId: $itineraryId, ')
           ..write('author: $author, ')
           ..write('content: $content, ')
+          ..write('failureCode: $failureCode, ')
+          ..write('richContentJson: $richContentJson, ')
           ..write('deliveryState: $deliveryState, ')
           ..write('createdAtEpochMs: $createdAtEpochMs, ')
           ..write('updatedAtEpochMs: $updatedAtEpochMs, ')
@@ -2292,6 +2402,8 @@ typedef $$AssistantMessagesTableCreateCompanionBuilder =
       Value<String?> itineraryId,
       required AssistantMessageAuthor author,
       required String content,
+      Value<String?> failureCode,
+      Value<String?> richContentJson,
       required AssistantMessageDeliveryState deliveryState,
       required int createdAtEpochMs,
       required int updatedAtEpochMs,
@@ -2307,6 +2419,8 @@ typedef $$AssistantMessagesTableUpdateCompanionBuilder =
       Value<String?> itineraryId,
       Value<AssistantMessageAuthor> author,
       Value<String> content,
+      Value<String?> failureCode,
+      Value<String?> richContentJson,
       Value<AssistantMessageDeliveryState> deliveryState,
       Value<int> createdAtEpochMs,
       Value<int> updatedAtEpochMs,
@@ -2393,6 +2507,16 @@ class $$AssistantMessagesTableFilterComposer
 
   ColumnFilters<String> get content => $composableBuilder(
     column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get failureCode => $composableBuilder(
+    column: $table.failureCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get richContentJson => $composableBuilder(
+    column: $table.richContentJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2485,6 +2609,16 @@ class $$AssistantMessagesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get failureCode => $composableBuilder(
+    column: $table.failureCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get richContentJson => $composableBuilder(
+    column: $table.richContentJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get deliveryState => $composableBuilder(
     column: $table.deliveryState,
     builder: (column) => ColumnOrderings(column),
@@ -2560,6 +2694,16 @@ class $$AssistantMessagesTableAnnotationComposer
 
   GeneratedColumn<String> get content =>
       $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<String> get failureCode => $composableBuilder(
+    column: $table.failureCode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get richContentJson => $composableBuilder(
+    column: $table.richContentJson,
+    builder: (column) => column,
+  );
 
   GeneratedColumnWithTypeConverter<AssistantMessageDeliveryState, String>
   get deliveryState => $composableBuilder(
@@ -2643,6 +2787,8 @@ class $$AssistantMessagesTableTableManager
                 Value<String?> itineraryId = const Value.absent(),
                 Value<AssistantMessageAuthor> author = const Value.absent(),
                 Value<String> content = const Value.absent(),
+                Value<String?> failureCode = const Value.absent(),
+                Value<String?> richContentJson = const Value.absent(),
                 Value<AssistantMessageDeliveryState> deliveryState =
                     const Value.absent(),
                 Value<int> createdAtEpochMs = const Value.absent(),
@@ -2657,6 +2803,8 @@ class $$AssistantMessagesTableTableManager
                 itineraryId: itineraryId,
                 author: author,
                 content: content,
+                failureCode: failureCode,
+                richContentJson: richContentJson,
                 deliveryState: deliveryState,
                 createdAtEpochMs: createdAtEpochMs,
                 updatedAtEpochMs: updatedAtEpochMs,
@@ -2672,6 +2820,8 @@ class $$AssistantMessagesTableTableManager
                 Value<String?> itineraryId = const Value.absent(),
                 required AssistantMessageAuthor author,
                 required String content,
+                Value<String?> failureCode = const Value.absent(),
+                Value<String?> richContentJson = const Value.absent(),
                 required AssistantMessageDeliveryState deliveryState,
                 required int createdAtEpochMs,
                 required int updatedAtEpochMs,
@@ -2685,6 +2835,8 @@ class $$AssistantMessagesTableTableManager
                 itineraryId: itineraryId,
                 author: author,
                 content: content,
+                failureCode: failureCode,
+                richContentJson: richContentJson,
                 deliveryState: deliveryState,
                 createdAtEpochMs: createdAtEpochMs,
                 updatedAtEpochMs: updatedAtEpochMs,

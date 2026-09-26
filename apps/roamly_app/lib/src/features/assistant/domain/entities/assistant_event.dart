@@ -1,3 +1,4 @@
+import 'package:roamly_app/src/features/assistant/domain/entities/assistant_rich_content.dart';
 import 'package:roamly_core/roamly_core.dart';
 
 import 'assistant_clarification.dart';
@@ -128,6 +129,7 @@ final class AssistantResponseCompleted extends AssistantResponseWithMessage {
     required String content,
     required this.isDuplicate,
     String? itineraryId,
+    this.richContent,
   }) : clientMessageId = RoamlyValueGuards.requireUuid(
          clientMessageId,
          field: 'clientMessageId',
@@ -157,6 +159,8 @@ final class AssistantResponseCompleted extends AssistantResponseWithMessage {
   final bool isDuplicate;
   @override
   final String? itineraryId;
+  final AssistantRichContent? richContent;
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -167,7 +171,8 @@ final class AssistantResponseCompleted extends AssistantResponseWithMessage {
             assistantMessageId == other.assistantMessageId &&
             content == other.content &&
             isDuplicate == other.isDuplicate &&
-            itineraryId == other.itineraryId;
+            itineraryId == other.itineraryId &&
+            richContent == other.richContent;
   }
 
   @override
@@ -179,6 +184,7 @@ final class AssistantResponseCompleted extends AssistantResponseWithMessage {
     content,
     isDuplicate,
     itineraryId,
+    richContent,
   );
 }
 

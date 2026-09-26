@@ -1,22 +1,29 @@
 import 'package:drift/drift.dart';
 import 'package:roamly_app/src/features/assistant/data/database/assistant_database.dart';
+import 'package:roamly_app/src/features/assistant/data/serialization/assistant_rich_content_codec.dart';
 import 'package:roamly_app/src/features/assistant/data/sources/assistant_local_data_source.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_conversation.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message_delivery_state.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_request.dart';
+import 'package:roamly_app/src/features/assistant/domain/entities/assistant_rich_content.dart';
 import 'package:roamly_app/src/features/assistant/domain/policies/assistant_policy.dart';
 import 'package:roamly_core/roamly_core.dart';
+import 'package:roamly_logging/roamly_logging.dart';
 
 final class DriftAssistantLocalDataSource implements AssistantLocalDataSource {
   final AssistantDatabase _database;
   final String _ownerId;
+  final RoamlyLogger? _logger;
+  static const _richContentCodec = AssistantRichContentCodec();
 
   DriftAssistantLocalDataSource({
     required AssistantDatabase database,
     required String ownerId,
+    RoamlyLogger? logger,
   }) : _database = database,
-       _ownerId = _validateOwnerId(ownerId);
+       _ownerId = _validateOwnerId(ownerId),
+       _logger = logger;
 
   @override
   Stream<List<AssistantConversation>> watchConversations({
@@ -425,6 +432,7 @@ final class DriftAssistantLocalDataSource implements AssistantLocalDataSource {
 
   Future<void> _upsertMessageRecord(AssistantMessage message) async {
     await _ensureMessageRecordOwnership(message.id);
+    final richContentJson = _richContentCodec.encode(message.richContent);
 
     await _database
         .into(_database.assistantMessages)
@@ -436,8 +444,10 @@ final class DriftAssistantLocalDataSource implements AssistantLocalDataSource {
             clientMessageId: message.clientMessageId,
             assistantMessageId: Value(message.assistantMessageId),
             itineraryId: Value(message.itineraryId),
+            richContentJson: Value(richContentJson),
             author: message.author,
             content: message.content,
+            failureCode: Value(message.failureCode),
             deliveryState: message.deliveryState,
             createdAtEpochMs: message.createdAt.millisecondsSinceEpoch,
             updatedAtEpochMs: message.updatedAt.millisecondsSinceEpoch,
@@ -526,7 +536,7 @@ final class DriftAssistantLocalDataSource implements AssistantLocalDataSource {
     );
   }
 
-  static AssistantMessage _messageFromRecord(AssistantMessageRecord record) {
+  AssistantMessage _messageFromRecord(AssistantMessageRecord record) {
     return AssistantMessage(
       id: record.id,
       conversationLocalId: record.conversationLocalId,
@@ -535,7 +545,9 @@ final class DriftAssistantLocalDataSource implements AssistantLocalDataSource {
       itineraryId: record.itineraryId,
       author: record.author,
       content: record.content,
+      failureCode: record.failureCode,
       deliveryState: record.deliveryState,
+      richContent: _readRichContent(record),
       createdAt: DateTime.fromMillisecondsSinceEpoch(
         record.createdAtEpochMs,
         isUtc: true,
@@ -606,5 +618,21 @@ final class DriftAssistantLocalDataSource implements AssistantLocalDataSource {
     }
 
     return records.isEmpty ? null : _messageFromRecord(records.single);
+  }
+
+  AssistantRichContent? _readRichContent(AssistantMessageRecord record) {
+    if (record.author != AssistantMessageAuthor.assistant) {
+      return null;
+    }
+    try {
+      return _richContentCodec.decode(record.richContentJson);
+    } on FormatException {
+      _logger?.warning(
+        'Stored assistant rich content was invalid; using text only.',
+        fields: const {'code': 'invalid_stored_rich_content'},
+      );
+
+      return null;
+    }
   }
 }

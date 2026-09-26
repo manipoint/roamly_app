@@ -122,7 +122,7 @@ final class _TripPaceOption extends StatelessWidget {
               color: selected ? colors.primary : colors.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: RoamlySpacing.space4),
+          RoamlyGap.h4,
           Text(
             label,
             maxLines: 1,

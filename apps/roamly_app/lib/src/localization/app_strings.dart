@@ -3,6 +3,20 @@
 /// This provides a single source during Phase 1. It can later be replaced by
 /// Flutter's generated localization system without changing domain packages.
 abstract final class AppStrings {
+  static String assistantFailureReason(String? code) => switch (code) {
+    'rejected.conversationNotFound' =>
+      'This conversation is no longer available. Start a new chat.',
+    'rejected.clientMessageConflict' =>
+      'This request conflicts with an earlier message. Send a new message.',
+    'rejected.tripNotFound' => 'The selected trip is no longer available.',
+    'response.providerError' =>
+      'The AI service could not respond. Please try again later.',
+    'response.generationFailed' =>
+      'A response could not be generated. Please try again.',
+    'response.attemptsExhausted' =>
+      'The AI service could not complete this request after several attempts. Please try again later.',
+    _ => 'This message could not be completed. Please try again.',
+  };
   static const String appName = 'Roamly AI';
   static const String appNamePrefix = 'Roamly ';
   static const String appNameEmphasis = 'AI';
@@ -219,9 +233,27 @@ abstract final class AppStrings {
       'Start a conversation about your next trip.';
   static const String assistantSendFailed =
       'Could not save your message. Please try again.';
-      static const String assistantExternalImageBlocked =
+  static const String assistantExternalImageBlocked =
       'External images are not displayed';
-      static const String assistantThinking = 'Roamly AI is preparing a response';
+  static const String assistantThinking = 'Roamly AI is preparing a response';
+  static const String assistantHotelQuotedPrice = 'Quoted price';
+  static const String assistantHotelTotal = 'total';
+  static const String assistantHotelPerNight = 'per night';
+  static const String assistantHotelFrom = 'From';
+
+  static String assistantHotelStars(int rating) => '$rating-star hotel';
+  static const String assistantViewItinerary = 'View itinerary';
+  static const String assistantPaceRelaxed = 'Relaxed';
+  static const String assistantPaceBalanced = 'Balanced';
+  static const String assistantPacePacked = 'Packed';
+
+  static String assistantTripDays(int count) =>
+      '$count ${count == 1 ? 'day' : 'days'}';
+  static String assistantTripTravelers(int count) =>
+      '$count ${count == 1 ? 'traveler' : 'travelers'}';
+  static String assistantItineraryDay(int number) => 'Day $number';
+  static String assistantHotelReviewScore(String score) =>
+      '$score / 10 guest rating';
   static String mediaPosition(int current, int total) => '$current / $total';
   static String mapMarkerFor(String name) => 'Map marker for $name';
   static String preferenceProgress(int currentStep, int stepCount) {

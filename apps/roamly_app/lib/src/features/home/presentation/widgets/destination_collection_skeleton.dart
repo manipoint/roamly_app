@@ -41,13 +41,13 @@ final class DestinationCollectionSkeleton extends StatelessWidget {
               child: Column(
                 children: [
                   for (var row = 0; row < rowCount; row++) ...[
-                    if (row > 0) const SizedBox(height: HomeLayout.gridGap),
+                    if (row > 0) const RoamlyGap.vertical(HomeLayout.gridGap),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         for (var column = 0; column < columns; column++) ...[
                           if (column > 0)
-                            const SizedBox(width: HomeLayout.gridGap),
+                            const RoamlyGap.horizontal(HomeLayout.gridGap),
                           const Expanded(child: _DestinationGridCardSkeleton()),
                         ],
                       ],
