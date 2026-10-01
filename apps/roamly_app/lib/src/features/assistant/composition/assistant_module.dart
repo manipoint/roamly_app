@@ -3,6 +3,7 @@ import 'package:roamly_app/src/features/assistant/data/repositories/default_assi
 import 'package:roamly_app/src/features/assistant/data/services/default_assistant_heartbeat_coordinator.dart';
 import 'package:roamly_app/src/features/assistant/data/services/default_assistant_realtime_session.dart';
 import 'package:roamly_app/src/features/assistant/data/sources/default_assistant_socket_data_source.dart';
+import 'package:roamly_app/src/features/assistant/data/sources/api_assistant_remote_data_source.dart';
 import 'package:roamly_app/src/features/assistant/data/sources/drift_assistant_local_data_source.dart';
 import 'package:roamly_app/src/features/assistant/domain/repositories/assistant_repository.dart';
 import 'package:roamly_logging/roamly_logging.dart';
@@ -45,6 +46,8 @@ abstract final class AssistantModule {
   static AssistantDependencies create({
     required Uri websocketUri,
     required AccessTokenProvider accessTokenProvider,
+    required ApiClient authenticatedApiClient,
+    required ApiRequestExecutor requestExecutor,
     required String ownerId,
     required RoamlyLogger logger,
     WebsocketTransport transport = const IoWebSocketTransport(),
@@ -55,7 +58,7 @@ abstract final class AssistantModule {
     final localDataSource = DriftAssistantLocalDataSource(
       database: database,
       ownerId: ownerId,
-      logger: featureLogger
+      logger: featureLogger,
     );
     final manager = WebsocketManager(
       transport: transport,
@@ -75,6 +78,10 @@ abstract final class AssistantModule {
     final repository = DefaultAssistantRepository(
       realtimeSession: realtimeSession,
       localDataSource: localDataSource,
+      remoteDataSource: ApiAssistantRemoteDataSource(
+        authenticatedClient: authenticatedApiClient,
+      ),
+      requestExecutor: requestExecutor,
       logger: featureLogger,
     );
     return AssistantDependencies(repository: repository, database: database);

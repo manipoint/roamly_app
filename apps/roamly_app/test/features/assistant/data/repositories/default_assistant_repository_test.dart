@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:roamly_core/roamly_core.dart';
 import 'package:roamly_app/src/features/assistant/data/database/assistant_database.dart';
 import 'package:roamly_app/src/features/assistant/data/models/assistant_incoming_event_model.dart';
 import 'package:roamly_app/src/features/assistant/data/models/connection_pong_event_model.dart';
@@ -15,6 +16,7 @@ import 'package:roamly_app/src/features/assistant/data/models/travel_response_pr
 import 'package:roamly_app/src/features/assistant/data/repositories/default_assistant_repository.dart';
 import 'package:roamly_app/src/features/assistant/data/services/assistant_realtime_session.dart';
 import 'package:roamly_app/src/features/assistant/data/sources/assistant_local_data_source.dart';
+import 'package:roamly_app/src/features/assistant/data/sources/assistant_remote_data_source.dart';
 import 'package:roamly_app/src/features/assistant/data/sources/drift_assistant_local_data_source.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_conversation.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_event.dart';
@@ -322,12 +324,65 @@ final class _CountingAssistantLocalDataSource
   }
 }
 
+final class _RecoveryTimer implements Timer {
+  _RecoveryTimer(this.delay, this.callback);
+  final Duration delay;
+  final void Function() callback;
+  @override
+  bool isActive = true;
+  @override
+  int tick = 0;
+  @override
+  void cancel() => isActive = false;
+  void fire() {
+    if (!isActive) return;
+    isActive = false;
+    tick++;
+    callback();
+  }
+}
+
+final class _FakeAssistantRemoteDataSource
+    implements AssistantRemoteDataSource {
+  final deletedConversationIds = <String>[];
+  Object? deleteError;
+
+  @override
+  Future<void> deleteConversation({required String conversationId}) async {
+    final error = deleteError;
+    if (error != null) throw error;
+    deletedConversationIds.add(conversationId);
+  }
+}
+
+final class _FakeApiRequestExecutor implements ApiRequestExecutor {
+  AppFailure? failure;
+
+  @override
+  Future<Result<T>> execute<T>(Future<T> Function() request) async {
+    final currentFailure = failure;
+    if (currentFailure != null) return FailureResult<T>(currentFailure);
+    return Success<T>(await request());
+  }
+}
+
+Future<void> _eventually(bool Function() condition) async {
+  for (var i = 0; i < 200; i++) {
+    if (condition()) return;
+    await Future<void>.delayed(const Duration(milliseconds: 1));
+  }
+  expect(condition(), isTrue);
+}
+
 void main() {
   late AssistantDatabase database;
   late DriftAssistantLocalDataSource localDataSource;
   late _CountingAssistantLocalDataSource countingLocalDataSource;
   late _FakeRealtimeSession session;
+  late _FakeAssistantRemoteDataSource remoteDataSource;
+  late _FakeApiRequestExecutor requestExecutor;
   late DefaultAssistantRepository repository;
+  late List<_RecoveryTimer> recoveryTimers;
 
   setUp(() {
     database = AssistantDatabase(NativeDatabase.memory());
@@ -339,8 +394,18 @@ void main() {
       localDataSource,
     );
     session = _FakeRealtimeSession();
+    remoteDataSource = _FakeAssistantRemoteDataSource();
+    requestExecutor = _FakeApiRequestExecutor();
+    recoveryTimers = [];
     repository = DefaultAssistantRepository(
       realtimeSession: session,
+      remoteDataSource: remoteDataSource,
+      requestExecutor: requestExecutor,
+      recoveryTimerFactory: (delay, callback) {
+        final timer = _RecoveryTimer(delay, callback);
+        recoveryTimers.add(timer);
+        return timer;
+      },
       localDataSource: countingLocalDataSource,
       logger: RoamlyLogger(name: 'test.assistant', sink: const NoopLogSink()),
     );
@@ -348,8 +413,196 @@ void main() {
   });
 
   tearDown(() async {
+    await repository.dispose();
     await session.closeControllers();
     await database.close();
+  });
+
+  test(
+    'processing request recovers without readiness events with capped backoff',
+    () async {
+      final request = _request(
+        clientMessageId: _clientMessageId,
+        createdAt: _historyTime(0),
+      );
+      await repository.sendRequest(request);
+      final next = repository.events.first;
+      session.eventController.add(
+        TravelResponseProcessingEventModel.fromJson(
+          _event(
+            type: 'travel.response.processing',
+            payload: {
+              'client_message_id': _clientMessageId,
+              'conversation_id': _conversationId,
+            },
+          ),
+        ),
+      );
+      await next;
+      for (final seconds in [5, 10, 20, 30, 30]) {
+        await _eventually(() => recoveryTimers.last.isActive);
+        final timer = recoveryTimers.last;
+        expect(timer.delay, Duration(seconds: seconds));
+        final count = session.sentRequests.length;
+        timer.fire();
+        await _eventually(
+          () =>
+              session.sentRequests.length == count + 1 &&
+              recoveryTimers.last != timer,
+        );
+        expect(
+          session.sentRequests.last.clientMessageId,
+          request.clientMessageId,
+        );
+      }
+    },
+  );
+
+  test('terminal failure stops recovery', () async {
+    await repository.sendRequest(
+      _request(clientMessageId: _clientMessageId, createdAt: _historyTime(0)),
+    );
+    final timer = recoveryTimers.single;
+    final next = repository.events.first;
+    session.eventController.add(
+      TravelResponseFailedEventModel.fromJson(
+        _event(
+          type: 'travel.response.failed',
+          payload: {
+            'client_message_id': _clientMessageId,
+            'conversation_id': _conversationId,
+            'code': 'attempts_exhausted',
+          },
+        ),
+      ),
+    );
+    await next;
+    expect(timer.isActive, isFalse);
+    timer.fire();
+    expect(session.sentRequests, hasLength(1));
+    expect(await localDataSource.getPendingRequests(), isEmpty);
+  });
+
+  test(
+    'disconnect stops timer and reconnect replays without a new message ID',
+    () async {
+      await repository.sendRequest(
+        _request(clientMessageId: _clientMessageId, createdAt: _historyTime(0)),
+      );
+      final timer = recoveryTimers.single;
+      session.isReady = false;
+      session.readinessController.add(false);
+      await _eventually(() => !timer.isActive);
+      timer.fire();
+      expect(session.sentRequests, hasLength(1));
+      session.isReady = true;
+      session.readinessController.add(true);
+      await _eventually(
+        () => session.sentRequests.length == 2 && recoveryTimers.last != timer,
+      );
+      expect(session.sentRequests.last.clientMessageId, _clientMessageId);
+      expect(recoveryTimers.last.delay, AssistantPolicy.initialRecoveryDelay);
+    },
+  );
+
+  test('explicit disconnect and dispose suppress recovery', () async {
+    await repository.sendRequest(
+      _request(clientMessageId: _clientMessageId, createdAt: _historyTime(0)),
+    );
+    final timer = recoveryTimers.single;
+    await repository.disconnect();
+    session.readinessController.add(true);
+    await Future<void>.delayed(Duration.zero);
+    expect(timer.isActive, isFalse);
+    timer.fire();
+    expect(session.sentRequests, hasLength(1));
+    repository.connect();
+    session.readinessController.add(true);
+    await _eventually(
+      () => session.sentRequests.length == 2 && recoveryTimers.last != timer,
+    );
+    final current = recoveryTimers.last;
+    await repository.dispose();
+    expect(current.isActive, isFalse);
+    current.fire();
+    expect(session.sentRequests, hasLength(2));
+  });
+
+  test('cached completion during replay does not rearm recovery', () async {
+    await repository.sendRequest(
+      _request(clientMessageId: _clientMessageId, createdAt: _historyTime(0)),
+    );
+    final gate = Completer<void>();
+    final started = Completer<void>();
+    session.sendObserver = (_) async {
+      started.complete();
+      await gate.future;
+    };
+    recoveryTimers.single.fire();
+    await started.future;
+    final next = repository.events.first;
+    session.eventController.add(
+      TravelResponseCompletedEventModel.fromJson(
+        _event(
+          type: 'travel.response.completed',
+          payload: {
+            'client_message_id': _clientMessageId,
+            'conversation_id': _conversationId,
+            'assistant_message_id': _assistantMessageId,
+            'content': 'Cached reply',
+            'is_duplicate': true,
+          },
+        ),
+      ),
+    );
+    await next;
+    gate.complete();
+    await _eventually(() => session.sentRequests.length == 2);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(recoveryTimers.where((timer) => timer.isActive), isEmpty);
+    expect(await localDataSource.getPendingRequests(), isEmpty);
+    expect(
+      await repository
+          .watchMessages(conversationLocalId: _localConversationId)
+          .first,
+      hasLength(2),
+    );
+  });
+
+  test('deleted outbox drains recovery without recreating a request', () async {
+    await repository.sendRequest(
+      _request(clientMessageId: _clientMessageId, createdAt: _historyTime(0)),
+    );
+    final timer = recoveryTimers.single;
+    await repository.deleteConversation(localId: _localConversationId);
+    timer.fire();
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    expect(session.sentRequests, hasLength(1));
+    expect(recoveryTimers.where((timer) => timer.isActive), isEmpty);
+  });
+
+  test('transient send failure recovers with one shared timer', () async {
+    session.sendError = WebSocketFailure(kind: WebSocketFailureKind.connection);
+    await repository.sendRequest(
+      _request(clientMessageId: _clientMessageId, createdAt: _historyTime(0)),
+    );
+    await repository.sendRequest(
+      _request(clientMessageId: _clientMessageId2, createdAt: _historyTime(1)),
+    );
+    expect(recoveryTimers.where((timer) => timer.isActive), hasLength(1));
+    session.sendError = null;
+    final timer = recoveryTimers.single;
+    timer.fire();
+    await _eventually(
+      () => session.sentRequests.length == 4 && recoveryTimers.last != timer,
+    );
+    expect(session.sentRequests.map((request) => request.clientMessageId), [
+      _clientMessageId,
+      _clientMessageId2,
+      _clientMessageId,
+      _clientMessageId2,
+    ]);
+    expect(recoveryTimers.where((timer) => timer.isActive), hasLength(1));
   });
 
   test('queues offline without invoking transport', () async {
@@ -586,6 +839,16 @@ void main() {
     expect(repository.connect, throwsStateError);
   });
 
+  test('disconnect is safe after disposal has started', () async {
+    final disposing = repository.dispose();
+
+    await repository.disconnect();
+    await disposing;
+
+    expect(session.disconnectCalls, 0);
+    expect(session.disposeCalls, 1);
+  });
+
   test('maps every request field to the transport model', () async {
     final request = AssistantRequest(
       clientMessageId: _clientMessageId,
@@ -763,6 +1026,8 @@ void main() {
     final failingRepository = DefaultAssistantRepository(
       realtimeSession: session,
       localDataSource: _FailingAssistantLocalDataSource(failure),
+      remoteDataSource: remoteDataSource,
+      requestExecutor: requestExecutor,
       logger: RoamlyLogger(name: 'test.assistant', sink: const NoopLogSink()),
     );
     var transportCalled = false;
@@ -803,6 +1068,8 @@ void main() {
         conversation: _conversation(),
         message: message,
       ),
+      remoteDataSource: remoteDataSource,
+      requestExecutor: requestExecutor,
       logger: RoamlyLogger(name: 'test.assistant', sink: sink),
     );
     final nextEvent = failingRepository.events.first;
@@ -1004,6 +1271,8 @@ void main() {
     final replayRepository = DefaultAssistantRepository(
       realtimeSession: replaySession,
       localDataSource: countingLocalDataSource,
+      remoteDataSource: remoteDataSource,
+      requestExecutor: requestExecutor,
       logger: RoamlyLogger(
         name: 'test.assistant.replay',
         sink: const NoopLogSink(),
@@ -1482,12 +1751,52 @@ void main() {
     expect(previousPage, [second]);
   });
 
+  test('deletion removes queued messages and ignores late events', () async {
+    await repository.sendRequest(
+      _request(clientMessageId: _clientMessageId, createdAt: _historyTime(0)),
+    );
+    expect(await localDataSource.getPendingRequests(), hasLength(1));
+    await repository.deleteConversation(localId: _localConversationId);
+    expect(remoteDataSource.deletedConversationIds, isEmpty);
+    expect(await localDataSource.getPendingRequests(), isEmpty);
+    expect(
+      await repository
+          .watchMessages(conversationLocalId: _localConversationId)
+          .first,
+      isEmpty,
+    );
+    final next = repository.events.first;
+    session.eventController.add(
+      TravelRequestRejectedEventModel.fromJson(
+        _event(
+          type: 'travel.request.rejected',
+          payload: {
+            'client_message_id': _clientMessageId,
+            'code': 'conversation_not_found',
+          },
+        ),
+      ),
+    );
+    await next;
+    expect(
+      await localDataSource.getConversation(localId: _localConversationId),
+      isNull,
+    );
+    expect(
+      await repository
+          .watchMessages(conversationLocalId: _localConversationId)
+          .first,
+      isEmpty,
+    );
+  });
+
   test('deletes a conversation and clears cached history', () async {
     final conversation = _conversation();
 
     await localDataSource.upsertConversation(conversation);
     await repository.deleteConversation(localId: conversation.localId);
 
+    expect(remoteDataSource.deletedConversationIds, [_conversationId]);
     expect(
       await localDataSource.getConversation(localId: conversation.localId),
       isNull,
@@ -1498,6 +1807,57 @@ void main() {
 
     expect(await repository.watchConversations().first, isEmpty);
   });
+
+  test('deletes local-only conversations without a server request', () async {
+    final conversation = _conversation(remoteId: null);
+    await localDataSource.upsertConversation(conversation);
+
+    await repository.deleteConversation(localId: conversation.localId);
+
+    expect(remoteDataSource.deletedConversationIds, isEmpty);
+    expect(
+      await localDataSource.getConversation(localId: conversation.localId),
+      isNull,
+    );
+  });
+
+  test('retains local history when remote deletion fails', () async {
+    final conversation = _conversation();
+    final failure = StateError('remote delete failed');
+    remoteDataSource.deleteError = failure;
+    await localDataSource.upsertConversation(conversation);
+
+    await expectLater(
+      repository.deleteConversation(localId: conversation.localId),
+      throwsA(same(failure)),
+    );
+
+    expect(
+      await localDataSource.getConversation(localId: conversation.localId),
+      conversation,
+    );
+  });
+
+  test(
+    'cleans local history when the remote conversation is already absent',
+    () async {
+      final conversation = _conversation();
+      requestExecutor.failure = const NetworkFailure(
+        code: 'resource_not_found',
+        isRetryable: false,
+        kind: NetworkFailureKind.notFound,
+        statusCode: 404,
+      );
+      await localDataSource.upsertConversation(conversation);
+
+      await repository.deleteConversation(localId: conversation.localId);
+
+      expect(
+        await localDataSource.getConversation(localId: conversation.localId),
+        isNull,
+      );
+    },
+  );
 }
 
 AssistantConversation _conversation({String? remoteId = _conversationId}) {

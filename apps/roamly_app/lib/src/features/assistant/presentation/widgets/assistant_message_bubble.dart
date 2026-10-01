@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message_delivery_state.dart';
 import 'package:roamly_app/src/features/assistant/presentation/widgets/assistant_message_content.dart';
@@ -79,10 +80,20 @@ final class AssistantMessageBubble extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (_isUser) ...[
-                    RoamlyGap.h4,
-                    _AssistantDeliveryIndicator(state: message.deliveryState),
-                  ],
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: AppStrings.assistantCopyMessage,
+                        icon: const Icon(Icons.copy_outlined, size: 16),
+                        onPressed: () => _copyMessage(context),
+                      ),
+                      if (_isUser)
+                        _AssistantDeliveryIndicator(
+                          state: message.deliveryState,
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -90,6 +101,21 @@ final class AssistantMessageBubble extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _copyMessage(BuildContext context) async {
+    try {
+      await Clipboard.setData(ClipboardData(text: message.content));
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.assistantMessageCopied)),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.assistantCopyFailed)),
+      );
+    }
   }
 
   BorderRadiusGeometry get _bubbleBorderRadius {

@@ -102,6 +102,8 @@ void main() {
           final dependencies = AssistantModule.create(
             websocketUri: appConfig.assistantWebSocketUri,
             accessTokenProvider: authDependencies.accessTokenProvider,
+            authenticatedApiClient: authDependencies.authenticatedApiClient,
+            requestExecutor: requestExecutorFor('assistant'),
             ownerId: ownerId,
             logger: logger,
           );

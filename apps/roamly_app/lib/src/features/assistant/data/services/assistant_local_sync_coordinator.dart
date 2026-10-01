@@ -59,6 +59,12 @@ final class AssistantLocalSyncCoordinator {
     return _synchronize(_localDataSource.clear);
   }
 
+  Future<AssistantConversation?> getConversation({required String localId}) {
+    return _synchronize(
+      () => _localDataSource.getConversation(localId: localId),
+    );
+  }
+
   Future<void> deleteConversation({required String localId}) {
     return _synchronize(
       () => _localDataSource.deleteConversation(localId: localId),

@@ -25,6 +25,8 @@ abstract final class AssistantPolicy {
   static const int maximumMessagesLimit = 200;
 
   // Durable request replay.
+  static const Duration initialRecoveryDelay = Duration(seconds: 5);
+  static const Duration maximumRecoveryDelay = Duration(seconds: 30);
   static const int pendingReplayBatchSize = 50;
   static const int maximumPendingReplayBatchSize = 100;
 

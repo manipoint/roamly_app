@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:roamly_core/roamly_core.dart';
 import 'package:roamly_app/src/features/assistant/data/mappers/assistant_event_model_mapper.dart';
 import 'package:roamly_app/src/features/assistant/data/services/assistant_local_sync_coordinator.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_conversation.dart';
@@ -13,14 +14,21 @@ import 'package:roamly_networking/roamly_networking.dart';
 import '../../domain/repositories/assistant_repository.dart';
 import '../services/assistant_realtime_session.dart';
 import '../sources/assistant_local_data_source.dart';
+import '../sources/assistant_remote_data_source.dart';
 
 final class DefaultAssistantRepository implements AssistantRepository {
   DefaultAssistantRepository({
     required AssistantRealtimeSession realtimeSession,
     required AssistantLocalDataSource localDataSource,
+    required AssistantRemoteDataSource remoteDataSource,
+    required ApiRequestExecutor requestExecutor,
     required RoamlyLogger logger,
+    Timer Function(Duration, void Function()) recoveryTimerFactory = Timer.new,
     AssistantEventModelMapper eventMapper = const AssistantEventModelMapper(),
-  }) : _realtimeSession = realtimeSession,
+  }) : _recoveryTimerFactory = recoveryTimerFactory,
+       _realtimeSession = realtimeSession,
+       _remoteDataSource = remoteDataSource,
+       _requestExecutor = requestExecutor,
        _logger = logger.child('assistant_repository'),
        _localSync = AssistantLocalSyncCoordinator(
          localDataSource: localDataSource,
@@ -45,6 +53,8 @@ final class DefaultAssistantRepository implements AssistantRepository {
   }
 
   final AssistantRealtimeSession _realtimeSession;
+  final AssistantRemoteDataSource _remoteDataSource;
+  final ApiRequestExecutor _requestExecutor;
   final AssistantLocalSyncCoordinator _localSync;
   final RoamlyLogger _logger;
   final StreamController<AssistantEvent> _eventsController =
@@ -59,6 +69,43 @@ final class DefaultAssistantRepository implements AssistantRepository {
   Future<void>? _disposeFuture;
   bool _disposed = false;
   bool _replayRequested = false;
+  final Timer Function(Duration, void Function()) _recoveryTimerFactory;
+  final Set<String> _recoveringIds = {};
+  Timer? _recoveryTimer;
+  Duration _recoveryDelay = AssistantPolicy.initialRecoveryDelay;
+  bool _recoveryPaused = false;
+
+  void _stopRecovery() {
+    _recoveryTimer?.cancel();
+    _recoveryTimer = null;
+  }
+
+  void _finishRecovery(String clientMessageId) {
+    _recoveringIds.remove(clientMessageId);
+    if (_recoveringIds.isEmpty) {
+      _stopRecovery();
+      _recoveryDelay = AssistantPolicy.initialRecoveryDelay;
+    }
+  }
+
+  void _scheduleRecovery() {
+    if (_disposed ||
+        _recoveryPaused ||
+        !_realtimeSession.isReady ||
+        _recoveringIds.isEmpty ||
+        _recoveryTimer != null ||
+        _replayFuture != null) {
+      return;
+    }
+    _recoveryTimer = _recoveryTimerFactory(_recoveryDelay, () {
+      _recoveryTimer = null;
+      final doubled = _recoveryDelay * 2;
+      _recoveryDelay = doubled > AssistantPolicy.maximumRecoveryDelay
+          ? AssistantPolicy.maximumRecoveryDelay
+          : doubled;
+      _schedulePendingReplay();
+    });
+  }
 
   @override
   Stream<AssistantEvent> get events => _events;
@@ -72,12 +119,16 @@ final class DefaultAssistantRepository implements AssistantRepository {
   @override
   void connect() {
     _ensureActive();
+    _recoveryPaused = false;
     _realtimeSession.connect();
   }
 
   @override
   Future<void> disconnect() {
-    _ensureActive();
+    if (_disposed) return Future<void>.value();
+
+    _recoveryPaused = true;
+    _stopRecovery();
     return _realtimeSession.disconnect();
   }
 
@@ -87,6 +138,7 @@ final class DefaultAssistantRepository implements AssistantRepository {
     if (disposing != null) return disposing;
 
     _disposed = true;
+    _stopRecovery();
     final future = _dispose();
     _disposeFuture = future;
     return future;
@@ -123,10 +175,16 @@ final class DefaultAssistantRepository implements AssistantRepository {
             requirePendingRecord: requirePendingRecord,
           );
 
-          if (model == null || _disposed || !_realtimeSession.isReady) {
+          if (model == null) {
+            _finishRecovery(request.clientMessageId);
             completer.complete();
             return;
           }
+          if (_disposed || _recoveryPaused || !_realtimeSession.isReady) {
+            completer.complete();
+            return;
+          }
+          _recoveringIds.add(request.clientMessageId);
           try {
             await _realtimeSession.sendTravelRequest(model);
           } catch (error, stackTrace) {
@@ -148,6 +206,7 @@ final class DefaultAssistantRepository implements AssistantRepository {
 
           completer.complete();
         } catch (error, stackTrace) {
+          _finishRecovery(request.clientMessageId);
           completer.completeError(error, stackTrace);
         } finally {
           final currentOperation = _sendOperations[request.clientMessageId];
@@ -156,6 +215,7 @@ final class DefaultAssistantRepository implements AssistantRepository {
               identical(currentOperation.completer, completer)) {
             _sendOperations.remove(request.clientMessageId);
           }
+          _scheduleRecovery();
         }
       })(),
     );
@@ -164,15 +224,35 @@ final class DefaultAssistantRepository implements AssistantRepository {
   }
 
   @override
-  Future<void> clearLocalHistory() {
+  Future<void> clearLocalHistory() async {
     _ensureActive();
-    return _localSync.clear();
+    await _localSync.clear();
+    _recoveringIds.clear();
+    _stopRecovery();
+    _recoveryDelay = AssistantPolicy.initialRecoveryDelay;
   }
 
   @override
-  Future<void> deleteConversation({required String localId}) {
+  Future<void> deleteConversation({required String localId}) async {
     _ensureActive();
-    return _localSync.deleteConversation(localId: localId);
+    final conversation = await _localSync.getConversation(localId: localId);
+    if (conversation == null) return;
+
+    final remoteId = conversation.remoteId;
+    if (remoteId != null) {
+      final result = await _requestExecutor.execute<void>(
+        () => _remoteDataSource.deleteConversation(conversationId: remoteId),
+      );
+      if (result case FailureResult<void>(:final failure)) {
+        // DELETE is idempotent from the client's perspective: an already
+        // absent remote conversation has reached the requested state.
+        if (failure is! NetworkFailure || failure.statusCode != 404) {
+          throw failure;
+        }
+      }
+    }
+
+    await _localSync.deleteConversation(localId: localId);
   }
 
   @override
@@ -212,11 +292,16 @@ final class DefaultAssistantRepository implements AssistantRepository {
   }
 
   void _handleReadinessChange(bool isReady) {
-    if (isReady) _schedulePendingReplay();
+    _stopRecovery();
+    if (isReady) {
+      _recoveryDelay = AssistantPolicy.initialRecoveryDelay;
+      _schedulePendingReplay();
+    }
   }
 
   void _schedulePendingReplay() {
-    if (_disposed) return;
+    if (_disposed || _recoveryPaused || !_realtimeSession.isReady) return;
+    _stopRecovery();
     _replayRequested = true;
     if (_replayFuture != null) return;
 
@@ -225,6 +310,8 @@ final class DefaultAssistantRepository implements AssistantRepository {
       _replayFuture = null;
       if (!_disposed && _realtimeSession.isReady && _replayRequested) {
         _schedulePendingReplay();
+      } else {
+        _scheduleRecovery();
       }
     });
     unawaited(_replayFuture);
@@ -233,21 +320,20 @@ final class DefaultAssistantRepository implements AssistantRepository {
   Future<void> _replayPendingRequests() async {
     DateTime? cursorCreatedAt;
     String? cursorClientMessageId;
+    final seen = <String>{};
+    final recoveringAtStart = Set<String>.of(_recoveringIds);
 
     try {
-      while (!_disposed && _realtimeSession.isReady) {
+      while (!_disposed && !_recoveryPaused && _realtimeSession.isReady) {
         final requests = await _localSync.getPendingRequests(
           limit: AssistantPolicy.pendingReplayBatchSize,
           afterCreatedAt: cursorCreatedAt,
           afterClientMessageId: cursorClientMessageId,
         );
 
-        if (requests.isEmpty) {
-          return;
-        }
-
         for (final request in requests) {
-          if (_disposed || !_realtimeSession.isReady) {
+          seen.add(request.clientMessageId);
+          if (_disposed || _recoveryPaused || !_realtimeSession.isReady) {
             return;
           }
 
@@ -266,13 +352,15 @@ final class DefaultAssistantRepository implements AssistantRepository {
           }
         }
 
+        if (requests.length < AssistantPolicy.pendingReplayBatchSize) {
+          for (final id in recoveringAtStart.difference(seen)) {
+            _finishRecovery(id);
+          }
+          return;
+        }
         final lastRequest = requests.last;
         cursorCreatedAt = lastRequest.createdAt;
         cursorClientMessageId = lastRequest.clientMessageId;
-
-        if (requests.length < AssistantPolicy.pendingReplayBatchSize) {
-          return;
-        }
       }
     } catch (error, stackTrace) {
       _logger.error(
@@ -305,6 +393,11 @@ final class DefaultAssistantRepository implements AssistantRepository {
     }
     try {
       await _localSync.persistEvent(event);
+      if (event is AssistantResponseWithMessage ||
+          event is AssistantResponseFailed ||
+          event is AssistantRequestRejected) {
+        _finishRecovery(event.clientMessageId);
+      }
     } catch (error, stackTrace) {
       _logger.error(
         'Failed to persist an assistant event.',

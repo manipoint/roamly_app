@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message.dart';
 import 'package:roamly_app/src/features/assistant/domain/entities/assistant_message_delivery_state.dart';
@@ -46,6 +47,26 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('UK'), findsOneWidget);
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map)['text'] as String;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await tester.tap(find.byTooltip(AppStrings.assistantCopyMessage));
+      await tester.pump();
+      expect(copied, 'UK');
+      expect(find.text(AppStrings.assistantMessageCopied), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }

@@ -200,3 +200,24 @@ flutter test     # 570 tests passed
 - Resolve the upstream `path_provider_foundation`/`objective_c` iOS simulator
   native-symbol issue before relying on affected builds for device validation.
 
+
+
+### Accepted request recovery
+
+The repository retains the durable outbox until a terminal response is persisted.
+A single recovery timer reconciles unresolved requests with their original
+client message IDs at 5, 10, 20, then at most once every 30 seconds. This is a
+capped polling interval, not a fixed total retry count; backend leases and attempt
+limits decide whether generation may run again. Active claims return processing,
+and completed requests restore the cached response rather than regenerating it.
+
+Recovery batches remain serialized and keyset-paginated. Terminal responses stop
+tracking their request; the timer stops when none remain. Offline state, explicit
+disconnect, and disposal cancel scheduling. Reconnect scans the durable outbox.
+Non-retryable send errors surface without a timer retry for that request. Deleted
+outbox records are removed on the next scan and are never recreated by replay.
+
+Tests cover capped backoff, missing final delivery, completion during an in-flight
+replay, transient sends, reconnect, terminal failure, deletion, disposal, and the
+existing idempotency and owner-isolation cases. This does not diagnose the original
+1006 transport closure or implement server-history synchronization.

@@ -20,6 +20,13 @@ final class _FakeAccessTokenProvider implements AccessTokenProvider {
   }
 }
 
+final class _FakeApiClient implements ApiClient {
+  const _FakeApiClient();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 final class _FakeWebSocketConnection implements WebSocketConnection {
   final StreamController<String> _messages = StreamController<String>();
   final Completer<WebSocketCloseInfo> _closed = Completer<WebSocketCloseInfo>();
@@ -110,6 +117,14 @@ void main() {
       final dependencies = AssistantModule.create(
         websocketUri: Uri.parse('wss://example.com/ws/travel'),
         accessTokenProvider: tokenProvider,
+        authenticatedApiClient: const _FakeApiClient(),
+        requestExecutor: DefaultApiRequestExecutor(
+          failureMapper: const DefaultDioFailureMapper(),
+          logger: RoamlyLogger(
+            name: 'test.assistant.module.network',
+            sink: const NoopLogSink(),
+          ),
+        ),
         ownerId: 'assistant-module-user',
         logger: RoamlyLogger(
           name: 'test.assistant.module',
@@ -144,6 +159,14 @@ void main() {
       final dependencies = AssistantModule.create(
         websocketUri: Uri.parse('wss://example.com/ws/travel'),
         accessTokenProvider: tokenProvider,
+        authenticatedApiClient: const _FakeApiClient(),
+        requestExecutor: DefaultApiRequestExecutor(
+          failureMapper: const DefaultDioFailureMapper(),
+          logger: RoamlyLogger(
+            name: 'test.assistant.module.network',
+            sink: const NoopLogSink(),
+          ),
+        ),
         ownerId: 'assistant-module-user',
         logger: RoamlyLogger(name: 'test.assistant.module', sink: sink),
         transport: transport,

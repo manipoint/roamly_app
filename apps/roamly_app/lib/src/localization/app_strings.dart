@@ -3,6 +3,24 @@
 /// This provides a single source during Phase 1. It can later be replaced by
 /// Flutter's generated localization system without changing domain packages.
 abstract final class AppStrings {
+  static const assistantRecentConversations = 'Recent conversations';
+  static const assistantHistoryRetry =
+      'Could not load conversations. Tap to retry.';
+  static const assistantHistoryEmpty = 'No saved conversations';
+  static const assistantUntitledConversation = 'Untitled conversation';
+  static const assistantNewConversation = 'New conversation';
+  static const assistantDeleteConversation = 'Delete conversation';
+  static const assistantConversationActions = 'Conversation actions';
+  static const assistantDeleteConfirmation =
+      'Delete this entire conversation from this device? Messages and queued requests will be removed. This cannot be undone. Requests already sent may still finish on the server.';
+  static const assistantCancel = 'Cancel';
+  static const assistantDelete = 'Delete';
+  static const assistantDeleteFailed =
+      'Could not delete this conversation. Please try again.';
+  static const assistantCopyMessage = 'Copy message';
+  static const assistantMessageCopied = 'Message copied';
+  static const assistantCopyFailed =
+      'Could not copy this message. Please try again.';
   static String assistantFailureReason(String? code) => switch (code) {
     'rejected.conversationNotFound' =>
       'This conversation is no longer available. Start a new chat.',
