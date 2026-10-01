@@ -14,7 +14,7 @@ import '../models/auth_token_pair_model.dart';
 import '../models/authentication_response_model.dart';
 
 final class DefaultAuthRepository implements AuthRepository {
-  const DefaultAuthRepository({
+  DefaultAuthRepository({
     required AuthRemoteDataSource remoteDataSource,
     required AuthTokenStore tokenStore,
     required ApiRequestExecutor requestExecutor,
@@ -28,6 +28,7 @@ final class DefaultAuthRepository implements AuthRepository {
   final AuthTokenStore _tokenStore;
   final ApiRequestExecutor _requestExecutor;
   final RoamlyLogger _logger;
+  Future<Result<AuthUser?>>? _restoreInFlight;
 
   @override
   Future<Result<AuthUser>> login({
@@ -53,7 +54,24 @@ final class DefaultAuthRepository implements AuthRepository {
     if (storageFailure != null) {
       return FailureResult<void>(storageFailure);
     }
-    return remoteResult;
+
+    return remoteResult.fold<Result<void>>(
+      onSuccess: (_) => const Success<void>(null),
+      onFailure: (failure) {
+        if (_isUnauthorized(failure)) {
+          _logger.info('Remote logout rejected an already-invalid session');
+        } else {
+          _logger.warning(
+            'Remote logout failed after local credentials were cleared',
+            fields: {
+              'failure_code': failure.code,
+              'is_retryable': failure.isRetryable,
+            },
+          );
+        }
+        return const Success<void>(null);
+      },
+    );
   }
 
   @override
@@ -73,6 +91,21 @@ final class DefaultAuthRepository implements AuthRepository {
 
   @override
   Future<Result<AuthUser?>> restoreSession() async {
+    final activeRestore = _restoreInFlight;
+    if (activeRestore != null) {
+      return activeRestore;
+    }
+    late final Future<Result<AuthUser?>> operation;
+    operation = _restoreSession().whenComplete(() {
+      if (identical(_restoreInFlight, operation)) {
+        _restoreInFlight = null;
+      }
+    });
+    _restoreInFlight = operation;
+    return operation;
+  }
+
+  Future<Result<AuthUser?>> _restoreSession() async {
     final storedTokensResult = await _readTokens();
 
     if (storedTokensResult case FailureResult<AuthTokenPairModel?>(
@@ -80,34 +113,44 @@ final class DefaultAuthRepository implements AuthRepository {
     )) {
       return FailureResult<AuthUser?>(failure);
     }
+
     final storedToken =
         (storedTokensResult as Success<AuthTokenPairModel?>).value;
+
     if (storedToken == null) {
       return const Success<AuthUser?>(null);
     }
+
     final refreshResult = await _requestExecutor
         .execute<AuthenticationResponseModel>(
           () =>
               _remoteDataSource.refresh(refreshToken: storedToken.refreshToken),
         );
+
     return refreshResult.fold(
       onSuccess: (response) async {
         final user = response.user.toDomain();
         final storageFailure = await _writeTokensSafely(response.tokens);
+
         if (storageFailure != null) {
           return FailureResult<AuthUser?>(storageFailure);
         }
+
         return Success<AuthUser?>(user);
       },
       onFailure: (failure) async {
         if (!_isUnauthorized(failure)) {
-          return FailureResult<AuthUser>(failure);
+          return FailureResult<AuthUser?>(failure);
         }
+
         _logger.info('Expired session credentials rejected by API');
+
         final storageFailure = await _clearTokensSafely();
+
         if (storageFailure != null) {
-          return FailureResult<AuthUser>(storageFailure);
+          return FailureResult<AuthUser?>(storageFailure);
         }
+
         return const Success<AuthUser?>(null);
       },
     );

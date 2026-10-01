@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roamly_auth/src/data/models/auth_token_pair_model.dart';
 import 'package:roamly_auth/src/data/models/auth_user_model.dart';
@@ -230,15 +232,30 @@ void main() {
       expect(tokenStore.tokens, isNull);
     });
 
-    test('logout clears local tokens while returning remote failure', () async {
+    test(
+      'logout treats an unauthorized remote response as already signed out',
+      () async {
+        final remote = _FakeAuthRemoteDataSource(error: _unauthorizedFailure());
+        final tokenStore = _FakeAuthTokenStore(tokens: _tokens());
+        final repository = _repository(remote: remote, tokenStore: tokenStore);
+
+        final result = await repository.logout();
+
+        expect(result, isA<Success<void>>());
+        expect(remote.logoutCalls, 1);
+        expect(tokenStore.clearCalls, 1);
+        expect(tokenStore.tokens, isNull);
+      },
+    );
+
+    test('logout completes locally when remote logout fails', () async {
       final remote = _FakeAuthRemoteDataSource(error: _connectionFailure());
       final tokenStore = _FakeAuthTokenStore(tokens: _tokens());
       final repository = _repository(remote: remote, tokenStore: tokenStore);
 
       final result = await repository.logout();
 
-      final failure = _failureValue(result) as NetworkFailure;
-      expect(failure.kind, NetworkFailureKind.connection);
+      expect(result, isA<Success<void>>());
       expect(tokenStore.clearCalls, 1);
       expect(tokenStore.tokens, isNull);
     });
@@ -275,6 +292,52 @@ void main() {
         throwsA(same(expectedError)),
       );
     });
+    test(
+      'shares one refresh request between concurrent session restores',
+      () async {
+        final refreshCompleter = Completer<AuthenticationResponseModel>();
+
+        final remoteDataSource = _FakeAuthRemoteDataSource(
+          refreshOperation: () => refreshCompleter.future,
+        );
+
+        final tokenStore = _FakeAuthTokenStore(tokens: _tokens());
+
+        final repository = DefaultAuthRepository(
+          remoteDataSource: remoteDataSource,
+          tokenStore: tokenStore,
+          requestExecutor: DefaultApiRequestExecutor(
+            failureMapper: DefaultDioFailureMapper(),
+            logger: RoamlyLogger(
+              name: 'test.network',
+              sink: const NoopLogSink(),
+            ),
+          ),
+          logger: RoamlyLogger(name: 'test.auth', sink: const NoopLogSink()),
+        );
+
+        final firstRestore = repository.restoreSession();
+        final secondRestore = repository.restoreSession();
+
+        await Future<void>.delayed(Duration.zero);
+
+        expect(remoteDataSource.refreshCalls, 1);
+        expect(remoteDataSource.receivedRefreshToken, 'stored-refresh');
+
+        refreshCompleter.complete(
+          _authenticationResponse(
+            tokens: _tokens(accessToken: 'rotated-access'),
+          ),
+        );
+
+        final results = await Future.wait([firstRestore, secondRestore]);
+
+        expect(results, hasLength(2));
+        expect(results.every((result) => result is Success<AuthUser?>), isTrue);
+        expect(remoteDataSource.refreshCalls, 1);
+        expect(tokenStore.tokens?.accessToken, 'rotated-access');
+      },
+    );
   });
 }
 
@@ -304,11 +367,15 @@ AppFailure _failureValue<T>(Result<T> result) {
 }
 
 final class _FakeAuthRemoteDataSource implements AuthRemoteDataSource {
-  _FakeAuthRemoteDataSource({AuthenticationResponseModel? response, this.error})
-    : response = response ?? _authenticationResponse();
+  _FakeAuthRemoteDataSource({
+    AuthenticationResponseModel? response,
+    this.error,
+    this.refreshOperation,
+  }) : response = response ?? _authenticationResponse();
 
   final AuthenticationResponseModel response;
   final Object? error;
+  final Future<AuthenticationResponseModel> Function()? refreshOperation;
   int registerCalls = 0;
   int loginCalls = 0;
   int refreshCalls = 0;
@@ -346,6 +413,10 @@ final class _FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   }) async {
     refreshCalls++;
     receivedRefreshToken = refreshToken;
+    final operation = refreshOperation;
+    if (operation != null) {
+      return operation();
+    }
     return _respond();
   }
 
@@ -426,7 +497,9 @@ final class _FakeAuthTokenStore implements AuthTokenStore {
   }
 }
 
-AuthenticationResponseModel _authenticationResponse() {
+AuthenticationResponseModel _authenticationResponse({
+  AuthTokenPairModel? tokens,
+}) {
   return AuthenticationResponseModel(
     user: AuthUserModel(
       id: '2db19db1-81b7-467c-b0e1-05bce783522a',
@@ -434,7 +507,7 @@ AuthenticationResponseModel _authenticationResponse() {
       status: 'active',
       createdAt: DateTime.utc(2026, 8, 30, 10, 30),
     ),
-    tokens: _tokens(accessToken: 'rotated-access'),
+    tokens: tokens ?? _tokens(accessToken: 'rotated-access'),
   );
 }
 
